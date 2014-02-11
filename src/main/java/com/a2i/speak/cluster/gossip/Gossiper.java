@@ -10,6 +10,7 @@ import com.a2i.speak.cluster.CommandMessage;
 import com.a2i.speak.cluster.CommandMessageType;
 import com.a2i.speak.cluster.Member;
 import com.a2i.speak.cluster.MemberHolder;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -72,7 +73,11 @@ public class Gossiper {
                 memberList.getTags().put(m.getIp(), Integer.toString(m.getCommandPort()) + ":" + m.getDataPort());
             }
 
-            member.sendCommand(memberList);
+            try {
+                member.sendCommand(memberList);
+            } catch(IOException ex) {
+                LOG.error("Exception sending member list.", ex);
+            }
         }
     }
 

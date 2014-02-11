@@ -74,8 +74,21 @@ public class ClusterService {
 
         String myAddress = NetworkUtil.getIp();
 
+        if(LOG.isDebugEnabled()) {
+            StringBuilder greeting = new StringBuilder();
+            LOG.debug(greeting
+                    .append("Greetings. I am ")
+                    .append(myAddress)
+                    .append(":")
+                    .append(commandPortInt)
+                    .append(":")
+                    .append(dataPortInt)
+                    .toString());
+        }
+
         me = new MeMember(myAddress, commandPortInt, dataPortInt);
         me.setStatus(Member.Status.Alive);
+        MemberHolder.INSTANCE.updateMember(me);
 
         ((MeMember)me).addCommandConsumer(CommandMessageType.MemberList, new CommandListener() {
             @Override

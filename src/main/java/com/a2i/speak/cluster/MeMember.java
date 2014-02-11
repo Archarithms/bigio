@@ -5,8 +5,19 @@
  */
 package com.a2i.speak.cluster;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -15,11 +26,6 @@ import reactor.core.spec.Reactors;
 import reactor.event.Event;
 import reactor.event.selector.Selectors;
 import reactor.function.Consumer;
-import reactor.tcp.TcpConnection;
-import reactor.tcp.TcpServer;
-import reactor.tcp.encoding.StandardCodecs;
-import reactor.tcp.netty.NettyTcpServer;
-import reactor.tcp.spec.TcpServerSpec;
 
 /**
  *
@@ -29,9 +35,6 @@ public class MeMember extends Member {
 
     private static final Logger LOG = LoggerFactory.getLogger(MeMember.class);
 
-    private TcpServer<byte[], byte[]> commandServer;
-    private TcpServer<byte[], byte[]> dataServer;
-        
     private final Environment env = new Environment();
     private Reactor reactor;
 
@@ -57,8 +60,11 @@ public class MeMember extends Member {
     @Override
     public void close() {
         super.close();
-        commandServer.shutdown();
-        dataServer.shutdown();
+    }
+
+    @Override
+    public void initializeClients() {
+        
     }
 
     private void initializeReactor() {
@@ -69,58 +75,74 @@ public class MeMember extends Member {
     }
 
     private void initializeServers() {
+        LOG.debug("Initializing command server on " + getIp() + ":" + getCommandPort());
 
-        commandServer = new TcpServerSpec<byte[], byte[]>(NettyTcpServer.class)
-                .env(env)
-                .listen(getIp(), getCommandPort())
-                .codec(StandardCodecs.BYTE_ARRAY_CODEC)
-                .consume(new Consumer<TcpConnection<byte[], byte[]>>() {
-                    @Override
-                    public void accept(final TcpConnection<byte[], byte[]> conn) {
-
-                        LOG.info("Accepted a command connection.");
-                        
-                        conn.in().consume(new Consumer<byte[]>() {
-                            @Override
-                            public void accept(byte[] bytes) {
-                                try {
-                                    CommandMessage message = new CommandMessage().decode(bytes);
-                                    LOG.info(message.getMessage());
-                                    reactor.notify(CommandMessageType.fromValue(message.getMessage()), Event.wrap(message));
-
-                                    conn.close();
-                                } catch (IOException ex) {
-                                    LOG.error("Error decoding command message.", ex);
+        new Thread() {
+            @Override
+            public void run() {
+                EventLoopGroup bossGroup = new NioEventLoopGroup();
+                EventLoopGroup workerGroup = new NioEventLoopGroup();
+                try {
+                    ServerBootstrap b = new ServerBootstrap();
+                    b.group(bossGroup, workerGroup)
+                            .channel(NioServerSocketChannel.class)
+                            .childHandler(new ChannelInitializer<SocketChannel>() {
+                                @Override
+                                public void initChannel(SocketChannel ch) throws Exception {
+                                    ch.pipeline().addLast(new CommandMessageHandler());
                                 }
-                            }
-                        });
-                    }
-                })
-                .get();
 
-        commandServer.start();
+                                @Override
+                                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                                    LOG.error("Cannot initialize command server.", cause);
+                                }
+                            })
+                            .option(ChannelOption.SO_BACKLOG, 128)
+                            .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-        dataServer = new TcpServerSpec<byte[], byte[]>(NettyTcpServer.class)
-                .env(env)
-                .listen(getIp(), getDataPort())
-                .codec(StandardCodecs.BYTE_ARRAY_CODEC)
-                .consume(new Consumer<TcpConnection<byte[], byte[]>>() {
-                    @Override
-                    public void accept(TcpConnection<byte[], byte[]> conn) {
+                    // Bind and start to accept incoming connections.
+                    ChannelFuture f = b.bind(getIp(), getCommandPort()).sync();
 
-//                        LOG.info("Accepted a data connection");
+                    // Wait until the server socket is closed.
+                    // In this example, this does not happen, but you can do that to gracefully
+                    // shut down your server.
+                    f.channel().closeFuture().sync();
+                } catch (InterruptedException ex) {
+                    LOG.error("Command server interrupted.", ex);
+                } finally {
+                    workerGroup.shutdownGracefully();
+                    bossGroup.shutdownGracefully();
+                }
+            }
+        }.start();
+    }
 
-                        // for each connection, process incoming data
-                        conn.in().consume(new Consumer<byte[]>() {
-                            @Override
-                            public void accept(byte[] bytes) {
-                                
-                            }
-                        });
-                    }
-                })
-                .get();
+    public class CommandMessageHandler extends ChannelInboundHandlerAdapter {
 
-        dataServer.start();
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            LOG.debug("Inbound server connection");
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            ByteBuf m = (ByteBuf) msg;
+            try {
+                LOG.debug("Decoding message");
+                CommandMessage message = new CommandMessage().decode(m.nioBuffer());
+                reactor.notify(CommandMessageType.fromValue(message.getMessage()), Event.wrap(message));
+                
+            } catch (IOException ex) {
+                LOG.error("Error decoding message.", ex);
+            } finally {
+                ReferenceCountUtil.release(m);
+            }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            LOG.error("Error in TCP Client", cause);
+            ctx.close();
+        }
     }
 }

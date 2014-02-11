@@ -5,28 +5,28 @@
  */
 package com.a2i.speak.cluster;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Environment;
-import reactor.core.composable.Stream;
-import reactor.function.Consumer;
-import reactor.tcp.Reconnect;
-import reactor.tcp.TcpClient;
-import reactor.tcp.TcpConnection;
-import reactor.tcp.encoding.StandardCodecs;
-import reactor.tcp.netty.NettyTcpClient;
-import reactor.tcp.spec.TcpClientSpec;
-import reactor.tuple.Tuple;
-import reactor.tuple.Tuple2;
+import reactor.event.Event;
 
 /**
  *
@@ -54,20 +54,11 @@ public class Member {
 
     private static final Logger LOG = LoggerFactory.getLogger(Member.class);
 
-    private static final int QUEUE_CAPACITY = 20;
-
-    private final BlockingQueue<CommandMessage> dataQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-
-    private TcpClient<byte[], byte[]> commandClient;
-    private TcpClient<byte[], byte[]> dataClient;
-
     private Status status;
 
     private final Map<String, String> tags = new HashMap<>();
 
     private final AtomicInteger sequence = new AtomicInteger(0);
-
-    private static final Environment env = new Environment();
 
     private String ip;
     private int dataPort;
@@ -83,28 +74,63 @@ public class Member {
         this.dataPort = dataPort;
     }
 
-    public void sendCommand(final CommandMessage message) {
-        commandClient.open().consume(new Consumer<TcpConnection<byte[], byte[]>>() {
-            @Override
-            public void accept(TcpConnection<byte[], byte[]> conn) {
-                try {
-                    conn.send(message.encode());
-                } catch (IOException ex) {
-                    LOG.error("Exception sending command.", ex);
+    public void sendCommand(final CommandMessage message) throws IOException {
+        final byte[] bytes = message.encode();
+
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+            
+        try {
+            Bootstrap b = new Bootstrap();
+            b.group(workerGroup);
+            b.channel(NioSocketChannel.class);
+            b.option(ChannelOption.SO_KEEPALIVE, true);
+            b.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                public void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+
+                            ByteBuf buff = ctx.alloc().buffer(bytes.length);
+                            buff.writeBytes(bytes);
+
+                            final ChannelFuture f = ctx.writeAndFlush(buff);
+                            f.addListener(new ChannelFutureListener() {
+                                @Override
+                                public void operationComplete(ChannelFuture future) throws Exception {
+                                    assert f == future;
+                                    LOG.debug("Message sent");
+                                    ctx.close();
+                                }
+                            });
+                        }
+                    });
                 }
 
-                conn.close();
-            }
-        });
+                @Override
+                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                    LOG.error("Cannot initialize command client.", cause);
+                }
+            });
+
+            // Start the client.
+            ChannelFuture f = b.connect(getIp(), getCommandPort()).sync();
+
+            // Wait until the connection is closed.
+            f.channel().closeFuture().sync();
+
+            LOG.debug("Finished sending message");
+        } catch (InterruptedException ex) {
+            LOG.error("Interrupted in command client.", ex);
+        } finally {
+            workerGroup.shutdownGracefully();
+        }
     }
 
     public void close() {
-        if(LOG.isDebugEnabled()) {
+        if (LOG.isDebugEnabled()) {
             LOG.debug("Closing TCP connections to " + ip + ":" + commandPort + ":" + dataPort);
         }
-
-        commandClient.close();
-//        dataClient.close();
     }
 
     @Override
@@ -138,10 +164,10 @@ public class Member {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof Member) {
-            Member them = (Member)obj;
-            return them.getIp().equals(getIp()) 
-                    && them.getCommandPort() == getCommandPort() 
+        if (obj instanceof Member) {
+            Member them = (Member) obj;
+            return them.getIp().equals(getIp())
+                    && them.getCommandPort() == getCommandPort()
                     && them.getDataPort() == getDataPort();
         }
 
@@ -227,105 +253,70 @@ public class Member {
         this.commandPort = commandPort;
     }
 
-    public void initClients() {
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("Initiating command channel to " + ip + ":" + commandPort + ":" + dataPort);
-        }
-
-        commandClient = new TcpClientSpec<byte[], byte[]>(NettyTcpClient.class)
-                .env(env)
-                .codec(StandardCodecs.BYTE_ARRAY_CODEC)
-                .connect(ip, commandPort)
-                .get();
+    public void initializeClients() {
+        LOG.debug("Initializing command client");
 
 //        new Thread() {
 //            @Override
 //            public void run() {
-//                while(running) {
-//                    try {
-//                        final CommandMessage message = commandQueue.take();
+//                EventLoopGroup workerGroup = new NioEventLoopGroup();
 //
-//                        LOG.info("Got a command");
-//                        
-//                        commandClient.open().consume(new Consumer<TcpConnection<byte[], byte[]>>() {
-//                            @Override
-//                            public void accept(TcpConnection<byte[], byte[]> conn) {
+//                try {
+//                    Bootstrap b = new Bootstrap();
+//                    b.group(workerGroup);
+//                    b.channel(NioSocketChannel.class);
+//                    b.option(ChannelOption.SO_KEEPALIVE, true);
+//                    b.handler(new ChannelInitializer<SocketChannel>() {
+//                        @Override
+//                        public void initChannel(SocketChannel ch) throws Exception {
+//                            ch.pipeline().addLast(new CommandMessageHandler());
+//                            channel = ch;
+//                        }
 //
-//                                LOG.info("Connection established");
+//                        @Override
+//                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+//                            LOG.error("Cannot initialize command client.", cause);
+//                        }
+//                    });
 //
-//                                if(LOG.isDebugEnabled()) {
-//                                    LOG.debug("Sending command to " + ip + ":" + commandPort + ":" + dataPort);
-//                                }
-//                                
-//                                try {
-//                                    conn.send(message.encode());
-//                                } catch (IOException ex) {
-//                                    LOG.error("Exception sending command.", ex);
-//                                }
-//                            }
-//                        });
-//                    } catch (InterruptedException ex) {
-//                        LOG.error("Interrupted waiting for a command.", ex);
-//                    }
+//                    // Start the client.
+//                    ChannelFuture f = b.connect(getIp(), getCommandPort()).sync();
+//
+//                    // Wait until the connection is closed.
+//                    f.channel().closeFuture().sync();
+//                } catch (InterruptedException ex) {
+//                    LOG.error("Interrupted in command client.", ex);
+//                } finally {
+//                    workerGroup.shutdownGracefully();
 //                }
 //            }
 //        }.start();
+    }
 
-//        dataClient = new TcpClientSpec<byte[], byte[]>(NettyTcpClient.class)
-//                .env(env)
-//                .codec(StandardCodecs.BYTE_ARRAY_CODEC)
-//                .connect(ip, dataPort)
-//                .get();
-//
-//        Stream<TcpConnection<byte[], byte[]>> dataConnections = dataClient.open(new Reconnect() {
-//            @Override
-//            public Tuple2<InetSocketAddress, Long> reconnect(InetSocketAddress currentAddress, int attempt) {
-//
-//                if(LOG.isTraceEnabled()) {
-//                    LOG.trace("Connection to " + ip + ":" + commandPort + ":" + dataPort + " failed.");
-//                }
-//
-//                if(getStatus() != Status.Unknown) {
-//                    setStatus(Status.Failed);
-//                }
-//
-//                return Tuple.of(currentAddress, 500l);
-//            }
-//        });
-//
-//        dataConnections.consume(new Consumer<TcpConnection<byte[], byte[]>>() {
-//            @Override
-//            public void accept(final TcpConnection<byte[], byte[]> conn) {
-//
-//                if(LOG.isDebugEnabled()) {
-//                    LOG.debug("Established data channel with " + ip + ":" + commandPort + ":" + dataPort);
-//                }
-//
-//                setStatus(Status.Alive);
-//
-//                while(running) {
-//                    try {
-//                        conn.send(dataQueue.take().encode());
-//                    } catch (InterruptedException ex) {
-//                        LOG.error("Interrupted while waiting for messages.", ex);
-//                    } catch (IOException ex) {
-//                        LOG.error("Exception while serializng message.", ex);
-//                    }
-//                }
-//
-////                conn.in().consume(new Consumer<byte[]>() {
-////                    @Override
-////                    public void accept(byte[] bytes) {
-////                        try {
-////                            conn.send(dataQueue.take().encode());
-////                        } catch (InterruptedException ex) {
-////                            LOG.error("Interrupted while waiting for messages.", ex);
-////                        } catch (IOException ex) {
-////                            LOG.error("Exception while serializng message.", ex);
-////                        }
-////                    }
-////                });
-//            }
-//        });
+    private class CommandMessageHandler extends ChannelInboundHandlerAdapter {
+
+        private ChannelHandlerContext ctx;
+
+        public void writeMessage(byte[] bytes) {
+            LOG.debug("Writing message");
+            ctx.writeAndFlush(bytes);
+        }
+
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            LOG.info("Command channel active");
+            this.ctx = ctx;
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            ((ByteBuf) msg).release();
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            LOG.error("Caught an exception", cause);
+            ctx.close();
+        }
     }
 }

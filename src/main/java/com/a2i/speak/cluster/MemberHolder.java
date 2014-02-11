@@ -55,7 +55,7 @@ public enum MemberHolder {
             }
         } else {
             LOG.debug("Adding new member " + id);
-            member.initClients();
+            member.initializeClients();
             members.put(id, member);
             if(member.getStatus() == Member.Status.Alive) {
                 activeMembers.put(id, member);
