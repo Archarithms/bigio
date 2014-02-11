@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.a2i.speak.cluster.gossip;
+package com.a2i.speak.cluster;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

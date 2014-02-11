@@ -6,8 +6,11 @@
 
 package com.a2i.speak.cluster.gossip;
 
+import com.a2i.speak.cluster.CommandMessageType;
+import com.a2i.speak.cluster.CommandMessage;
 import com.a2i.speak.Parameters;
 import com.a2i.speak.cluster.Member;
+import com.a2i.speak.cluster.MemberHolder;
 import com.a2i.speak.cluster.NetworkUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
@@ -67,6 +70,8 @@ public class MCDiscovery extends Thread {
     }
 
     public void initialize(Member me) {
+        this.me = me;
+
         if(isEnabled()) {
             start();
         }
@@ -81,7 +86,7 @@ public class MCDiscovery extends Thread {
     @Override
     public void run() {
         try {
-            if(!NetworkUtil.INSTANCE.getNetworkInterface().supportsMulticast()) {
+            if(!NetworkUtil.getNetworkInterface().supportsMulticast()) {
                 LOG.error("Network Interface doesn't support multicast.");
                 return;
             }
@@ -91,7 +96,7 @@ public class MCDiscovery extends Thread {
         }
 
         //InetSocketAddress addr = new InetSocketAddress(NetworkUtil.INSTANCE.getIp(), NetworkUtil.INSTANCE.getFreePort());
-        InetSocketAddress addr = new InetSocketAddress(NetworkUtil.INSTANCE.getIp(), multicastPort);
+        InetSocketAddress addr = new InetSocketAddress(NetworkUtil.getIp(), multicastPort);
         group = new InetSocketAddress(multicastGroup, addr.getPort());
 
         workerGroup = new NioEventLoopGroup(THREADS, new DefaultThreadFactory("multicast-thread-pool", true));
@@ -120,11 +125,11 @@ public class MCDiscovery extends Thread {
                     }
                 }).localAddress(addr.getPort());
 
-            b.option(ChannelOption.IP_MULTICAST_IF, NetworkUtil.INSTANCE.getNetworkInterface());
+            b.option(ChannelOption.IP_MULTICAST_IF, NetworkUtil.getNetworkInterface());
             b.option(ChannelOption.SO_REUSEADDR, true);
 
             channel = (DatagramChannel)b.bind().sync().channel();
-            channel.joinGroup(group, NetworkUtil.INSTANCE.getNetworkInterface()).sync();
+            channel.joinGroup(group, NetworkUtil.getNetworkInterface()).sync();
 
             LOG.info("Announcing");
             try {
@@ -180,7 +185,12 @@ public class MCDiscovery extends Thread {
         protected void channelRead0(ChannelHandlerContext chc, DatagramPacket packet) throws Exception {
             ByteBuf buff = packet.content();
             CommandMessage message = new CommandMessage().decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
-            LOG.info(message.toString());
+            Member member = new Member(message.getIp(), message.getCommandPort(), message.getDataPort());
+            member.setStatus(Member.Status.Unknown);
+            for(String key : message.getTags().keySet()) {
+                member.getTags().put(key, message.getTags().get(key));
+            }
+            MemberHolder.INSTANCE.updateMember(member);
         }
 
         @Override

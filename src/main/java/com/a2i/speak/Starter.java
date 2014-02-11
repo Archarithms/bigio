@@ -10,7 +10,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
-import com.a2i.speak.cluster.gossip.MCDiscovery;
+import com.a2i.speak.cluster.ClusterService;
 import java.lang.management.ManagementFactory;
 import java.io.PrintWriter;
 import java.lang.management.GarbageCollectorMXBean;
@@ -44,8 +44,8 @@ public class Starter implements CommandLineRunner {
 
     private static final boolean MONITOR_THREAD_CONTENTION = true;
 
-//    @Autowired
-//    ClusterService cluster;
+    @Autowired
+    private ClusterService cluster;
     
     private static final Logger LOG = LoggerFactory.getLogger(Starter.class);
 
@@ -94,6 +94,8 @@ public class Starter implements CommandLineRunner {
     public void run(String... args) throws Exception {
         LOG.info("Speak easy my friends");
 
+        cluster.initialize();
+
         if(args.length > 0 && args[0].equals("interactive")) {
 
             switch(Parameters.INSTANCE.currentOS()) {
@@ -123,19 +125,18 @@ public class Starter implements CommandLineRunner {
 
             try {
                 while ((line = reader.readLine()) != null) {
-//                    if(line.equals("members")) {
-//                        cluster.members();
-//                    } else if(line.contains("join")) {
-//                        String[] arr = line.split("\\s+");
-//                        if(arr.length < 2) {
-//                            System.out.println("Usage: join <some ip:port>");
-//                        } else {
-//                            cluster.join(arr[1]);
-//                        }
-//                    } else if(line.equals("leave")) {
-//                        cluster.leave();
-//                    } else 
-                    if(line.equals("mem")) {
+                    if(line.equals("members")) {
+                        cluster.members();
+                    } else if(line.contains("join")) {
+                        String[] arr = line.split("\\s+");
+                        if(arr.length < 2) {
+                            System.out.println("Usage: join <some ip:port>");
+                        } else {
+                            cluster.join(arr[1]);
+                        }
+                    } else if(line.equals("leave")) {
+                        cluster.leave();
+                    } else if(line.equals("mem")) {
                         printOSStats();
                         printMemStats();
                     } else if(line.contains("log")) {

@@ -6,8 +6,7 @@
 
     <!-- Set these to the highest level required -->
     <logger name="com.a2i" level="TRACE"/>
-    <!--logger name="io.netty.handler.logging.LoggingHandler" level="TRACE"/-->
-    <logger name="io.netty" level="TRACE"/>
+    <logger name="io.netty.handler.logging.LoggingHandler" level="TRACE"/>
 
     <!-- The log file -->
     <property name="LOG_FILE" value="logs/speakeasy.log}"/>

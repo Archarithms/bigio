@@ -7,7 +7,6 @@
 package com.a2i.speak;
 
 import java.io.IOException;
-import java.util.logging.Level;
 import org.msgpack.MessagePack;
 import org.msgpack.annotation.Message;
 import org.slf4j.Logger;
@@ -72,7 +71,6 @@ public class Speaker {
                 .env(env)
                 .dispatcher(Environment.EVENT_LOOP)
                 .get();
-
 
         reactor.on(Selectors.object("parse"), new Consumer<Event<String>>() {
             @Override

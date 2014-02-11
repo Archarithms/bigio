@@ -6,9 +6,7 @@
 
 package com.a2i.speak.cluster;
 
-import com.a2i.speak.OperatingSystem;
 import com.a2i.speak.Parameters;
-import com.a2i.speak.Starter;
 import io.netty.util.NetUtil;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -28,30 +26,29 @@ import org.slf4j.LoggerFactory;
  *
  * @author atrimble
  */
-public enum NetworkUtil {
-    INSTANCE;
+public class NetworkUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(NetworkUtil.class);
     
-    private NetworkInterface nic = null;
+    private static NetworkInterface nic = null;
 
-    private String ip;
+    private static String ip;
 
-    private final int START_PORT = 32768;
-    private final int END_PORT = 65536;
-    private final int NUM_CANDIDATES = END_PORT - START_PORT;
+    private static final int START_PORT = 32768;
+    private static final int END_PORT = 65536;
+    private static final int NUM_CANDIDATES = END_PORT - START_PORT;
 
-    private final List<Integer> PORTS = new ArrayList<>();
-    private Iterator<Integer> portIterator;
+    private static final List<Integer> PORTS = new ArrayList<>();
+    private static Iterator<Integer> portIterator;
 
-    NetworkUtil() {
+    static {
         for (int i = START_PORT; i < END_PORT; i ++) {
             PORTS.add(i);
         }
         Collections.shuffle(PORTS);
     }
 
-    public synchronized String getIp() {
+    public static String getIp() {
         if(nic == null) {
             findNIC();
         }
@@ -59,7 +56,7 @@ public enum NetworkUtil {
         return ip;
     }
 
-    public synchronized NetworkInterface getNetworkInterface() {
+    public static NetworkInterface getNetworkInterface() {
         if(nic == null) {
             findNIC();
         }
@@ -67,7 +64,7 @@ public enum NetworkUtil {
         return nic;
     }
 
-    public int getFreePort() {
+    public static int getFreePort() {
         for (int i = 0; i < NUM_CANDIDATES; i ++) {
             int port = nextCandidatePort();
             try {
@@ -92,14 +89,14 @@ public enum NetworkUtil {
         throw new RuntimeException("unable to find a free port");
     }
 
-    private int nextCandidatePort() {
+    private static int nextCandidatePort() {
         if (portIterator == null || !portIterator.hasNext()) {
             portIterator = PORTS.iterator();
         }
         return portIterator.next();
     }
 
-    private void findNIC() {
+    private static void findNIC() {
         try {
             String networkInterfaceName = "eth0";
 

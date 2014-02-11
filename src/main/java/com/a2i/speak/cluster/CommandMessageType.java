@@ -4,14 +4,14 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.cluster.gossip;
+package com.a2i.speak.cluster;
 
 /**
  *
  * @author atrimble
  */
 public enum CommandMessageType {
-    Announce("Announce"), Unknown("Unk");
+    Announce("Announce"), MemberList("MemberList"), Unknown("Unk");
 
     private final String value;
 
@@ -26,6 +26,8 @@ public enum CommandMessageType {
     public static CommandMessageType fromValue(String value) {
         if(value.equals(Announce.value)) {
             return Announce;
+        } else if(value.equals(MemberList.value)) {
+            return MemberList;
         }
 
         return Unknown;

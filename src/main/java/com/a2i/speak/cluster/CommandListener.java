@@ -6,16 +6,10 @@
 
 package com.a2i.speak.cluster;
 
-import java.io.IOException;
-
 /**
  *
  * @author atrimble
- * @param <T>
  */
-public interface RPCMessage<T extends RPCMessage> {
-
-    byte[] encode(int seq) throws IOException;
-
-    T decode(byte[] bytes) throws IOException;
+public interface CommandListener {
+    public void accept(CommandMessage message);
 }
