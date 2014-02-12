@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ClusterService {
 
-    private static final String COMMAND_PORT_PROPERTY = "com.a2i.port.command";
+    private static final String GOSSIP_PORT_PROPERTY = "com.a2i.port.gossip";
     private static final String DATA_PORT_PROPERTY = "com.a2i.port.data";
 
     @Autowired
@@ -50,17 +50,17 @@ public class ClusterService {
 
     public void initialize() {
 
-        String commandPort = Parameters.INSTANCE.getProperty(COMMAND_PORT_PROPERTY);
+        String gossipPort = Parameters.INSTANCE.getProperty(GOSSIP_PORT_PROPERTY);
         String dataPort = Parameters.INSTANCE.getProperty(DATA_PORT_PROPERTY);
 
-        int commandPortInt;
+        int gossipPortInt;
         int dataPortInt;
 
-        if(commandPort == null) {
-            LOG.debug("Finding a random port for commands.");
-            commandPortInt = NetworkUtil.getFreePort();
+        if(gossipPort == null) {
+            LOG.debug("Finding a random port for gossiping.");
+            gossipPortInt = NetworkUtil.getFreePort();
         } else {
-            commandPortInt = Integer.parseInt(commandPort);
+            gossipPortInt = Integer.parseInt(gossipPort);
         }
 
         if(dataPort == null) {
@@ -78,13 +78,13 @@ public class ClusterService {
                     .append("Greetings. I am ")
                     .append(myAddress)
                     .append(":")
-                    .append(commandPortInt)
+                    .append(gossipPortInt)
                     .append(":")
                     .append(dataPortInt)
                     .toString());
         }
 
-        me = new MeMember(myAddress, commandPortInt, dataPortInt);
+        me = new MeMember(myAddress, gossipPortInt, dataPortInt);
         me.setStatus(MemberStatus.Alive);
         me.initialize();
         MemberHolder.INSTANCE.updateMemberStatus(me);
@@ -101,21 +101,6 @@ public class ClusterService {
 
                     MemberHolder.INSTANCE.updateMemberStatus(m);
                 }
-//                for(String ip : message.getTags().keySet()) {
-//                    String cp = message.getTags().get(ip).split(":")[0];
-//                    String dp = message.getTags().get(ip).split(":")[1];
-//                    String key = MemberHolder.INSTANCE.getKey(ip, cp, dp);
-//                    Member m = MemberHolder.INSTANCE.getMember(key);
-//                    if(m == null) {
-//                        m = new RemoteMember(
-//                            ip, 
-//                            Integer.parseInt(cp), 
-//                            Integer.parseInt(dp));
-//                        ((AbstractMember)m).initialize();
-//                    }
-//
-//                    MemberHolder.INSTANCE.updateMemberStatus(m);
-//                }
             }
         });
 

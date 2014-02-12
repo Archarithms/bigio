@@ -61,7 +61,7 @@ public class Gossiper {
             GossipMessage memberList = new GossipMessage();
             memberList.setSequence(me.getSequence().getAndIncrement());
             memberList.setIp(me.getIp());
-            memberList.setCommandPort(me.getCommandPort());
+            memberList.setGossipPort(me.getGossipPort());
             memberList.setDataPort(me.getDataPort());
             memberList.getTags().putAll(me.getTags());
 
@@ -70,7 +70,7 @@ public class Gossiper {
             }
 
             try {
-                ((RemoteMember)member).sendCommand(memberList);
+                ((RemoteMember)member).gossip(memberList);
             } catch(IOException ex) {
                 LOG.error("Exception sending member list.", ex);
             }

@@ -22,7 +22,7 @@ public abstract class AbstractMember implements Member {
     private MemberStatus status = MemberStatus.Unknown;
     private String ip;
     private int dataPort;
-    private int commandPort;
+    private int gossipPort;
     
     protected abstract void initialize();
     protected abstract void shutdown();
@@ -31,9 +31,9 @@ public abstract class AbstractMember implements Member {
 
     }
 
-    public AbstractMember(String ip, int commandPort, int dataPort) {
+    public AbstractMember(String ip, int gossipPort, int dataPort) {
         this.ip = ip;
-        this.commandPort = commandPort;
+        this.gossipPort = gossipPort;
         this.dataPort = dataPort;
     }
 
@@ -43,7 +43,7 @@ public abstract class AbstractMember implements Member {
 
         builder.append("\nMember ").append(ip);
         builder.append(":");
-        builder.append(commandPort);
+        builder.append(gossipPort);
         builder.append(":");
         builder.append(dataPort);
         if (status == MemberStatus.Alive || status == MemberStatus.Unknown) {
@@ -71,7 +71,7 @@ public abstract class AbstractMember implements Member {
         if (obj instanceof Member) {
             Member them = (Member) obj;
             return them.getIp().equals(getIp())
-                    && them.getCommandPort() == getCommandPort()
+                    && them.getGossipPort() == getGossipPort()
                     && them.getDataPort() == getDataPort();
         }
 
@@ -83,7 +83,7 @@ public abstract class AbstractMember implements Member {
         int hash = 5;
         hash = 83 * hash + Objects.hashCode(this.ip);
         hash = 83 * hash + this.dataPort;
-        hash = 83 * hash + this.commandPort;
+        hash = 83 * hash + this.gossipPort;
         return hash;
     }
 
@@ -152,18 +152,18 @@ public abstract class AbstractMember implements Member {
     }
 
     /**
-     * @return the commandPort
+     * @return the gossipPort 
      */
     @Override
-    public int getCommandPort() {
-        return commandPort;
+    public int getGossipPort() {
+        return gossipPort;
     }
 
     /**
-     * @param commandPort the commandPort to set
+     * @param gossipPort the gossip port to set
      */
     @Override
-    public void setCommandPort(int commandPort) {
-        this.commandPort = commandPort;
+    public void setGossipPort(int gossipPort) {
+        this.gossipPort = gossipPort;
     }
 }

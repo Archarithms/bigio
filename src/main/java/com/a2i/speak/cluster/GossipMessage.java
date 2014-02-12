@@ -22,7 +22,7 @@ public class GossipMessage {
 
     private int sequence;
     private String ip;
-    private int commandPort;
+    private int gossipPort;
     private int dataPort;
     private final Map<String, String> tags = new HashMap<>();
     private final List<String> members = new ArrayList<>();
@@ -32,20 +32,20 @@ public class GossipMessage {
         
     }
 
-    public GossipMessage(int sequence, String ip, int commandPort, int dataPort) {
+    public GossipMessage(int sequence, String ip, int gossipPort, int dataPort) {
         this.sequence = sequence;
         this.ip = ip;
-        this.commandPort = commandPort;
+        this.gossipPort = gossipPort;
         this.dataPort = dataPort;
     }
 
     @Override
     public String toString() {
         StringBuilder buff = new StringBuilder();
-        buff.append("Command: ").append("\n")
+        buff.append("GossipMessage: ").append("\n")
                 .append("Sequence: ").append(getSequence()).append("\n")
                 .append("Address: ").append(getIp()).append("\n")
-                .append("CommandPort: ").append(getCommandPort()).append("\n")
+                .append("GossipPort: ").append(getGossipPort()).append("\n")
                 .append("DataPort: ").append(getDataPort()).append("\n")
                 .append("Tags: ").append("\n");
         for(String key : getTags().keySet()) {
@@ -69,17 +69,17 @@ public class GossipMessage {
     }
 
     /**
-     * @return the commandPort
+     * @return the gossipPort
      */
-    public int getCommandPort() {
-        return commandPort;
+    public int getGossipPort() {
+        return gossipPort;
     }
 
     /**
-     * @param commandPort the command port to set
+     * @param gossipPort the gossipPort to set
      */
-    public void setCommandPort(int commandPort) {
-        this.commandPort = commandPort;
+    public void setGossipPort(int gossipPort) {
+        this.gossipPort = gossipPort;
     }
 
     /**

@@ -31,8 +31,8 @@ public interface Member {
 
     public void setDataPort(int dataPort);
 
-    public int getCommandPort();
+    public int getGossipPort();
 
-    public void setCommandPort(int commandPort);
+    public void setGossipPort(int gossipPort);
 
 }

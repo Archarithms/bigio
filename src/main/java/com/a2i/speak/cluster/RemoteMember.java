@@ -21,6 +21,7 @@ import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import java.io.IOException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ public class RemoteMember extends AbstractMember {
     private int timeout;
     
     private final AtomicInteger retryCount = new AtomicInteger(0);
+    private final ScheduledExecutorService retryExecutor = Executors.newSingleThreadScheduledExecutor();
 
     private Channel channel = null;
     private EventLoopGroup workerGroup = null;
@@ -53,8 +55,8 @@ public class RemoteMember extends AbstractMember {
         super();
     }
 
-    public RemoteMember(String ip, int commandPort, int dataPort) {
-        super(ip, commandPort, dataPort);
+    public RemoteMember(String ip, int gossipPort, int dataPort) {
+        super(ip, gossipPort, dataPort);
     }
 
     @Override
@@ -74,7 +76,7 @@ public class RemoteMember extends AbstractMember {
         });
     }
 
-    public void sendCommand(final GossipMessage message) throws IOException {
+    public void gossip(final GossipMessage message) throws IOException {
         byte[] bytes = GossipEncoder.encode(message);
         if(channel != null) {
             channel.writeAndFlush(bytes);
@@ -84,7 +86,7 @@ public class RemoteMember extends AbstractMember {
     @Override
     protected void shutdown() {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Closing TCP connections to " + getIp() + ":" + getCommandPort() + ":" + getDataPort());
+            LOG.debug("Closing TCP connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
         }
 
         if(workerGroup != null) {
@@ -93,7 +95,7 @@ public class RemoteMember extends AbstractMember {
     }
 
     private void initializeClients() {
-        LOG.debug("Initializing command client");
+        LOG.debug("Initializing gossip client");
 
         workerGroup = new NioEventLoopGroup();
             
@@ -112,13 +114,13 @@ public class RemoteMember extends AbstractMember {
 
             @Override
             public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                LOG.error("Cannot initialize command client.", cause);
+                LOG.error("Cannot initialize gossip client.", cause);
                 ctx.close();
             }
         });
 
         // Start the client.
-        ChannelFuture future = b.connect(getIp(), getCommandPort()).awaitUninterruptibly();
+        ChannelFuture future = b.connect(getIp(), getGossipPort()).awaitUninterruptibly();
 
         if(future.isCancelled()) {
             LOG.warn("Connection cancelled by user");
@@ -135,7 +137,7 @@ public class RemoteMember extends AbstractMember {
 
     private void retry() {
         if(retryCount.getAndIncrement() < maxRetry) {
-            Executors.newSingleThreadScheduledExecutor().schedule(new Runnable() {
+            retryExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
                     initializeClients();

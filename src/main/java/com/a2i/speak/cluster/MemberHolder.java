@@ -26,11 +26,6 @@ public enum MemberHolder {
     private final Map<String, Member> activeMembers = new ConcurrentHashMap<>();
     private final Map<String, Member> deadMembers = new ConcurrentHashMap<>();
 
-//    public String getKey(String ip, String commandPort, String dataPort) {
-//        return new StringBuilder().append(ip).append(":")
-//                .append(commandPort).append(":").append(dataPort).toString();
-//    }
-
     public Member getMember(String key) {
         Member m;
         synchronized(members) {

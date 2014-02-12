@@ -15,7 +15,7 @@ public class MemberKey {
         return new StringBuilder()
                 .append(member.getIp())
                 .append(":")
-                .append(member.getCommandPort())
+                .append(member.getGossipPort())
                 .append(":")
                 .append(member.getDataPort()).toString();
     }
@@ -24,7 +24,7 @@ public class MemberKey {
         return new StringBuilder()
                 .append(message.getIp())
                 .append(":")
-                .append(message.getCommandPort())
+                .append(message.getGossipPort())
                 .append(":")
                 .append(message.getDataPort()).toString();
     }
@@ -33,7 +33,7 @@ public class MemberKey {
         String[] values = key.split(":");
         RemoteMember mem = new RemoteMember();
         mem.setIp(values[0]);
-        mem.setCommandPort(Integer.parseInt(values[1]));
+        mem.setGossipPort(Integer.parseInt(values[1]));
         mem.setDataPort(Integer.parseInt(values[2]));
         return mem;
     }

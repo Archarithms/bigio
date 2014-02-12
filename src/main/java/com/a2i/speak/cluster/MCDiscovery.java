@@ -131,7 +131,7 @@ public class MCDiscovery extends Thread {
                 GossipMessage message = new GossipMessage(
                         me.getSequence().getAndIncrement(),
                         me.getIp(),
-                        me.getCommandPort(),
+                        me.getGossipPort(),
                         me.getDataPort());
                 message.getTags().putAll(me.getTags());
                 message.getMembers().add(MemberKey.getKey(me));
@@ -187,7 +187,7 @@ public class MCDiscovery extends Thread {
             Member member = MemberHolder.INSTANCE.getMember(key);
 
             if(member == null) {
-                member = new RemoteMember(message.getIp(), message.getCommandPort(), message.getDataPort());
+                member = new RemoteMember(message.getIp(), message.getGossipPort(), message.getDataPort());
                 ((AbstractMember)member).initialize();
             }
 

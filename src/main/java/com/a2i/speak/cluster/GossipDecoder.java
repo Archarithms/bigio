@@ -52,7 +52,7 @@ public class GossipDecoder {
                 .append(unpacker.readInt());
         
         message.setIp(ipBuilder.toString());
-        message.setCommandPort(unpacker.readInt());
+        message.setGossipPort(unpacker.readInt());
         message.setDataPort(unpacker.readInt());
         message.getTags().putAll(unpacker.read(mapTemplate));
         
@@ -99,7 +99,7 @@ public class GossipDecoder {
         
         message.setIp(ipBuilder.toString());
         
-        message.setCommandPort(unpacker.readInt());
+        message.setGossipPort(unpacker.readInt());
         message.setDataPort(unpacker.readInt());
         message.getTags().putAll(unpacker.read(mapTemplate));
         
