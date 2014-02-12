@@ -185,12 +185,23 @@ public class MCDiscovery extends Thread {
         protected void channelRead0(ChannelHandlerContext chc, DatagramPacket packet) throws Exception {
             ByteBuf buff = packet.content();
             CommandMessage message = new CommandMessage().decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
-            Member member = new Member(message.getIp(), message.getCommandPort(), message.getDataPort());
-            member.setStatus(Member.Status.Unknown);
-            for(String key : message.getTags().keySet()) {
-                member.getTags().put(key, message.getTags().get(key));
+
+            String key = MemberHolder.INSTANCE.getKey(
+                    message.getIp(), 
+                    Integer.toString(message.getCommandPort()), 
+                    Integer.toString(message.getDataPort()));
+
+            Member member = MemberHolder.INSTANCE.getMember(key);
+
+            if(member == null) {
+                member = new Member(message.getIp(), message.getCommandPort(), message.getDataPort());
             }
-            MemberHolder.INSTANCE.updateMember(member);
+
+            for(String k : message.getTags().keySet()) {
+                member.getTags().put(k, message.getTags().get(k));
+            }
+
+            MemberHolder.INSTANCE.updateMemberStatus(member);
         }
 
         @Override

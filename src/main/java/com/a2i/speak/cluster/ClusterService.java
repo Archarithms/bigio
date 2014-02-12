@@ -88,19 +88,24 @@ public class ClusterService {
 
         me = new MeMember(myAddress, commandPortInt, dataPortInt);
         me.setStatus(Member.Status.Alive);
-        MemberHolder.INSTANCE.updateMember(me);
+        MemberHolder.INSTANCE.updateMemberStatus(me);
 
         ((MeMember)me).addCommandConsumer(CommandMessageType.MemberList, new CommandListener() {
             @Override
             public void accept(CommandMessage message) {
-                LOG.info("Got a member list");
                 for(String ip : message.getTags().keySet()) {
-                    Member m = new Member(
+                    String cp = message.getTags().get(ip).split(":")[0];
+                    String dp = message.getTags().get(ip).split(":")[1];
+                    String key = MemberHolder.INSTANCE.getKey(ip, cp, dp);
+                    Member m = MemberHolder.INSTANCE.getMember(key);
+                    if(m == null) {
+                        m = new Member(
                             ip, 
-                            Integer.parseInt(message.getTags().get(ip).split(":")[0]), 
-                            Integer.parseInt(message.getTags().get(ip).split(":")[1]));
+                            Integer.parseInt(cp), 
+                            Integer.parseInt(dp));
+                    }
 
-                    MemberHolder.INSTANCE.updateMember(m);
+                    MemberHolder.INSTANCE.updateMemberStatus(m);
                 }
             }
         });

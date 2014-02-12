@@ -69,7 +69,7 @@ public class Gossiper {
             memberList.setCommandPort(me.getCommandPort());
             memberList.setDataPort(me.getDataPort());
 
-            for(Member m : MemberHolder.INSTANCE.getAllMembers()) {
+            for(Member m : MemberHolder.INSTANCE.getActiveMembers()) {
                 memberList.getTags().put(m.getIp(), Integer.toString(m.getCommandPort()) + ":" + m.getDataPort());
             }
 
@@ -84,11 +84,11 @@ public class Gossiper {
     private Member getRandomMember() {
         Member chosenMember = null;
 
-        if (MemberHolder.INSTANCE.getAllMembers().size() > 1) {
+        if (MemberHolder.INSTANCE.getActiveMembers().size() > 1) {
             int tries = 10;
             do {
-                int randomNeighborIndex = random.nextInt(MemberHolder.INSTANCE.getAllMembers().size());
-                Iterator<Member> iter = MemberHolder.INSTANCE.getAllMembers().iterator();
+                int randomNeighborIndex = random.nextInt(MemberHolder.INSTANCE.getActiveMembers().size());
+                Iterator<Member> iter = MemberHolder.INSTANCE.getActiveMembers().iterator();
 
                 int i = -1;
                 do {

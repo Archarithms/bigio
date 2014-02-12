@@ -16,8 +16,12 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.ReplayingDecoder;
+import io.netty.handler.codec.bytes.ByteArrayDecoder;
+import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -34,12 +38,17 @@ import reactor.function.Consumer;
 public class MeMember extends Member {
 
     private static final Logger LOG = LoggerFactory.getLogger(MeMember.class);
+                
+    private EventLoopGroup bossGroup = null;
+    private EventLoopGroup workerGroup = null;
 
     private final Environment env = new Environment();
     private Reactor reactor;
 
     public MeMember() {
         super();
+        initializeReactor();
+        initializeServers();
     }
 
     public MeMember(String ip, int commandPort, int dataPort) {
@@ -60,11 +69,9 @@ public class MeMember extends Member {
     @Override
     public void close() {
         super.close();
-    }
 
-    @Override
-    public void initializeClients() {
-        
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
     }
 
     private void initializeReactor() {
@@ -80,8 +87,8 @@ public class MeMember extends Member {
         new Thread() {
             @Override
             public void run() {
-                EventLoopGroup bossGroup = new NioEventLoopGroup();
-                EventLoopGroup workerGroup = new NioEventLoopGroup();
+                bossGroup = new NioEventLoopGroup();
+                workerGroup = new NioEventLoopGroup();
                 try {
                     ServerBootstrap b = new ServerBootstrap();
                     b.group(bossGroup, workerGroup)
@@ -89,6 +96,10 @@ public class MeMember extends Member {
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 public void initChannel(SocketChannel ch) throws Exception {
+//                                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                                    ch.pipeline().addLast(new CommandMessageDecoder());
+                                    ch.pipeline().addLast("encoder", new ByteArrayEncoder());
+                                    ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                                     ch.pipeline().addLast(new CommandMessageHandler());
                                 }
 
@@ -107,6 +118,8 @@ public class MeMember extends Member {
                     // In this example, this does not happen, but you can do that to gracefully
                     // shut down your server.
                     f.channel().closeFuture().sync();
+
+                    LOG.debug("Shutting down server");
                 } catch (InterruptedException ex) {
                     LOG.error("Command server interrupted.", ex);
                 } finally {
@@ -117,25 +130,35 @@ public class MeMember extends Member {
         }.start();
     }
 
+    public class CommandMessageDecoder extends ReplayingDecoder {
+
+        @Override
+        protected void decode(ChannelHandlerContext chc, ByteBuf bb, List<Object> list) throws Exception {
+            int length = bb.readShort();
+//            list.add(length);
+            list.add(bb.readBytes(length));
+        }
+    }
+
     public class CommandMessageHandler extends ChannelInboundHandlerAdapter {
 
         @Override
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            LOG.debug("Inbound server connection");
-        }
-
-        @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            ByteBuf m = (ByteBuf) msg;
-            try {
-                LOG.debug("Decoding message");
-                CommandMessage message = new CommandMessage().decode(m.nioBuffer());
-                reactor.notify(CommandMessageType.fromValue(message.getMessage()), Event.wrap(message));
-                
-            } catch (IOException ex) {
-                LOG.error("Error decoding message.", ex);
-            } finally {
-                ReferenceCountUtil.release(m);
+            if(msg instanceof byte[]) {
+                byte[] bytes = (byte[]) msg;
+                try {
+                    CommandMessage message = new CommandMessage().decode(bytes);
+                    reactor.notify(CommandMessageType.fromValue(message.getMessage()), Event.wrap(message));
+                    
+                } catch (IOException ex) {
+                    LOG.error("Error decoding message.", ex);
+                } finally {
+                    ReferenceCountUtil.release(msg);
+                }
+            } else if (msg instanceof Integer) {
+                // length field
+            } else {
+                LOG.debug(msg.getClass().getName());
             }
         }
 

@@ -39,46 +39,46 @@ public class Speaker {
     public Speaker() {
         LOG.info("The speaker has arrived");
 
-        SomeMessage message = new SomeMessage();
-        message.name = "Speaker";
-        message.version = 1.0;
-        
-        try {
-            byte[] bytes = msgPack.write(message);
-
-            Envelope envelope = new Envelope();
-            envelope.type = SomeMessage.class.getName();
-            envelope.payload = bytes;
-
-            byte[] envBytes = msgPack.write(envelope);
-
-            LOG.info("Message serialized into " + envBytes.length + " bytes.");
-
-            Envelope s = msgPack.read(envBytes, Envelope.class);
-            LOG.info("Received message of type " + s.type);
-
-            SomeMessage m = (SomeMessage)msgPack.read(s.payload, Class.forName(s.type));
-
-            LOG.info(m.name + " v. " + m.version);
-        } catch (IOException ex) {
-            LOG.error("Exception serializing message.", ex);
-        } catch (ClassNotFoundException ex) {
-            LOG.error("Could not find message class.", ex);
-        }
-
-        Environment env = new Environment();
-        Reactor reactor = Reactors.reactor()
-                .env(env)
-                .dispatcher(Environment.EVENT_LOOP)
-                .get();
-
-        reactor.on(Selectors.object("parse"), new Consumer<Event<String>>() {
-            @Override
-            public void accept(Event<String> t) {
-                LOG.info("Received event with data: " + t.getData());
-            }
-        });
-
-        reactor.notify("parse", Event.wrap("data"));
+//        SomeMessage message = new SomeMessage();
+//        message.name = "Speaker";
+//        message.version = 1.0;
+//        
+//        try {
+//            byte[] bytes = msgPack.write(message);
+//
+//            Envelope envelope = new Envelope();
+//            envelope.type = SomeMessage.class.getName();
+//            envelope.payload = bytes;
+//
+//            byte[] envBytes = msgPack.write(envelope);
+//
+//            LOG.info("Message serialized into " + envBytes.length + " bytes.");
+//
+//            Envelope s = msgPack.read(envBytes, Envelope.class);
+//            LOG.info("Received message of type " + s.type);
+//
+//            SomeMessage m = (SomeMessage)msgPack.read(s.payload, Class.forName(s.type));
+//
+//            LOG.info(m.name + " v. " + m.version);
+//        } catch (IOException ex) {
+//            LOG.error("Exception serializing message.", ex);
+//        } catch (ClassNotFoundException ex) {
+//            LOG.error("Could not find message class.", ex);
+//        }
+//
+//        Environment env = new Environment();
+//        Reactor reactor = Reactors.reactor()
+//                .env(env)
+//                .dispatcher(Environment.EVENT_LOOP)
+//                .get();
+//
+//        reactor.on(Selectors.object("parse"), new Consumer<Event<String>>() {
+//            @Override
+//            public void accept(Event<String> t) {
+//                LOG.info("Received event with data: " + t.getData());
+//            }
+//        });
+//
+//        reactor.notify("parse", Event.wrap("data"));
     }
 }

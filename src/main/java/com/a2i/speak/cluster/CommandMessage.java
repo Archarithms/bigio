@@ -15,12 +15,16 @@ import org.msgpack.packer.Packer;
 import org.msgpack.template.Template;
 import org.msgpack.template.Templates;
 import org.msgpack.unpacker.Unpacker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author atrimble
  */
 public class CommandMessage {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CommandMessage.class);
 
     private final MessagePack msgPack = new MessagePack();
     private final Template<Map<String, String>> tagTemplate = Templates.tMap(Templates.TString, Templates.TString);
@@ -51,6 +55,9 @@ public class CommandMessage {
 
     public CommandMessage decode(ByteBuffer bytes) throws IOException {
 
+        bytes.get();
+        bytes.get();
+
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
 
         setMessage(unpacker.readString());
@@ -65,6 +72,7 @@ public class CommandMessage {
 
     public CommandMessage decode(byte[] bytes) throws IOException {
 
+        //Unpacker unpacker = msgPack.createBufferUnpacker(bytes, 2, bytes.length - 2);
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
 
         setMessage(unpacker.readString());
@@ -78,15 +86,20 @@ public class CommandMessage {
     }
 
     public byte[] encode() throws IOException {
+        ByteArrayOutputStream msgBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        
-        Packer packer = msgPack.createPacker(out);
+
+        Packer packer = msgPack.createPacker(msgBuffer);
         packer.write(getMessage());
         packer.write(getSequence());
         packer.write(getIp());
         packer.write(getCommandPort());
         packer.write(getDataPort());
         packer.write(getTags());
+
+        out.write((short)msgBuffer.size() >>> 8);
+        out.write((short)msgBuffer.size());
+        msgBuffer.writeTo(out);
 
         return out.toByteArray();
     }

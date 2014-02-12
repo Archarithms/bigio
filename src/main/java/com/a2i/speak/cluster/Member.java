@@ -6,10 +6,8 @@
 package com.a2i.speak.cluster;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
@@ -17,16 +15,18 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.bytes.ByteArrayDecoder;
+import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.event.Event;
 
 /**
  *
@@ -52,84 +52,57 @@ public class Member {
         }
     };
 
+    private static final int MAX_RETRY_COUNT = 3;
+    private static final long RETRY_INTERVAL = 2000l;
+    private static final int CONNECTION_TIMEOUT = 5000;
     private static final Logger LOG = LoggerFactory.getLogger(Member.class);
+    
+    private final AtomicInteger retryCount = new AtomicInteger(0);
 
-    private Status status;
+    private Channel channel = null;
+    private EventLoopGroup workerGroup = null;
 
     private final Map<String, String> tags = new HashMap<>();
-
     private final AtomicInteger sequence = new AtomicInteger(0);
-
+    private Status status = Status.Unknown;
     private String ip;
     private int dataPort;
     private int commandPort;
 
     public Member() {
-
+        init();
     }
 
     public Member(String ip, int commandPort, int dataPort) {
         this.ip = ip;
         this.commandPort = commandPort;
         this.dataPort = dataPort;
+
+        init();
+    }
+
+    private void init() {
+        Executors.newSingleThreadExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                initializeClients();
+            }
+        });
     }
 
     public void sendCommand(final CommandMessage message) throws IOException {
-        final byte[] bytes = message.encode();
-
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
-            
-        try {
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup);
-            b.channel(NioSocketChannel.class);
-            b.option(ChannelOption.SO_KEEPALIVE, true);
-            b.handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                public void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-                        @Override
-                        public void channelActive(final ChannelHandlerContext ctx) throws Exception {
-
-                            ByteBuf buff = ctx.alloc().buffer(bytes.length);
-                            buff.writeBytes(bytes);
-
-                            final ChannelFuture f = ctx.writeAndFlush(buff);
-                            f.addListener(new ChannelFutureListener() {
-                                @Override
-                                public void operationComplete(ChannelFuture future) throws Exception {
-                                    assert f == future;
-                                    LOG.debug("Message sent");
-                                    ctx.close();
-                                }
-                            });
-                        }
-                    });
-                }
-
-                @Override
-                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                    LOG.error("Cannot initialize command client.", cause);
-                }
-            });
-
-            // Start the client.
-            ChannelFuture f = b.connect(getIp(), getCommandPort()).sync();
-
-            // Wait until the connection is closed.
-            f.channel().closeFuture().sync();
-
-            LOG.debug("Finished sending message");
-        } catch (InterruptedException ex) {
-            LOG.error("Interrupted in command client.", ex);
-        } finally {
-            workerGroup.shutdownGracefully();
+        byte[] bytes = message.encode();
+        if(channel != null) {
+            channel.writeAndFlush(bytes);
         }
     }
 
     public void close() {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Closing TCP connections to " + ip + ":" + commandPort + ":" + dataPort);
+        }
+        if(workerGroup != null) {
+            workerGroup.shutdownGracefully();
         }
     }
 
@@ -253,70 +226,77 @@ public class Member {
         this.commandPort = commandPort;
     }
 
-    public void initializeClients() {
+    private void initializeClients() {
         LOG.debug("Initializing command client");
 
-//        new Thread() {
-//            @Override
-//            public void run() {
-//                EventLoopGroup workerGroup = new NioEventLoopGroup();
-//
-//                try {
-//                    Bootstrap b = new Bootstrap();
-//                    b.group(workerGroup);
-//                    b.channel(NioSocketChannel.class);
-//                    b.option(ChannelOption.SO_KEEPALIVE, true);
-//                    b.handler(new ChannelInitializer<SocketChannel>() {
-//                        @Override
-//                        public void initChannel(SocketChannel ch) throws Exception {
-//                            ch.pipeline().addLast(new CommandMessageHandler());
-//                            channel = ch;
-//                        }
-//
-//                        @Override
-//                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//                            LOG.error("Cannot initialize command client.", cause);
-//                        }
-//                    });
-//
-//                    // Start the client.
-//                    ChannelFuture f = b.connect(getIp(), getCommandPort()).sync();
-//
-//                    // Wait until the connection is closed.
-//                    f.channel().closeFuture().sync();
-//                } catch (InterruptedException ex) {
-//                    LOG.error("Interrupted in command client.", ex);
-//                } finally {
-//                    workerGroup.shutdownGracefully();
-//                }
-//            }
-//        }.start();
+        workerGroup = new NioEventLoopGroup();
+            
+        Bootstrap b = new Bootstrap();
+        b.group(workerGroup);
+        b.channel(NioSocketChannel.class);
+        b.option(ChannelOption.SO_KEEPALIVE, true);
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECTION_TIMEOUT);
+        b.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline().addLast("encoder", new ByteArrayEncoder());
+                ch.pipeline().addLast("decoder", new ByteArrayDecoder());
+                ch.pipeline().addLast(new ExceptionHandler());
+            }
+
+            @Override
+            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                LOG.error("Cannot initialize command client.", cause);
+                ctx.close();
+            }
+        });
+
+        // Start the client.
+        ChannelFuture future = b.connect(getIp(), getCommandPort()).awaitUninterruptibly();
+
+        if(future.isCancelled()) {
+            LOG.warn("Connection cancelled by user");
+            channel = null;
+        } else if(!future.isSuccess()) {
+            channel = null;
+            retry();
+        } else {
+            channel = future.channel();
+            setStatus(Status.Alive);
+            updateMember();
+        }
     }
 
-    private class CommandMessageHandler extends ChannelInboundHandlerAdapter {
-
-        private ChannelHandlerContext ctx;
-
-        public void writeMessage(byte[] bytes) {
-            LOG.debug("Writing message");
-            ctx.writeAndFlush(bytes);
+    private void retry() {
+        if(retryCount.getAndIncrement() < MAX_RETRY_COUNT) {
+            Executors.newSingleThreadScheduledExecutor().schedule(new Runnable() {
+                @Override
+                public void run() {
+                    initializeClients();
+                }
+            }, RETRY_INTERVAL, TimeUnit.MILLISECONDS);
+        } else {
+            LOG.warn("Could not connect to member after max retries.");
         }
+    }
+
+    private void updateMember() {
+        MemberHolder.INSTANCE.updateMemberStatus(this);
+    }
+
+    private class ExceptionHandler extends ChannelInboundHandlerAdapter {
 
         @Override
-        public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            LOG.info("Command channel active");
-            this.ctx = ctx;
-        }
-
-        @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            ((ByteBuf) msg).release();
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            LOG.debug("Member left");
+            setStatus(Status.Left);
+            updateMember();
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.error("Caught an exception", cause);
-            ctx.close();
+            LOG.warn("Member failed");
+            retry();
         }
     }
 }
