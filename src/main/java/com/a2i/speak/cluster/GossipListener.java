@@ -10,6 +10,6 @@ package com.a2i.speak.cluster;
  *
  * @author atrimble
  */
-public interface CommandListener {
-    public void accept(CommandMessage message);
+public interface GossipListener {
+    public void accept(GossipMessage message);
 }

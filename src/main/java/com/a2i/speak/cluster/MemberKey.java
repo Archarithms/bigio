@@ -20,7 +20,7 @@ public class MemberKey {
                 .append(member.getDataPort()).toString();
     }
 
-    public static String getKey(CommandMessage message) {
+    public static String getKey(GossipMessage message) {
         return new StringBuilder()
                 .append(message.getIp())
                 .append(":")

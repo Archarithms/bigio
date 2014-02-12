@@ -19,7 +19,7 @@ import org.msgpack.unpacker.Unpacker;
  *
  * @author atrimble
  */
-public class CommandDecoder {
+public class GossipDecoder {
 
     private static final MessagePack msgPack = new MessagePack();
     private static final Template<Map<String, String>> mapTemplate = 
@@ -27,7 +27,7 @@ public class CommandDecoder {
     private static final Template<List<List<Integer>>> listTemplate = 
             Templates.tList(Templates.tList(Templates.TInteger));
     
-    public static CommandMessage decode(ByteBuffer bytes) throws IOException {
+    public static GossipMessage decode(ByteBuffer bytes) throws IOException {
 
         // Discard the message length.
         // This method is only used by the Multicast discovery mechanism.
@@ -37,7 +37,7 @@ public class CommandDecoder {
 
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
 
-        CommandMessage message = new CommandMessage();
+        GossipMessage message = new GossipMessage();
 
         message.setSequence(unpacker.readInt());
         
@@ -79,11 +79,11 @@ public class CommandDecoder {
         return message;
     }
 
-    public static CommandMessage decode(byte[] bytes) throws IOException {
+    public static GossipMessage decode(byte[] bytes) throws IOException {
 
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
 
-        CommandMessage message = new CommandMessage();
+        GossipMessage message = new GossipMessage();
 
         message.setSequence(unpacker.readInt());
 

@@ -74,8 +74,8 @@ public class RemoteMember extends AbstractMember {
         });
     }
 
-    public void sendCommand(final CommandMessage message) throws IOException {
-        byte[] bytes = CommandEncoder.encode(message);
+    public void sendCommand(final GossipMessage message) throws IOException {
+        byte[] bytes = GossipEncoder.encode(message);
         if(channel != null) {
             channel.writeAndFlush(bytes);
         }

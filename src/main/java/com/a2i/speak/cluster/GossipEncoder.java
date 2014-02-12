@@ -17,11 +17,11 @@ import org.msgpack.packer.Packer;
  *
  * @author atrimble
  */
-public class CommandEncoder {
+public class GossipEncoder {
 
     private static final MessagePack msgPack = new MessagePack();
     
-    public static byte[] encode(CommandMessage message) throws IOException {
+    public static byte[] encode(GossipMessage message) throws IOException {
         ByteArrayOutputStream msgBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 

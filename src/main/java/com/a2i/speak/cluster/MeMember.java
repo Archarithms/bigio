@@ -52,10 +52,10 @@ public class MeMember extends AbstractMember {
         super(ip, commandPort, dataPort);
     }
 
-    public void addCommandConsumer(final CommandListener consumer) {
-        reactor.on(new Consumer<Event<CommandMessage>>() {
+    public void addGossipConsumer(final GossipListener consumer) {
+        reactor.on(new Consumer<Event<GossipMessage>>() {
             @Override
-            public void accept(Event<CommandMessage> m) {
+            public void accept(Event<GossipMessage> m) {
                 consumer.accept(m.getData());
             }
         });
@@ -146,7 +146,7 @@ public class MeMember extends AbstractMember {
             if(msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
-                    CommandMessage message = CommandDecoder.decode(bytes);
+                    GossipMessage message = GossipDecoder.decode(bytes);
                     reactor.notify(Event.wrap(message));
                     
                 } catch (IOException ex) {

@@ -58,7 +58,7 @@ public class Gossiper {
         Member member = getRandomMember();
 
         if (member != null) {
-            CommandMessage memberList = new CommandMessage();
+            GossipMessage memberList = new GossipMessage();
             memberList.setSequence(me.getSequence().getAndIncrement());
             memberList.setIp(me.getIp());
             memberList.setCommandPort(me.getCommandPort());

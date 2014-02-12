@@ -89,9 +89,9 @@ public class ClusterService {
         me.initialize();
         MemberHolder.INSTANCE.updateMemberStatus(me);
 
-        me.addCommandConsumer(new CommandListener() {
+        me.addGossipConsumer(new GossipListener() {
             @Override
-            public void accept(CommandMessage message) {
+            public void accept(GossipMessage message) {
                 for(String key : message.getMembers()) {
                     Member m = MemberHolder.INSTANCE.getMember(key);
                     if(m == null) {

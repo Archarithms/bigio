@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author atrimble
  */
-public class CommandMessage {
+public class GossipMessage {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CommandMessage.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GossipMessage.class);
 
     private int sequence;
     private String ip;
@@ -28,11 +28,11 @@ public class CommandMessage {
     private final List<String> members = new ArrayList<>();
     private final Map<String, String> listeners = new HashMap<>();
 
-    public CommandMessage() {
+    public GossipMessage() {
         
     }
 
-    public CommandMessage(int sequence, String ip, int commandPort, int dataPort) {
+    public GossipMessage(int sequence, String ip, int commandPort, int dataPort) {
         this.sequence = sequence;
         this.ip = ip;
         this.commandPort = commandPort;

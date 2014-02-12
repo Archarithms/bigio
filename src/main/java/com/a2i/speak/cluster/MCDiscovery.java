@@ -128,7 +128,7 @@ public class MCDiscovery extends Thread {
 
             LOG.info("Announcing");
             try {
-                CommandMessage message = new CommandMessage(
+                GossipMessage message = new GossipMessage(
                         me.getSequence().getAndIncrement(),
                         me.getIp(),
                         me.getCommandPort(),
@@ -150,9 +150,9 @@ public class MCDiscovery extends Thread {
         LOG.info("Connection to Clustering agent closed.");
     }
 
-    public void sendMessage(CommandMessage message) throws IOException {
+    public void sendMessage(GossipMessage message) throws IOException {
 
-        byte[] bytes = CommandEncoder.encode(message);
+        byte[] bytes = GossipEncoder.encode(message);
         ByteBuf buff = Unpooled.buffer(bytes.length);
         buff.writeBytes(bytes);
         
@@ -180,7 +180,7 @@ public class MCDiscovery extends Thread {
         @Override
         protected void channelRead0(ChannelHandlerContext chc, DatagramPacket packet) throws Exception {
             ByteBuf buff = packet.content();
-            CommandMessage message = CommandDecoder.decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
+            GossipMessage message = GossipDecoder.decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
 
             String key = MemberKey.getKey(message);
 
