@@ -4,14 +4,9 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.cluster.gossip;
+package com.a2i.speak.cluster;
 
-import com.a2i.speak.cluster.CommandMessageType;
-import com.a2i.speak.cluster.CommandMessage;
 import com.a2i.speak.Parameters;
-import com.a2i.speak.cluster.Member;
-import com.a2i.speak.cluster.MemberHolder;
-import com.a2i.speak.cluster.NetworkUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.buffer.ByteBuf;
@@ -194,7 +189,8 @@ public class MCDiscovery extends Thread {
             Member member = MemberHolder.INSTANCE.getMember(key);
 
             if(member == null) {
-                member = new Member(message.getIp(), message.getCommandPort(), message.getDataPort());
+                member = new RemoteMember(message.getIp(), message.getCommandPort(), message.getDataPort());
+                ((AbstractMember)member).initialize();
             }
 
             for(String k : message.getTags().keySet()) {

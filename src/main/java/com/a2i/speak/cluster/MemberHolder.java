@@ -57,18 +57,18 @@ public enum MemberHolder {
         synchronized(members) {
             if(members.containsKey(id)) {
                 if(activeMembers.containsKey(id) 
-                        && (member.getStatus() == Member.Status.Failed 
-                        || member.getStatus() == Member.Status.Left 
-                        || member.getStatus() == Member.Status.Unknown)) {
+                        && (member.getStatus() == MemberStatus.Failed 
+                        || member.getStatus() == MemberStatus.Left 
+                        || member.getStatus() == MemberStatus.Unknown)) {
                     activeMembers.remove(id);
                     deadMembers.put(id, member);
-                } else if(deadMembers.containsKey(id) && member.getStatus() == Member.Status.Alive) {
+                } else if(deadMembers.containsKey(id) && member.getStatus() == MemberStatus.Alive) {
                     deadMembers.remove(id);
                     activeMembers.put(id, member);
                 }
             } else {
                 members.put(id, member);
-                if(member.getStatus() == Member.Status.Alive) {
+                if(MemberStatus.Alive == member.getStatus()) {
                     activeMembers.put(id, member);
                 } else {
                     deadMembers.put(id, member);

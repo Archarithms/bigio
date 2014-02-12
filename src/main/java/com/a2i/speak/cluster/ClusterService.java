@@ -7,8 +7,6 @@
 package com.a2i.speak.cluster;
 
 import com.a2i.speak.Parameters;
-import com.a2i.speak.cluster.gossip.Gossiper;
-import com.a2i.speak.cluster.gossip.MCDiscovery;
 import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +26,7 @@ public class ClusterService {
     @Autowired
     private MCDiscovery multicast;
 
-    private Member me;
+    private AbstractMember me;
 
     private Gossiper gossiper;
 
@@ -87,7 +85,8 @@ public class ClusterService {
         }
 
         me = new MeMember(myAddress, commandPortInt, dataPortInt);
-        me.setStatus(Member.Status.Alive);
+        me.setStatus(MemberStatus.Alive);
+        me.initialize();
         MemberHolder.INSTANCE.updateMemberStatus(me);
 
         ((MeMember)me).addCommandConsumer(CommandMessageType.MemberList, new CommandListener() {
@@ -99,10 +98,11 @@ public class ClusterService {
                     String key = MemberHolder.INSTANCE.getKey(ip, cp, dp);
                     Member m = MemberHolder.INSTANCE.getMember(key);
                     if(m == null) {
-                        m = new Member(
+                        m = new RemoteMember(
                             ip, 
                             Integer.parseInt(cp), 
                             Integer.parseInt(dp));
+                        ((AbstractMember)m).initialize();
                     }
 
                     MemberHolder.INSTANCE.updateMemberStatus(m);
@@ -138,8 +138,9 @@ public class ClusterService {
 
     public void shutdown() {
         multicast.shutdown();
+        me.shutdown();
         for(Member member : MemberHolder.INSTANCE.getAllMembers()) {
-            member.close();
+            ((AbstractMember)member).shutdown();
         }
     }
 }

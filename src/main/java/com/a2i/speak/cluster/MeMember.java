@@ -35,7 +35,7 @@ import reactor.function.Consumer;
  *
  * @author atrimble
  */
-public class MeMember extends Member {
+public class MeMember extends AbstractMember {
 
     private static final Logger LOG = LoggerFactory.getLogger(MeMember.class);
                 
@@ -47,14 +47,10 @@ public class MeMember extends Member {
 
     public MeMember() {
         super();
-        initializeReactor();
-        initializeServers();
     }
 
     public MeMember(String ip, int commandPort, int dataPort) {
         super(ip, commandPort, dataPort);
-        initializeReactor();
-        initializeServers();
     }
 
     public void addCommandConsumer(CommandMessageType type, final CommandListener consumer) {
@@ -67,9 +63,13 @@ public class MeMember extends Member {
     }
 
     @Override
-    public void close() {
-        super.close();
+    protected void initialize() {
+        initializeReactor();
+        initializeServers();
+    }
 
+    @Override
+    public void shutdown() {
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
     }
@@ -130,7 +130,7 @@ public class MeMember extends Member {
         }.start();
     }
 
-    public class CommandMessageDecoder extends ReplayingDecoder {
+    private class CommandMessageDecoder extends ReplayingDecoder {
 
         @Override
         protected void decode(ChannelHandlerContext chc, ByteBuf bb, List<Object> list) throws Exception {
@@ -140,7 +140,7 @@ public class MeMember extends Member {
         }
     }
 
-    public class CommandMessageHandler extends ChannelInboundHandlerAdapter {
+    private class CommandMessageHandler extends ChannelInboundHandlerAdapter {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {

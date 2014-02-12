@@ -3,13 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.a2i.speak.cluster.gossip;
+package com.a2i.speak.cluster;
 
 import com.a2i.speak.Parameters;
-import com.a2i.speak.cluster.CommandMessage;
-import com.a2i.speak.cluster.CommandMessageType;
-import com.a2i.speak.cluster.Member;
-import com.a2i.speak.cluster.MemberHolder;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Random;
@@ -74,7 +70,7 @@ public class Gossiper {
             }
 
             try {
-                member.sendCommand(memberList);
+                ((RemoteMember)member).sendCommand(memberList);
             } catch(IOException ex) {
                 LOG.error("Exception sending member list.", ex);
             }
