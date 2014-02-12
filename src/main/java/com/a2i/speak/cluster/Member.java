@@ -29,9 +29,10 @@ public interface Member {
 
     public int getDataPort();
 
-    public void setPort(int dataPort);
+    public void setDataPort(int dataPort);
 
     public int getCommandPort();
 
     public void setCommandPort(int commandPort);
+
 }

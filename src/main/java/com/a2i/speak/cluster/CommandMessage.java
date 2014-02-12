@@ -5,16 +5,10 @@
  */
 package com.a2i.speak.cluster;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import org.msgpack.MessagePack;
-import org.msgpack.packer.Packer;
-import org.msgpack.template.Template;
-import org.msgpack.template.Templates;
-import org.msgpack.unpacker.Unpacker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,88 +20,29 @@ public class CommandMessage {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommandMessage.class);
 
-    private final MessagePack msgPack = new MessagePack();
-    private final Template<Map<String, String>> tagTemplate = Templates.tMap(Templates.TString, Templates.TString);
-
-    private String message;
     private int sequence;
     private String ip;
     private int commandPort;
     private int dataPort;
-    private Map<String, String> tags;
+    private final Map<String, String> tags = new HashMap<>();
+    private final List<String> members = new ArrayList<>();
+    private final Map<String, String> listeners = new HashMap<>();
 
     public CommandMessage() {
-        tags = new HashMap<>();
+        
     }
 
-    public CommandMessage(String message, int sequence, String ip, int commandPort, int dataPort) {
-        this(message, sequence, ip, commandPort, dataPort, new HashMap<String, String>());
-    }
-
-    public CommandMessage(String message, int sequence, String ip, int commandPort, int dataPort, Map<String, String> tags) {
-        this.message = message;
+    public CommandMessage(int sequence, String ip, int commandPort, int dataPort) {
         this.sequence = sequence;
         this.ip = ip;
         this.commandPort = commandPort;
         this.dataPort = dataPort;
-        this.tags = tags;
-    }
-
-    public CommandMessage decode(ByteBuffer bytes) throws IOException {
-
-        bytes.get();
-        bytes.get();
-
-        Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
-
-        setMessage(unpacker.readString());
-        setSequence(unpacker.readInt());
-        setIp(unpacker.readString());
-        setCommandPort(unpacker.readInt());
-        setDataPort(unpacker.readInt());
-        this.tags = unpacker.read(tagTemplate);
-
-        return this;
-    }
-
-    public CommandMessage decode(byte[] bytes) throws IOException {
-
-        //Unpacker unpacker = msgPack.createBufferUnpacker(bytes, 2, bytes.length - 2);
-        Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
-
-        setMessage(unpacker.readString());
-        setSequence(unpacker.readInt());
-        setIp(unpacker.readString());
-        setCommandPort(unpacker.readInt());
-        setDataPort(unpacker.readInt());
-        this.tags = unpacker.read(tagTemplate);
-
-        return this;
-    }
-
-    public byte[] encode() throws IOException {
-        ByteArrayOutputStream msgBuffer = new ByteArrayOutputStream();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        Packer packer = msgPack.createPacker(msgBuffer);
-        packer.write(getMessage());
-        packer.write(getSequence());
-        packer.write(getIp());
-        packer.write(getCommandPort());
-        packer.write(getDataPort());
-        packer.write(getTags());
-
-        out.write((short)msgBuffer.size() >>> 8);
-        out.write((short)msgBuffer.size());
-        msgBuffer.writeTo(out);
-
-        return out.toByteArray();
     }
 
     @Override
     public String toString() {
         StringBuilder buff = new StringBuilder();
-        buff.append("Command: ").append(getMessage()).append("\n")
+        buff.append("Command: ").append("\n")
                 .append("Sequence: ").append(getSequence()).append("\n")
                 .append("Address: ").append(getIp()).append("\n")
                 .append("CommandPort: ").append(getCommandPort()).append("\n")
@@ -117,20 +52,6 @@ public class CommandMessage {
             buff.append("    ").append(key).append(" -> ").append(getTags().get(key)).append("\n");
         }
         return buff.toString();
-    }
-
-    /**
-     * @return the message
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
-     * @param message the message to set
-     */
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     /**
@@ -194,5 +115,19 @@ public class CommandMessage {
      */
     public void setSequence(int sequence) {
         this.sequence = sequence;
+    }
+
+    /**
+     * @return the members
+     */
+    public List<String> getMembers() {
+        return members;
+    }
+
+    /**
+     * @return the listeners
+     */
+    public Map<String, String> getListeners() {
+        return listeners;
     }
 }

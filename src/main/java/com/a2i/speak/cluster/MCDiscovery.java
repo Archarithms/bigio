@@ -128,14 +128,15 @@ public class MCDiscovery extends Thread {
 
             LOG.info("Announcing");
             try {
-                sendMessage(new CommandMessage(
-                        CommandMessageType.Announce.getValue(),
+                CommandMessage message = new CommandMessage(
                         me.getSequence().getAndIncrement(),
                         me.getIp(),
                         me.getCommandPort(),
-                        me.getDataPort(),
-                        me.getTags()
-                ));
+                        me.getDataPort());
+                message.getTags().putAll(me.getTags());
+                message.getMembers().add(MemberKey.getKey(me));
+
+                sendMessage(message);
             } catch (IOException ex) {
                 LOG.error("Cannot serialize message.", ex);
             }
@@ -151,7 +152,7 @@ public class MCDiscovery extends Thread {
 
     public void sendMessage(CommandMessage message) throws IOException {
 
-        byte[] bytes = message.encode();
+        byte[] bytes = CommandEncoder.encode(message);
         ByteBuf buff = Unpooled.buffer(bytes.length);
         buff.writeBytes(bytes);
         
@@ -179,12 +180,9 @@ public class MCDiscovery extends Thread {
         @Override
         protected void channelRead0(ChannelHandlerContext chc, DatagramPacket packet) throws Exception {
             ByteBuf buff = packet.content();
-            CommandMessage message = new CommandMessage().decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
+            CommandMessage message = CommandDecoder.decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
 
-            String key = MemberHolder.INSTANCE.getKey(
-                    message.getIp(), 
-                    Integer.toString(message.getCommandPort()), 
-                    Integer.toString(message.getDataPort()));
+            String key = MemberKey.getKey(message);
 
             Member member = MemberHolder.INSTANCE.getMember(key);
 

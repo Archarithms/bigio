@@ -28,7 +28,6 @@ import reactor.core.Environment;
 import reactor.core.Reactor;
 import reactor.core.spec.Reactors;
 import reactor.event.Event;
-import reactor.event.selector.Selectors;
 import reactor.function.Consumer;
 
 /**
@@ -53,8 +52,8 @@ public class MeMember extends AbstractMember {
         super(ip, commandPort, dataPort);
     }
 
-    public void addCommandConsumer(CommandMessageType type, final CommandListener consumer) {
-        reactor.on(Selectors.object(type), new Consumer<Event<CommandMessage>>() {
+    public void addCommandConsumer(final CommandListener consumer) {
+        reactor.on(new Consumer<Event<CommandMessage>>() {
             @Override
             public void accept(Event<CommandMessage> m) {
                 consumer.accept(m.getData());
@@ -147,8 +146,8 @@ public class MeMember extends AbstractMember {
             if(msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
-                    CommandMessage message = new CommandMessage().decode(bytes);
-                    reactor.notify(CommandMessageType.fromValue(message.getMessage()), Event.wrap(message));
+                    CommandMessage message = CommandDecoder.decode(bytes);
+                    reactor.notify(Event.wrap(message));
                     
                 } catch (IOException ex) {
                     LOG.error("Error decoding message.", ex);

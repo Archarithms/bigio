@@ -59,14 +59,14 @@ public class Gossiper {
 
         if (member != null) {
             CommandMessage memberList = new CommandMessage();
-            memberList.setMessage(CommandMessageType.MemberList.getValue());
             memberList.setSequence(me.getSequence().getAndIncrement());
             memberList.setIp(me.getIp());
             memberList.setCommandPort(me.getCommandPort());
             memberList.setDataPort(me.getDataPort());
+            memberList.getTags().putAll(me.getTags());
 
             for(Member m : MemberHolder.INSTANCE.getActiveMembers()) {
-                memberList.getTags().put(m.getIp(), Integer.toString(m.getCommandPort()) + ":" + m.getDataPort());
+                memberList.getMembers().add(MemberKey.getKey(m));
             }
 
             try {

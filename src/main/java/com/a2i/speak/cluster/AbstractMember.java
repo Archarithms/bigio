@@ -147,7 +147,7 @@ public abstract class AbstractMember implements Member {
      * @param dataPort the data port to set
      */
     @Override
-    public void setPort(int dataPort) {
+    public void setDataPort(int dataPort) {
         this.dataPort = dataPort;
     }
 

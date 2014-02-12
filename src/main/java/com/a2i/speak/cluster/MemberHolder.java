@@ -26,10 +26,10 @@ public enum MemberHolder {
     private final Map<String, Member> activeMembers = new ConcurrentHashMap<>();
     private final Map<String, Member> deadMembers = new ConcurrentHashMap<>();
 
-    public String getKey(String ip, String commandPort, String dataPort) {
-        return new StringBuilder().append(ip).append(":")
-                .append(commandPort).append(":").append(dataPort).toString();
-    }
+//    public String getKey(String ip, String commandPort, String dataPort) {
+//        return new StringBuilder().append(ip).append(":")
+//                .append(commandPort).append(":").append(dataPort).toString();
+//    }
 
     public Member getMember(String key) {
         Member m;
@@ -52,32 +52,28 @@ public enum MemberHolder {
     }
 
     public void updateMemberStatus(Member member) {
-        String id = getId(member);
+        String key = MemberKey.getKey(member);
 
         synchronized(members) {
-            if(members.containsKey(id)) {
-                if(activeMembers.containsKey(id) 
+            if(members.containsKey(key)) {
+                if(activeMembers.containsKey(key) 
                         && (member.getStatus() == MemberStatus.Failed 
                         || member.getStatus() == MemberStatus.Left 
                         || member.getStatus() == MemberStatus.Unknown)) {
-                    activeMembers.remove(id);
-                    deadMembers.put(id, member);
-                } else if(deadMembers.containsKey(id) && member.getStatus() == MemberStatus.Alive) {
-                    deadMembers.remove(id);
-                    activeMembers.put(id, member);
+                    activeMembers.remove(key);
+                    deadMembers.put(key, member);
+                } else if(deadMembers.containsKey(key) && member.getStatus() == MemberStatus.Alive) {
+                    deadMembers.remove(key);
+                    activeMembers.put(key, member);
                 }
             } else {
-                members.put(id, member);
+                members.put(key, member);
                 if(MemberStatus.Alive == member.getStatus()) {
-                    activeMembers.put(id, member);
+                    activeMembers.put(key, member);
                 } else {
-                    deadMembers.put(id, member);
+                    deadMembers.put(key, member);
                 }
             }
         }
-    }
-
-    private String getId(Member member) {
-        return member.getIp() + ":" + member.getCommandPort() + ":" + member.getDataPort();
     }
 }

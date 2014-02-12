@@ -5,6 +5,7 @@
  */
 package com.a2i.speak.cluster;
 
+import com.a2i.speak.Parameters;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -31,10 +32,17 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoteMember extends AbstractMember {
 
-    private static final int MAX_RETRY_COUNT = 3;
-    private static final long RETRY_INTERVAL = 2000l;
-    private static final int CONNECTION_TIMEOUT = 5000;
+    private static final String MAX_RETRY_COUNT_PROPERTY = "com.a2i.remote.maxRetry";
+    private static final String RETRY_INTERVAL_PROPERTY = "com.a2i.remote.retryInterval";
+    private static final String CONNECTION_TIMEOUT_PROPERTY = "com.a2i.remote.connectionTimeout";
+    private static final String DEFAULT_MAX_RETRY_COUNT = "3";
+    private static final String DEFAULT_RETRY_INTERVAL = "2000";
+    private static final String DEFAULT_CONNECTION_TIMEOUT = "5000";
     private static final Logger LOG = LoggerFactory.getLogger(Member.class);
+
+    private int maxRetry;
+    private long retryInterval;
+    private int timeout;
     
     private final AtomicInteger retryCount = new AtomicInteger(0);
 
@@ -51,6 +59,13 @@ public class RemoteMember extends AbstractMember {
 
     @Override
     protected void initialize() {
+        maxRetry = Integer.parseInt(Parameters.INSTANCE.getProperty(
+                MAX_RETRY_COUNT_PROPERTY, DEFAULT_MAX_RETRY_COUNT));
+        retryInterval = Long.parseLong(Parameters.INSTANCE.getProperty(
+                RETRY_INTERVAL_PROPERTY, DEFAULT_RETRY_INTERVAL));
+        timeout = Integer.parseInt(Parameters.INSTANCE.getProperty(
+                CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT));
+
         Executors.newSingleThreadExecutor().submit(new Runnable() {
             @Override
             public void run() {
@@ -60,7 +75,7 @@ public class RemoteMember extends AbstractMember {
     }
 
     public void sendCommand(final CommandMessage message) throws IOException {
-        byte[] bytes = message.encode();
+        byte[] bytes = CommandEncoder.encode(message);
         if(channel != null) {
             channel.writeAndFlush(bytes);
         }
@@ -71,6 +86,7 @@ public class RemoteMember extends AbstractMember {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Closing TCP connections to " + getIp() + ":" + getCommandPort() + ":" + getDataPort());
         }
+
         if(workerGroup != null) {
             workerGroup.shutdownGracefully();
         }
@@ -85,7 +101,7 @@ public class RemoteMember extends AbstractMember {
         b.group(workerGroup);
         b.channel(NioSocketChannel.class);
         b.option(ChannelOption.SO_KEEPALIVE, true);
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECTION_TIMEOUT);
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout);
         b.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
@@ -118,13 +134,13 @@ public class RemoteMember extends AbstractMember {
     }
 
     private void retry() {
-        if(retryCount.getAndIncrement() < MAX_RETRY_COUNT) {
+        if(retryCount.getAndIncrement() < maxRetry) {
             Executors.newSingleThreadScheduledExecutor().schedule(new Runnable() {
                 @Override
                 public void run() {
                     initializeClients();
                 }
-            }, RETRY_INTERVAL, TimeUnit.MILLISECONDS);
+            }, retryInterval, TimeUnit.MILLISECONDS);
         } else {
             LOG.warn("Could not connect to member after max retries.");
         }

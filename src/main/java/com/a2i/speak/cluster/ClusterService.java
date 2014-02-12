@@ -26,7 +26,7 @@ public class ClusterService {
     @Autowired
     private MCDiscovery multicast;
 
-    private AbstractMember me;
+    private MeMember me;
 
     private Gossiper gossiper;
 
@@ -89,24 +89,33 @@ public class ClusterService {
         me.initialize();
         MemberHolder.INSTANCE.updateMemberStatus(me);
 
-        ((MeMember)me).addCommandConsumer(CommandMessageType.MemberList, new CommandListener() {
+        me.addCommandConsumer(new CommandListener() {
             @Override
             public void accept(CommandMessage message) {
-                for(String ip : message.getTags().keySet()) {
-                    String cp = message.getTags().get(ip).split(":")[0];
-                    String dp = message.getTags().get(ip).split(":")[1];
-                    String key = MemberHolder.INSTANCE.getKey(ip, cp, dp);
+                for(String key : message.getMembers()) {
                     Member m = MemberHolder.INSTANCE.getMember(key);
                     if(m == null) {
-                        m = new RemoteMember(
-                            ip, 
-                            Integer.parseInt(cp), 
-                            Integer.parseInt(dp));
+                        m = MemberKey.decode(key);
                         ((AbstractMember)m).initialize();
                     }
 
                     MemberHolder.INSTANCE.updateMemberStatus(m);
                 }
+//                for(String ip : message.getTags().keySet()) {
+//                    String cp = message.getTags().get(ip).split(":")[0];
+//                    String dp = message.getTags().get(ip).split(":")[1];
+//                    String key = MemberHolder.INSTANCE.getKey(ip, cp, dp);
+//                    Member m = MemberHolder.INSTANCE.getMember(key);
+//                    if(m == null) {
+//                        m = new RemoteMember(
+//                            ip, 
+//                            Integer.parseInt(cp), 
+//                            Integer.parseInt(dp));
+//                        ((AbstractMember)m).initialize();
+//                    }
+//
+//                    MemberHolder.INSTANCE.updateMemberStatus(m);
+//                }
             }
         });
 
