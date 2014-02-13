@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.core;
+package com.a2i.speak.core.codec;
 
 import java.io.IOException;
 

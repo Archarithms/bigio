@@ -5,6 +5,8 @@
  */
 package com.a2i.speak.core;
 
+import com.a2i.speak.core.codec.EnvelopeDecoder;
+import com.a2i.speak.core.codec.GossipDecoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;

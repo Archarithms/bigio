@@ -4,8 +4,9 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.core;
+package com.a2i.speak.core.codec;
 
+import com.a2i.speak.core.GossipMessage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;

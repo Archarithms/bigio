@@ -6,6 +6,7 @@
 
 package com.a2i.speak.core;
 
+import com.a2i.speak.core.codec.GenericDecoder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
