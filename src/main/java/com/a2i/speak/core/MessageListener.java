@@ -4,16 +4,12 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.cluster;
-
-import java.io.IOException;
+package com.a2i.speak.core;
 
 /**
  *
  * @author atrimble
  */
-public class GenericDecoder {
-    public static Object decode(byte[] bytes) throws IOException {
-        return "Hello World!";
-    }
+public interface MessageListener<T> {
+    public void receive(T message);
 }

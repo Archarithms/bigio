@@ -4,12 +4,12 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.cluster;
+package com.a2i.speak.core;
 
 /**
  *
  * @author atrimble
  */
-public interface MessageListener<T> {
-    public void receive(T message);
+public interface GossipListener {
+    public void accept(GossipMessage message);
 }

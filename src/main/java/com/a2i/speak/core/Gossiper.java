@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.a2i.speak.cluster;
+package com.a2i.speak.core;
 
 import com.a2i.speak.Parameters;
 import java.io.IOException;

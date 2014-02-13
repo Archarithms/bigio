@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.cluster;
+package com.a2i.speak.core;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

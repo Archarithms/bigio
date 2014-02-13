@@ -10,7 +10,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
-import com.a2i.speak.cluster.ClusterService;
+import com.a2i.speak.core.ClusterService;
 import java.lang.management.ManagementFactory;
 import java.io.PrintWriter;
 import java.lang.management.GarbageCollectorMXBean;

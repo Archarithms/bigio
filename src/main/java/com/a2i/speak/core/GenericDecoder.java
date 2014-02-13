@@ -4,12 +4,16 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak.cluster;
+package com.a2i.speak.core;
+
+import java.io.IOException;
 
 /**
  *
  * @author atrimble
  */
-public interface GossipListener {
-    public void accept(GossipMessage message);
+public class GenericDecoder {
+    public static Object decode(byte[] bytes) throws IOException {
+        return "Hello World!";
+    }
 }

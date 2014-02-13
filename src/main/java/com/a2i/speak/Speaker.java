@@ -6,8 +6,8 @@
 
 package com.a2i.speak;
 
-import com.a2i.speak.cluster.ClusterService;
-import com.a2i.speak.cluster.MessageListener;
+import com.a2i.speak.core.ClusterService;
+import com.a2i.speak.core.MessageListener;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
