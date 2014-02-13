@@ -18,6 +18,11 @@
             <version>0.6.9</version>
         </dependency>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+            <version>4.0.15.Final</version>
+        </dependency>
+        <dependency>
             <groupId>org.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
             <version>1.0.0.RELEASE</version>
@@ -25,6 +30,10 @@
                 <exclusion>
                     <artifactId>org.slf4j</artifactId>
                     <groupId>slf4j-api</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>io.netty</artifactId>
+                    <groupId>netty-all</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -60,7 +69,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-            <version>1.0.0.BUILD-SNAPSHOT</version>
+            <version>1.0.0.RC2</version>
             <exclusions>
                 <exclusion>
                     <artifactId>commons-logging</artifactId>
@@ -132,7 +141,7 @@
         <repository>
             <id>spring-snapshots</id>
             <name>Spring Snapshots</name>
-            <url>http://repo.spring.io/snapshot</url>
+            <url>http://repo.spring.io/milestone</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>

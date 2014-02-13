@@ -6,6 +6,7 @@
 
 package com.a2i.speak.cluster;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,5 +35,7 @@ public interface Member {
     public int getGossipPort();
 
     public void setGossipPort(int gossipPort);
+
+    public void send(Envelope message) throws IOException;
 
 }

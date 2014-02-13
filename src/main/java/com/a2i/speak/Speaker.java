@@ -6,18 +6,13 @@
 
 package com.a2i.speak;
 
-import java.io.IOException;
-import org.msgpack.MessagePack;
-import org.msgpack.annotation.Message;
+import com.a2i.speak.cluster.ClusterService;
+import com.a2i.speak.cluster.MessageListener;
+import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import reactor.core.Environment;
-import reactor.core.Reactor;
-import reactor.core.spec.Reactors;
-import reactor.event.Event;
-import reactor.event.selector.Selectors;
-import reactor.function.Consumer;
 
 /**
  *
@@ -28,57 +23,23 @@ public class Speaker {
 
     private static final Logger LOG = LoggerFactory.getLogger(Speaker.class);
 
-    private final MessagePack msgPack = new MessagePack();
+    @Autowired
+    private ClusterService cluster;
 
-    @Message
-    public static class SomeMessage {
-        public String name;
-        public double version;
+    @PostConstruct
+    public void init() {
+        cluster.initialize();
     }
 
     public Speaker() {
         LOG.info("The speaker has arrived");
+    }
 
-//        SomeMessage message = new SomeMessage();
-//        message.name = "Speaker";
-//        message.version = 1.0;
-//        
-//        try {
-//            byte[] bytes = msgPack.write(message);
-//
-//            Envelope envelope = new Envelope();
-//            envelope.type = SomeMessage.class.getName();
-//            envelope.payload = bytes;
-//
-//            byte[] envBytes = msgPack.write(envelope);
-//
-//            LOG.info("Message serialized into " + envBytes.length + " bytes.");
-//
-//            Envelope s = msgPack.read(envBytes, Envelope.class);
-//            LOG.info("Received message of type " + s.type);
-//
-//            SomeMessage m = (SomeMessage)msgPack.read(s.payload, Class.forName(s.type));
-//
-//            LOG.info(m.name + " v. " + m.version);
-//        } catch (IOException ex) {
-//            LOG.error("Exception serializing message.", ex);
-//        } catch (ClassNotFoundException ex) {
-//            LOG.error("Could not find message class.", ex);
-//        }
-//
-//        Environment env = new Environment();
-//        Reactor reactor = Reactors.reactor()
-//                .env(env)
-//                .dispatcher(Environment.EVENT_LOOP)
-//                .get();
-//
-//        reactor.on(Selectors.object("parse"), new Consumer<Event<String>>() {
-//            @Override
-//            public void accept(Event<String> t) {
-//                LOG.info("Received event with data: " + t.getData());
-//            }
-//        });
-//
-//        reactor.notify("parse", Event.wrap("data"));
+    public <T> void send(String topic, T message) throws Exception {
+        cluster.sendMessage(topic, message);
+    }
+
+    public <T> void addListener(String topic, MessageListener<T> listener) {
+        cluster.addListener(topic, listener);
     }
 }

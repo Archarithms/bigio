@@ -69,6 +69,10 @@ public class Gossiper {
                 memberList.getMembers().add(MemberKey.getKey(m));
             }
 
+            for(String topic : ListenerRegistry.INSTANCE.getAllLocalTopics()) {
+                memberList.getListeners().put(MemberKey.getKey(me), topic);
+            }
+
             try {
                 ((RemoteMember)member).gossip(memberList);
             } catch(IOException ex) {

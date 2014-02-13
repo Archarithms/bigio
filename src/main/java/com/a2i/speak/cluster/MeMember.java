@@ -42,8 +42,10 @@ public class MeMember extends AbstractMember {
 
     private static final Logger LOG = LoggerFactory.getLogger(MeMember.class);
                 
-    private EventLoopGroup bossGroup = null;
-    private EventLoopGroup workerGroup = null;
+    private EventLoopGroup gossipBossGroup = null;
+    private EventLoopGroup gossipWorkerGroup = null;
+    private EventLoopGroup dataBossGroup = null;
+    private EventLoopGroup dataWorkerGroup = null;
 
     private final ExecutorService serverExecutor = Executors.newFixedThreadPool(SERVER_THREAD_POOL_SIZE);
 
@@ -75,14 +77,21 @@ public class MeMember extends AbstractMember {
 
     @Override
     public void shutdown() {
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
+        gossipBossGroup.shutdownGracefully();
+        gossipWorkerGroup.shutdownGracefully();
+        dataBossGroup.shutdownGracefully();
+        dataWorkerGroup.shutdownGracefully();
+    }
+
+    @Override
+    public void send(Envelope message) throws IOException {
+        ListenerRegistry.INSTANCE.send(message);
     }
 
     private void initializeReactor() {
         reactor = Reactors.reactor()
                 .env(env)
-                .dispatcher(Environment.EVENT_LOOP)
+                .dispatcher(Environment.RING_BUFFER)
                 .get();
     }
 
@@ -96,11 +105,11 @@ public class MeMember extends AbstractMember {
     private class GossipServerThread implements Runnable {
         @Override
         public void run() {
-            bossGroup = new NioEventLoopGroup();
-            workerGroup = new NioEventLoopGroup();
+            gossipBossGroup = new NioEventLoopGroup();
+            gossipWorkerGroup = new NioEventLoopGroup();
             try {
                 ServerBootstrap b = new ServerBootstrap();
-                b.group(bossGroup, workerGroup)
+                b.group(gossipBossGroup, gossipWorkerGroup)
                         .channel(NioServerSocketChannel.class)
                         .childHandler(new ChannelInitializer<SocketChannel>() {
                             @Override
@@ -132,8 +141,8 @@ public class MeMember extends AbstractMember {
             } catch (InterruptedException ex) {
                 LOG.error("Gossip server interrupted.", ex);
             } finally {
-                workerGroup.shutdownGracefully();
-                bossGroup.shutdownGracefully();
+                gossipBossGroup.shutdownGracefully();
+                gossipWorkerGroup.shutdownGracefully();
             }
         }
     }
@@ -141,11 +150,11 @@ public class MeMember extends AbstractMember {
     private class DataServerThread implements Runnable {
         @Override
         public void run() {
-            bossGroup = new NioEventLoopGroup();
-            workerGroup = new NioEventLoopGroup();
+            dataBossGroup = new NioEventLoopGroup();
+            dataWorkerGroup = new NioEventLoopGroup();
             try {
                 ServerBootstrap b = new ServerBootstrap();
-                b.group(bossGroup, workerGroup)
+                b.group(dataBossGroup, dataWorkerGroup)
                         .channel(NioServerSocketChannel.class)
                         .childHandler(new ChannelInitializer<SocketChannel>() {
                             @Override
@@ -177,8 +186,8 @@ public class MeMember extends AbstractMember {
             } catch (InterruptedException ex) {
                 LOG.error("Gossip data interrupted.", ex);
             } finally {
-                workerGroup.shutdownGracefully();
-                bossGroup.shutdownGracefully();
+                dataBossGroup.shutdownGracefully();
+                dataWorkerGroup.shutdownGracefully();
             }
         }
     }
@@ -237,8 +246,9 @@ public class MeMember extends AbstractMember {
             if(msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
-                    GossipMessage message = GossipDecoder.decode(bytes);
-                    reactor.notify(Event.wrap(message));
+                    Envelope message = EnvelopeDecoder.decode(bytes);
+                    message.setDecoded(false);
+                    send(message);
                     
                 } catch (IOException ex) {
                     LOG.error("Error decoding message.", ex);

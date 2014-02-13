@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 public class NetworkUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(NetworkUtil.class);
+
+    private static final String NETWORK_INTERFACE_PROPETY = "com.a2i.network";
     
     private static NetworkInterface nic = null;
 
@@ -98,23 +100,25 @@ public class NetworkUtil {
 
     private static void findNIC() {
         try {
-            String networkInterfaceName = "eth0";
+            String networkInterfaceName = Parameters.INSTANCE.getProperty(NETWORK_INTERFACE_PROPETY);
 
-            switch(Parameters.INSTANCE.currentOS()) {
-                case WIN_64:
-                case WIN_32:
-                    networkInterfaceName = "net0";
-                    break;
-                case LINUX_64:
-                case LINUX_32:
-                    networkInterfaceName = "eth0";
-                    break;
-                case MAC_64:
-                case MAC_32:
-                    networkInterfaceName = "eth0";
-                    break;
-                default:
-                    LOG.error("Cannot determine operating system. Cluster cannot form.");
+            if(networkInterfaceName == null || "".equals(networkInterfaceName)) {
+                switch(Parameters.INSTANCE.currentOS()) {
+                    case WIN_64:
+                    case WIN_32:
+                        networkInterfaceName = "net0";
+                        break;
+                    case LINUX_64:
+                    case LINUX_32:
+                        networkInterfaceName = "eth0";
+                        break;
+                    case MAC_64:
+                    case MAC_32:
+                        networkInterfaceName = "eth0";
+                        break;
+                    default:
+                        LOG.error("Cannot determine operating system. Cluster cannot form.");
+                }
             }
             
             nic = NetworkInterface.getByName(networkInterfaceName);

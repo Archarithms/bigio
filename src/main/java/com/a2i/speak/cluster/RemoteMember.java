@@ -20,6 +20,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -39,17 +40,22 @@ public class RemoteMember extends AbstractMember {
     private static final String DEFAULT_MAX_RETRY_COUNT = "3";
     private static final String DEFAULT_RETRY_INTERVAL = "2000";
     private static final String DEFAULT_CONNECTION_TIMEOUT = "5000";
-    private static final Logger LOG = LoggerFactory.getLogger(Member.class);
+    private static final int CLIENT_THREAD_POOL_SIZE = 2;
+    private static final Logger LOG = LoggerFactory.getLogger(RemoteMember.class);
 
     private int maxRetry;
     private long retryInterval;
     private int timeout;
     
-    private final AtomicInteger retryCount = new AtomicInteger(0);
-    private final ScheduledExecutorService retryExecutor = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicInteger gossipRetryCount = new AtomicInteger(0);
+    private final AtomicInteger dataRetryCount = new AtomicInteger(0);
+    private final ScheduledExecutorService retryExecutor = Executors.newScheduledThreadPool(CLIENT_THREAD_POOL_SIZE);
+    private final ExecutorService serverExecutor = Executors.newFixedThreadPool(CLIENT_THREAD_POOL_SIZE);
 
-    private Channel channel = null;
-    private EventLoopGroup workerGroup = null;
+    private Channel gossipChannel = null;
+    private Channel dataChannel = null;
+    private EventLoopGroup gossipWorkerGroup = null;
+    private EventLoopGroup dataWorkerGroup = null;
 
     public RemoteMember() {
         super();
@@ -68,39 +74,61 @@ public class RemoteMember extends AbstractMember {
         timeout = Integer.parseInt(Parameters.INSTANCE.getProperty(
                 CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT));
 
-        Executors.newSingleThreadExecutor().submit(new Runnable() {
+        serverExecutor.submit(new Runnable() {
             @Override
             public void run() {
-                initializeClients();
+                initializeGossipClient();
+            }
+        });
+        serverExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                initializeDataClient();
             }
         });
     }
 
+    @Override
+    public void send(final Envelope message) throws IOException {
+        byte[] bytes = EnvelopeEncoder.encode(message);
+        if(dataChannel != null) {
+            dataChannel.writeAndFlush(bytes);
+        }
+    }
+
     public void gossip(final GossipMessage message) throws IOException {
         byte[] bytes = GossipEncoder.encode(message);
-        if(channel != null) {
-            channel.writeAndFlush(bytes);
+        if(gossipChannel != null) {
+            gossipChannel.writeAndFlush(bytes);
         }
     }
 
     @Override
     protected void shutdown() {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Closing TCP connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
+            LOG.debug("Closing connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
         }
 
-        if(workerGroup != null) {
-            workerGroup.shutdownGracefully();
+        if(gossipWorkerGroup != null) {
+            gossipWorkerGroup.shutdownGracefully();
+        }
+        
+        if(dataWorkerGroup != null) {
+            dataWorkerGroup.shutdownGracefully();
         }
     }
 
-    private void initializeClients() {
+    private void updateMember() {
+        MemberHolder.INSTANCE.updateMemberStatus(this);
+    }
+
+    private void initializeGossipClient() {
         LOG.debug("Initializing gossip client");
 
-        workerGroup = new NioEventLoopGroup();
+        gossipWorkerGroup = new NioEventLoopGroup();
             
         Bootstrap b = new Bootstrap();
-        b.group(workerGroup);
+        b.group(gossipWorkerGroup);
         b.channel(NioSocketChannel.class);
         b.option(ChannelOption.SO_KEEPALIVE, true);
         b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout);
@@ -109,7 +137,7 @@ public class RemoteMember extends AbstractMember {
             public void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
-                ch.pipeline().addLast(new ExceptionHandler());
+                ch.pipeline().addLast(new GossipExceptionHandler());
             }
 
             @Override
@@ -124,35 +152,83 @@ public class RemoteMember extends AbstractMember {
 
         if(future.isCancelled()) {
             LOG.warn("Connection cancelled by user");
-            channel = null;
+            gossipChannel = null;
         } else if(!future.isSuccess()) {
-            channel = null;
-            retry();
+            gossipChannel = null;
+            retryGossipConnection();
         } else {
-            channel = future.channel();
+            gossipChannel = future.channel();
             setStatus(MemberStatus.Alive);
             updateMember();
         }
     }
 
-    private void retry() {
-        if(retryCount.getAndIncrement() < maxRetry) {
-            retryExecutor.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    initializeClients();
-                }
-            }, retryInterval, TimeUnit.MILLISECONDS);
+    private void initializeDataClient() {
+        LOG.debug("Initializing data client");
+
+        dataWorkerGroup = new NioEventLoopGroup();
+            
+        Bootstrap b = new Bootstrap();
+        b.group(dataWorkerGroup);
+        b.channel(NioSocketChannel.class);
+        b.option(ChannelOption.SO_KEEPALIVE, true);
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout);
+        b.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            public void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline().addLast("encoder", new ByteArrayEncoder());
+                ch.pipeline().addLast("decoder", new ByteArrayDecoder());
+                ch.pipeline().addLast(new DataExceptionHandler());
+            }
+
+            @Override
+            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                LOG.error("Cannot initialize data client.", cause);
+                ctx.close();
+            }
+        });
+
+        // Start the client.
+        ChannelFuture future = b.connect(getIp(), getDataPort()).awaitUninterruptibly();
+
+        if(future.isCancelled()) {
+            LOG.warn("Connection cancelled by user");
+            dataChannel = null;
+        } else if(!future.isSuccess()) {
+            dataChannel = null;
+            retryDataConnection();
         } else {
-            LOG.warn("Could not connect to member after max retries.");
+            dataChannel = future.channel();
         }
     }
 
-    private void updateMember() {
-        MemberHolder.INSTANCE.updateMemberStatus(this);
+    private void retryGossipConnection() {
+        if(gossipRetryCount.getAndIncrement() < maxRetry) {
+            retryExecutor.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    initializeGossipClient();
+                }
+            }, retryInterval, TimeUnit.MILLISECONDS);
+        } else {
+            LOG.warn("Could not connect to gossip server after max retries.");
+        }
     }
 
-    private class ExceptionHandler extends ChannelInboundHandlerAdapter {
+    private void retryDataConnection() {
+        if(dataRetryCount.getAndIncrement() < maxRetry) {
+            retryExecutor.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    initializeDataClient();
+                }
+            }, retryInterval, TimeUnit.MILLISECONDS);
+        } else {
+            LOG.warn("Could not connect to data server after max retries.");
+        }
+    }
+
+    private class GossipExceptionHandler extends ChannelInboundHandlerAdapter {
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -163,8 +239,22 @@ public class RemoteMember extends AbstractMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.warn("Member failed");
-            retry();
+            LOG.warn("Gossip connection failed");
+            retryGossipConnection();
+        }
+    }
+
+    private class DataExceptionHandler extends ChannelInboundHandlerAdapter {
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            LOG.warn("Data connection failed");
+            retryGossipConnection();
         }
     }
 }

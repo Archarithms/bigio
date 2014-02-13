@@ -4,19 +4,23 @@
  * and open the template in the editor.
  */
 
-package com.a2i.speak;
+package com.a2i.speak.cluster;
 
 /**
  *
  * @author atrimble
+ * @param <T>
  */
-public class Envelope {
+public class Envelope<T> {
     
     private String senderKey;
     private int sequence;
     private long executeTime;
     private String topic;
     private byte[] payload;
+
+    private boolean decoded = false;
+    private T message;
 
     /**
      * @return the senderKey
@@ -86,5 +90,33 @@ public class Envelope {
      */
     public void setPayload(byte[] payload) {
         this.payload = payload;
+    }
+
+    /**
+     * @return the decoded
+     */
+    public boolean isDecoded() {
+        return decoded;
+    }
+
+    /**
+     * @param decoded the decoded to set
+     */
+    public void setDecoded(boolean decoded) {
+        this.decoded = decoded;
+    }
+
+    /**
+     * @return the message
+     */
+    public T getMessage() {
+        return message;
+    }
+
+    /**
+     * @param message the message to set
+     */
+    public void setMessage(T message) {
+        this.message = message;
     }
 }

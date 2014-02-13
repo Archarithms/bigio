@@ -41,7 +41,6 @@ import org.springframework.context.annotation.Configuration;
 @ComponentScan
 public class Starter implements CommandLineRunner {
 
-
     private static final boolean MONITOR_THREAD_CONTENTION = true;
 
     @Autowired
@@ -93,8 +92,6 @@ public class Starter implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         LOG.info("Speak easy my friends");
-
-        cluster.initialize();
 
         if(args.length > 0 && args[0].equals("interactive")) {
 
@@ -149,6 +146,8 @@ public class Starter implements CommandLineRunner {
                     } else if(line.equals("threads")) {
                         printOSStats();
                         printThreadStats();
+                    } else if(line.equals("gc")) {
+                        System.gc();
                     } else if(!"".equals(line)) {
                         out.println("    \"" + line + "\"");
                         out.flush();
@@ -202,10 +201,10 @@ public class Starter implements CommandLineRunner {
         for(MemoryPoolMXBean bean : memPoolBeans) {
             stats.append("    ").append(bean.getName()).append("\n");
             stats.append("        Type: ").append(bean.getType()).append("\n");
-            stats.append("        Usage Initial: ").append(bean.getUsage().getInit() / 1024 / 1024).append(" MB\n");
-            stats.append("        Usage Max: ").append(bean.getUsage().getMax() / 1024 / 1024).append(" MB\n");
-            stats.append("        Usage Used: ").append(bean.getUsage().getUsed() / 1024).append(" MB\n");
-            stats.append("        Usage Committed: ").append(bean.getUsage().getCommitted() / 1024 / 1024).append(" MB\n");
+            stats.append("        Initial: ").append(bean.getUsage().getInit() / 1024 / 1024).append(" MB\n");
+            stats.append("        Max: ").append(bean.getUsage().getMax() / 1024 / 1024).append(" MB\n");
+            stats.append("        Used: ").append(bean.getUsage().getUsed() / 1024).append(" MB\n");
+            stats.append("        Committed: ").append(bean.getUsage().getCommitted() / 1024 / 1024).append(" MB\n");
         }
 
         stats.append("\nGarbage Collection:\n");

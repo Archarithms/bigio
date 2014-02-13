@@ -7,6 +7,7 @@
 package com.a2i.speak.cluster;
 
 import com.a2i.speak.Parameters;
+import java.io.IOException;
 import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,32 @@ public class ClusterService {
     
     public ClusterService() {
         
+    }
+
+    public <T> void addListener(String topic, MessageListener<T> consumer) {
+        ListenerRegistry.INSTANCE.registerMemberForTopic(topic, me);
+        ListenerRegistry.INSTANCE.addListener(topic, consumer);
+    }
+
+    public <T> void sendMessage(String topic, T message) throws IOException {
+        Envelope envelope = new Envelope();
+        envelope.setDecoded(false);
+        envelope.setExecuteTime(0);
+        envelope.setSenderKey(MemberKey.getKey(me));
+        envelope.setSequence(me.getSequence().getAndIncrement());
+        envelope.setTopic(topic);
+
+        for(Member member : ListenerRegistry.INSTANCE.getRegisteredMembers(topic)) {
+            if(me.equals(member)) {
+                envelope.setMessage(message);
+                envelope.setDecoded(true);
+            } else {
+                envelope.setPayload(GenericEncoder.encode(message));
+                envelope.setDecoded(false);
+            }
+
+            member.send(envelope);
+        }
     }
 
     public Collection<Member> getAllMembers() {
@@ -92,15 +119,7 @@ public class ClusterService {
         me.addGossipConsumer(new GossipListener() {
             @Override
             public void accept(GossipMessage message) {
-                for(String key : message.getMembers()) {
-                    Member m = MemberHolder.INSTANCE.getMember(key);
-                    if(m == null) {
-                        m = MemberKey.decode(key);
-                        ((AbstractMember)m).initialize();
-                    }
-
-                    MemberHolder.INSTANCE.updateMemberStatus(m);
-                }
+                handleGossipMessage(message);
             }
         });
 
@@ -135,6 +154,24 @@ public class ClusterService {
         me.shutdown();
         for(Member member : MemberHolder.INSTANCE.getAllMembers()) {
             ((AbstractMember)member).shutdown();
+        }
+    }
+
+    private void handleGossipMessage(GossipMessage message) {
+        for(String key : message.getMembers()) {
+            Member m = MemberHolder.INSTANCE.getMember(key);
+            if(m == null) {
+                m = MemberKey.decode(key);
+                ((AbstractMember)m).initialize();
+            }
+
+            MemberHolder.INSTANCE.updateMemberStatus(m);
+        }
+
+        for(String key : message.getListeners().keySet()) {
+            ListenerRegistry.INSTANCE.registerMemberForTopic(
+                    message.getListeners().get(key), 
+                    MemberHolder.INSTANCE.getMember(key));
         }
     }
 }
