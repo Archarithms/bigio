@@ -15,7 +15,8 @@ public class Envelope<T> {
     
     private String senderKey;
     private int sequence;
-    private long executeTime;
+    private int executeTime;
+    private int millisecondsSinceMidnight;
     private String topic;
     private byte[] payload;
 
@@ -53,14 +54,14 @@ public class Envelope<T> {
     /**
      * @return the executeTime
      */
-    public long getExecuteTime() {
+    public int getExecuteTime() {
         return executeTime;
     }
 
     /**
      * @param executeTime the executeTime to set
      */
-    public void setExecuteTime(long executeTime) {
+    public void setExecuteTime(int executeTime) {
         this.executeTime = executeTime;
     }
 
@@ -118,5 +119,19 @@ public class Envelope<T> {
      */
     public void setMessage(T message) {
         this.message = message;
+    }
+
+    /**
+     * @return the millisecondsSinceMidnight
+     */
+    public int getMillisecondsSinceMidnight() {
+        return millisecondsSinceMidnight;
+    }
+
+    /**
+     * @param millisecondsSinceMidnight the millisecondsSinceMidnight to set
+     */
+    public void setMillisecondsSinceMidnight(int millisecondsSinceMidnight) {
+        this.millisecondsSinceMidnight = millisecondsSinceMidnight;
     }
 }

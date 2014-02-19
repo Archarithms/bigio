@@ -24,6 +24,7 @@ public class GossipMessage {
     private String ip;
     private int gossipPort;
     private int dataPort;
+    private int millisecondsSinceMidnight;
     private final Map<String, String> tags = new HashMap<>();
     private final List<String> members = new ArrayList<>();
     private final Map<String, String> listeners = new HashMap<>();
@@ -47,9 +48,18 @@ public class GossipMessage {
                 .append("Address: ").append(getIp()).append("\n")
                 .append("GossipPort: ").append(getGossipPort()).append("\n")
                 .append("DataPort: ").append(getDataPort()).append("\n")
+                .append("Time: ").append(getMillisecondsSinceMidnight()).append("\n")
                 .append("Tags: ").append("\n");
         for(String key : getTags().keySet()) {
             buff.append("    ").append(key).append(" -> ").append(getTags().get(key)).append("\n");
+        }
+        buff.append("Members: ").append("\n");
+        for(String member : getMembers()) {
+            buff.append("    ").append(member).append("\n");
+        }
+        buff.append("Listeners: ").append("\n");
+        for(String key : getListeners().keySet()) {
+            buff.append("    ").append(key).append(" -> ").append(getListeners().get(key)).append("\n");
         }
         return buff.toString();
     }
@@ -129,5 +139,19 @@ public class GossipMessage {
      */
     public Map<String, String> getListeners() {
         return listeners;
+    }
+
+    /**
+     * @return the millisecondsSinceMidnight
+     */
+    public int getMillisecondsSinceMidnight() {
+        return millisecondsSinceMidnight;
+    }
+
+    /**
+     * @param millisecondsSinceMidnight the millisecondsSinceMidnight to set
+     */
+    public void setMillisecondsSinceMidnight(int millisecondsSinceMidnight) {
+        this.millisecondsSinceMidnight = millisecondsSinceMidnight;
     }
 }

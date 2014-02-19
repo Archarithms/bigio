@@ -55,6 +55,7 @@ public class GossipDecoder {
         message.setIp(ipBuilder.toString());
         message.setGossipPort(unpacker.readInt());
         message.setDataPort(unpacker.readInt());
+        message.setMillisecondsSinceMidnight(unpacker.readInt());
         message.getTags().putAll(unpacker.read(mapTemplate));
         
         List<List<Integer>> member = unpacker.read(listTemplate);
@@ -102,6 +103,7 @@ public class GossipDecoder {
         
         message.setGossipPort(unpacker.readInt());
         message.setDataPort(unpacker.readInt());
+        message.setMillisecondsSinceMidnight(unpacker.readInt());
         message.getTags().putAll(unpacker.read(mapTemplate));
         
         List<List<Integer>> member = unpacker.read(listTemplate);

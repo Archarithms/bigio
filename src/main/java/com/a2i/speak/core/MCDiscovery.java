@@ -135,6 +135,7 @@ public class MCDiscovery extends Thread {
                         me.getIp(),
                         me.getGossipPort(),
                         me.getDataPort());
+                message.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
                 message.getTags().putAll(me.getTags());
                 message.getMembers().add(MemberKey.getKey(me));
 

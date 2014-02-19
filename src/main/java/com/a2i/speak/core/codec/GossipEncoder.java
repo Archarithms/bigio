@@ -49,6 +49,7 @@ public class GossipEncoder {
         packer.write(Integer.parseInt(splitIp[3]));
         packer.write(message.getGossipPort());
         packer.write(message.getDataPort());
+        packer.write(message.getMillisecondsSinceMidnight());
         packer.write(message.getTags());
         packer.write(members);
         packer.write(message.getListeners());

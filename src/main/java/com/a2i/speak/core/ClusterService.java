@@ -47,18 +47,19 @@ public class ClusterService {
         Envelope envelope = new Envelope();
         envelope.setDecoded(false);
         envelope.setExecuteTime(0);
+        envelope.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
         envelope.setSenderKey(MemberKey.getKey(me));
         envelope.setSequence(me.getSequence().getAndIncrement());
         envelope.setTopic(topic);
 
         for(Member member : ListenerRegistry.INSTANCE.getRegisteredMembers(topic)) {
-            if(me.equals(member)) {
-                envelope.setMessage(message);
-                envelope.setDecoded(true);
-            } else {
+//            if(me.equals(member)) {
+//                envelope.setMessage(message);
+//                envelope.setDecoded(true);
+//            } else {
                 envelope.setPayload(GenericEncoder.encode(message));
                 envelope.setDecoded(false);
-            }
+//            }
 
             member.send(envelope);
         }
