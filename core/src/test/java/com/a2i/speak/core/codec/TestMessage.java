@@ -6,7 +6,7 @@
 
 package com.a2i.speak.core.codec;
 
-import com.a2i.speak.core.Message;
+import com.a2i.sim.core.Message;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
