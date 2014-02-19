@@ -126,9 +126,9 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
-                    <annotationProcessors>
+                    <!--annotationProcessors>
                         <annotationProcessor>com.a2i.speak.core.MessageProcessor</annotationProcessor>
-                    </annotationProcessors>
+                    </annotationProcessors-->
                 </configuration>
             </plugin>
             <plugin>
