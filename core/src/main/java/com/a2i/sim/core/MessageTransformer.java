@@ -1,384 +1,1310 @@
 package com.a2i.sim.core;
 
-///*
-// * To change this license header, choose License Headers in Project Properties.
-// * To change this template file, choose Tools | Templates
-// * and open the template in the editor.
-// */
-//package com.a2i.speak.core;
-//
-//import java.io.PrintWriter;
-//import java.lang.instrument.ClassFileTransformer;
-//import java.lang.instrument.IllegalClassFormatException;
-//import java.lang.instrument.Instrumentation;
-//import java.security.ProtectionDomain;
-//import java.util.ArrayList;
-//import java.util.List;
-//import org.objectweb.asm.AnnotationVisitor;
-//import org.objectweb.asm.ClassReader;
-//import org.objectweb.asm.ClassVisitor;
-//import org.objectweb.asm.ClassWriter;
-//import org.objectweb.asm.FieldVisitor;
-//import org.objectweb.asm.Label;
-//import org.objectweb.asm.MethodVisitor;
-//import org.objectweb.asm.Opcodes;
-//import static org.objectweb.asm.Opcodes.*;
-//import org.objectweb.asm.util.TraceClassVisitor;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//
-///**
-// *
-// * @author atrimble
-// */
-//public class MessageTransformer implements ClassFileTransformer {
-//
-//    private static final Logger LOG = LoggerFactory.getLogger(MessageTransformer.class);
-//
-//    public static void premain(String agentArgs, Instrumentation inst) {
-//        inst.addTransformer(new MessageTransformer());
-//    }
-//
-//    @Override
-//    public byte[] transform(ClassLoader loader, String className,
-//            Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
-//            byte[] b) throws IllegalClassFormatException {
-//        ClassReader cr = new ClassReader(b);
-//        ClassWriter cw = new ClassWriter(cr, 0);
-//        ClassVisitor cv = new MessageAdapter(cw);
-//        cr.accept(cv, 0);
-//        if(((MessageAdapter)cv).wasMessage()) {
-//            LOG.info("Returning transformed class");
-//
-////            cr = new ClassReader(cw.toByteArray());
-////            cv = new TraceClassVisitor(new PrintWriter(System.out));
-////            cr.accept(cv, 0);
-//            
-//            return cw.toByteArray();
-//        } else {
-//            return null;
-//        }
-//    }
-//
-//    public class MessageAdapter extends ClassVisitor {
-//
-//        String currentClass;
-//        boolean isMessage = false;
-//        List<Tuple> fields = new ArrayList<>();
-//
-//        public MessageAdapter(ClassVisitor cv) {
-//            super(ASM4, cv);
-//        }
-//
-//        public boolean wasMessage() {
-//            return isMessage;
-//        }
-//
-//        @Override
-//        public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-//            if(desc.equals("Lcom/a2i/speak/core/Message;")) {
-//                isMessage = true;
-//                LOG.info(currentClass + " : " + isMessage);
-//            }
-//
-//            return cv.visitAnnotation(desc, visible);
-//        }
-//
-//        @Override
-//        public void visit(int version, int access, String name,
-//                String signature, String superName, String[] interfaces) {
-//
-//            currentClass = name;
-//            isMessage = false;
-//
-//            cv.visit(version, access, name, signature, superName, interfaces);
-//        }
-//
-//        @Override
-//        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-//            if(isMessage) {
-//                fields.add(new Tuple(name, desc, signature));
-//            }
-//
-//            return cv.visitField(access, name, desc, signature, value);
-//        }
-//
-//        @Override
-//        public void visitEnd() {
-//            if(isMessage) {
-//                int maxStack = 3;
-//                int maxLocals = 4;
-//                
-//                LOG.info("Adding encoder to " + currentClass);
-//
-//                MethodVisitor mv = cv.visitMethod(ACC_PRIVATE, "_encodeList_", "(Ljava/util/List;Ljava/util/List;)V", "<T:Ljava/lang/Object;>(Ljava/util/List;Ljava/util/List<TT;>;)V", new String[] { "java/io/IOException" });
-//                mv.visitCode();
-//                mv.visitVarInsn(ALOAD, 2);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;");
-//                mv.visitVarInsn(ASTORE, 3);
-//                Label l0 = new Label();
-//                mv.visitLabel(l0);
-//                mv.visitFrame(Opcodes.F_APPEND,1, new Object[] {"java/util/Iterator"}, 0, null);
-//                mv.visitVarInsn(ALOAD, 3);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z");
-//                Label l1 = new Label();
-//                mv.visitJumpInsn(IFEQ, l1);
-//                mv.visitVarInsn(ALOAD, 3);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;");
-//                mv.visitVarInsn(ASTORE, 4);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/util/List");
-//                Label l2 = new Label();
-//                mv.visitJumpInsn(IFEQ, l2);
-//                mv.visitTypeInsn(NEW, "java/util/ArrayList");
-//                mv.visitInsn(DUP);
-//                mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
-//                mv.visitVarInsn(ASTORE, 5);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 5);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitVarInsn(ALOAD, 0);
-//                mv.visitVarInsn(ALOAD, 5);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(CHECKCAST, "java/util/List");
-//                mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeList_", "(Ljava/util/List;Ljava/util/List;)V");
-//                Label l3 = new Label();
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l2);
-//                mv.visitFrame(F_APPEND, 1, new Object[] {"java/lang/Object"}, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/Boolean");
-//                Label l4 = new Label();
-//                mv.visitJumpInsn(IFEQ, l4);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l4);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/Byte");
-//                Label l5 = new Label();
-//                mv.visitJumpInsn(IFEQ, l5);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l5);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/Short");
-//                Label l6 = new Label();
-//                mv.visitJumpInsn(IFEQ, l6);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l6);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/Integer");
-//                Label l7 = new Label();
-//                mv.visitJumpInsn(IFEQ, l7);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l7);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/Float");
-//                Label l8 = new Label();
-//                mv.visitJumpInsn(IFEQ, l8);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l8);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/Long");
-//                Label l9 = new Label();
-//                mv.visitJumpInsn(IFEQ, l9);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l9);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/Double");
-//                Label l10 = new Label();
-//                mv.visitJumpInsn(IFEQ, l10);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l10);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitTypeInsn(INSTANCEOF, "java/lang/String");
-//                Label l11 = new Label();
-//                mv.visitJumpInsn(IFEQ, l11);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitJumpInsn(GOTO, l3);
-//                mv.visitLabel(l11);
-//                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 4);
-//                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "_encode_", "()[B");
-//                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
-//                mv.visitInsn(POP);
-//                mv.visitLabel(l3);
-//                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
-//                mv.visitJumpInsn(GOTO, l0);
-//                mv.visitLabel(l1);
-//                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
-//                mv.visitInsn(RETURN);
-//                mv.visitMaxs(3, 6);
-//                mv.visitEnd();
-//                
-//                mv = cv.visitMethod(ACC_PUBLIC, "_encode_", "()[B", null, new String[] { "java/io/IOException" });
-//                mv.visitCode();
-//                mv.visitTypeInsn(NEW, "org/msgpack/MessagePack");
-//                mv.visitInsn(DUP);
-//                mv.visitMethodInsn(INVOKESPECIAL, "org/msgpack/MessagePack", "<init>", "()V");
-//                mv.visitVarInsn(ASTORE, 1);
-//                mv.visitTypeInsn(NEW, "java/io/ByteArrayOutputStream");
-//                mv.visitInsn(DUP);
-//                mv.visitMethodInsn(INVOKESPECIAL, "java/io/ByteArrayOutputStream", "<init>", "()V");
-//                mv.visitVarInsn(ASTORE, 2);
-//                mv.visitVarInsn(ALOAD, 1);
-//                mv.visitVarInsn(ALOAD, 2);
-//                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/MessagePack", "createPacker", "(Ljava/io/OutputStream;)Lorg/msgpack/packer/Packer;");
-//                mv.visitVarInsn(ASTORE, 3);
-//
-//                for(Tuple tuple : fields) {
-//                    String type;
-//
-//                    LOG.info(tuple.toString());
-//
-//                    switch(tuple.getType()) {
-//                        case "Z":
-//                        case "C":
-//                        case "B":
-//                        case "S":
-//                        case "I":
-//                        case "F":
-//                        case "J":
-//                        case "D":
-//                        case "Ljava/lang/String;":
-//                            type = tuple.getType();
-//                            mv.visitVarInsn(ALOAD, 3);
-//                            mv.visitVarInsn(ALOAD, 0);
-//                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
-//                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(" + type + ")Lorg/msgpack/packer/Packer;");
-//                            mv.visitInsn(POP);
-//                            break;
-//                        case "[Z":
-//                        case "[C":
-//                        case "[B":
-//                        case "[S":
-//                        case "[I":
-//                        case "[F":
-//                        case "[J":
-//                        case "[D":
-//                        case "[Ljava/lang/String;":
-//                            mv.visitVarInsn(ALOAD, 3);
-//                            mv.visitVarInsn(ALOAD, 0);
-//                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
-//                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
-//                            mv.visitInsn(POP); 
-//                            break;
-//                        case "Ljava/util/List;":
-//                            maxLocals = 5;
-//                            mv.visitTypeInsn(NEW, "java/util/ArrayList");
-//                            mv.visitInsn(DUP);
-//                            mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
-//                            mv.visitVarInsn(ASTORE, 4);
-//                            mv.visitVarInsn(ALOAD, 0);
-//                            mv.visitVarInsn(ALOAD, 4);
-//                            mv.visitVarInsn(ALOAD, 0);
-//                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), "Ljava/util/List;");
-//                            mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeList_", "(Ljava/util/List;Ljava/util/List;)V");
-//                            mv.visitVarInsn(ALOAD, 3);
-//                            mv.visitVarInsn(ALOAD, 4);
-//                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
-//                            mv.visitInsn(POP);
-//                            break;
-//                        default:
-//                            maxLocals = 5;
-//                            mv.visitVarInsn(ALOAD, 0);
-//                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
-//                            mv.visitMethodInsn(INVOKEVIRTUAL, tuple.getType().substring(1, tuple.getType().length() - 1), "_encode_", "()[B");
-//                            mv.visitVarInsn(ASTORE, 4);
-//                            mv.visitVarInsn(ALOAD, 3);
-//                            mv.visitVarInsn(ALOAD, 4);
-//                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "([B)Lorg/msgpack/packer/Packer;");
-//                            mv.visitInsn(POP);
-//                            break;
-//                    }
-//                }
-//
-//                mv.visitVarInsn(ALOAD, 2);
-//                mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/ByteArrayOutputStream", "toByteArray", "()[B");
-//                mv.visitInsn(ARETURN);
-//                mv.visitMaxs(maxStack, maxLocals);
-//                mv.visitEnd();
-//            }
-//            
-//            cv.visitEnd();
-//        }
-//    }
-//
-//    private void encodeList(Tuple tuple, MethodVisitor mv, String currentClass) {
-//        String[]  arr = tuple.getSignature().split("<");
-//        String listType = arr[1].split(">")[0];
-//
-//        mv.visitVarInsn(ALOAD, 3);
-//        mv.visitVarInsn(ALOAD, 0);
-//        mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
-//        mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
-//        mv.visitInsn(POP); 
-//    }
-//
-//    private class Tuple {
-//        private final String name;
-//        private final String type;
-//        private final String signature;
-//        
-//        public Tuple(String name, String type, String signature) {
-//            this.name = name;
-//            this.type = type;
-//            this.signature = signature;
-//        }
-//
-//        public String getName() {
-//            return name;
-//        }
-//
-//        public String getSignature() {
-//            return signature;
-//        }
-//
-//        public String getType() {
-//            return type;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return name + " : " + type + " : " + signature;
-//        }
-//    }
-//}
+import java.io.PrintWriter;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.lang.instrument.Instrumentation;
+import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.List;
+import javassist.bytecode.Opcode;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import static org.objectweb.asm.Opcodes.*;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.util.TraceClassVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ *
+ * @author atrimble
+ */
+public class MessageTransformer implements ClassFileTransformer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MessageTransformer.class);
+
+    public static void premain(String agentArgs, Instrumentation inst) {
+        inst.addTransformer(new MessageTransformer());
+    }
+
+    @Override
+    public byte[] transform(ClassLoader loader, String className,
+            Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
+            byte[] b) throws IllegalClassFormatException {
+
+        ClassReader cr = new ClassReader(b);
+        ClassWriter cw = new ClassWriter(cr, 0);
+        ClassVisitor cv = new MessageAdapter(cw);
+        cr.accept(cv, 0);
+        if (((MessageAdapter) cv).wasMessage()) {
+            //LOG.info("Returning transformed class");
+
+//            cr = new ClassReader(cw.toByteArray());
+//            cv = new TraceClassVisitor(new PrintWriter(System.out));
+//            cr.accept(cv, 0);
+
+            return cw.toByteArray();
+        } else {
+            return null;
+        }
+    }
+
+    public class MessageAdapter extends ClassVisitor {
+
+        String currentClass;
+        boolean isMessage = false;
+        boolean msgPackDefined = false;
+        List<Tuple> fields = new ArrayList<>();
+
+        public MessageAdapter(ClassVisitor cv) {
+            super(ASM4, cv);
+        }
+
+        public boolean wasMessage() {
+            return isMessage;
+        }
+
+        private class AddMsgPack extends MethodVisitor {
+
+            public AddMsgPack(MethodVisitor mv) {
+                super(ASM4, mv);
+            }
+
+            @Override public void visitCode() {
+                mv.visitTypeInsn(NEW, "org/msgpack/MessagePack");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "org/msgpack/MessagePack", "<init>", "()V");
+                mv.visitFieldInsn(PUTSTATIC, currentClass, "_MSG_PACK_", "Lorg/msgpack/MessagePack;");
+            }
+
+            @Override
+            public void visitMaxs(int maxStack, int maxLocals) {
+                mv.visitMaxs(maxStack + 1, maxLocals);
+            }
+        }
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+            if (desc.equals("Lcom/a2i/sim/core/Message;")) {
+                isMessage = true;
+            }
+
+            return cv.visitAnnotation(desc, visible);
+        }
+
+        @Override
+        public MethodVisitor visitMethod(int version, String name, String desc, String signature, String[] interfaces) {
+
+            MethodVisitor mv = cv.visitMethod(version, name, desc, signature, interfaces);
+
+            if (name.equals("<init>")) {
+                mv = new AddMsgPack(mv);
+            }
+
+            return mv;
+        }
+
+        @Override
+        public void visit(int version, int access, String name,
+                String signature, String superName, String[] interfaces) {
+
+            currentClass = name;
+            isMessage = false;
+            msgPackDefined = false;
+
+            cv.visit(version, access, name, signature, superName, interfaces);
+        }
+
+        @Override
+        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+            if (isMessage) {
+
+                boolean isTransient = (access & ACC_TRANSIENT) != 0;
+
+                if (!isTransient) {
+                    fields.add(new Tuple(name, desc, signature));
+                }
+
+                if (!msgPackDefined) {
+                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL + ACC_STATIC, "_MSG_PACK_", "Lorg/msgpack/MessagePack;", null, null);
+                    fv.visitEnd();
+                    msgPackDefined = true;
+                }
+            }
+
+            return cv.visitField(access, name, desc, signature, value);
+        }
+
+        @Override
+        public void visitEnd() {
+            
+            if (isMessage) {
+
+                //LOG.info("Adding encoder to " + currentClass);
+
+                MethodVisitor mv = cv.visitMethod(ACC_PUBLIC, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;", null, new String[]{"java/io/IOException", "java/lang/InstantiationException", "java/lang/IllegalAccessException", "java/lang/NoSuchMethodException", "java/lang/IllegalArgumentException", "java/lang/reflect/InvocationTargetException"});
+                mv.visitCode();
+                mv.visitInsn(ACONST_NULL);
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitFieldInsn(GETSTATIC, currentClass + "$1", "$SwitchMap$org$msgpack$type$ValueType", "[I");
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "getType", "()Lorg/msgpack/type/ValueType;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/ValueType", "ordinal", "()I");
+                mv.visitInsn(IALOAD);
+                Label l0 = new Label();
+                Label l1 = new Label();
+                Label l2 = new Label();
+                Label l3 = new Label();
+                Label l4 = new Label();
+                Label l5 = new Label();
+                Label l6 = new Label();
+                mv.visitTableSwitchInsn(1, 7, l6, new Label[]{l0, l1, l2, l3, l4, l5, l6});
+                mv.visitLabel(l0);
+                mv.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"java/lang/Object"}, 0, null);
+                mv.visitTypeInsn(NEW, "java/util/ArrayList");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asArrayValue", "()Lorg/msgpack/type/ArrayValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/ArrayValue", "getElementArray", "()[Lorg/msgpack/type/Value;");
+                mv.visitVarInsn(ASTORE, 4);
+                mv.visitInsn(ICONST_0);
+                mv.visitVarInsn(ISTORE, 5);
+                Label l7 = new Label();
+                mv.visitLabel(l7);
+                mv.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[Lorg/msgpack/type/Value;", Opcodes.INTEGER}, 0, null);
+                mv.visitVarInsn(ILOAD, 5);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitInsn(ARRAYLENGTH);
+                Label l8 = new Label();
+                mv.visitJumpInsn(IF_ICMPGE, l8);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitTypeInsn(CHECKCAST, "java/util/List");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitVarInsn(ILOAD, 5);
+                mv.visitInsn(AALOAD);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitIincInsn(5, 1);
+                mv.visitJumpInsn(GOTO, l7);
+                mv.visitLabel(l8);
+                mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                Label l9 = new Label();
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l1);
+                mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asBooleanValue", "()Lorg/msgpack/type/BooleanValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/BooleanValue", "getBoolean", "()Z");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l2);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/Float;"));
+                Label l10 = new Label();
+                mv.visitJumpInsn(IF_ACMPNE, l10);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asFloatValue", "()Lorg/msgpack/type/FloatValue;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/FloatValue", "getFloat", "()F");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l10);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/Double;"));
+                mv.visitJumpInsn(IF_ACMPNE, l9);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asFloatValue", "()Lorg/msgpack/type/FloatValue;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/FloatValue", "getDouble", "()D");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l3);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/Integer;"));
+                Label l11 = new Label();
+                mv.visitJumpInsn(IF_ACMPNE, l11);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asIntegerValue", "()Lorg/msgpack/type/IntegerValue;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/IntegerValue", "getInt", "()I");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l11);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/Long;"));
+                Label l12 = new Label();
+                mv.visitJumpInsn(IF_ACMPNE, l12);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asIntegerValue", "()Lorg/msgpack/type/IntegerValue;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/IntegerValue", "getLong", "()J");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf", "(J)Ljava/lang/Long;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l12);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/Byte;"));
+                Label l13 = new Label();
+                mv.visitJumpInsn(IF_ACMPNE, l13);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asIntegerValue", "()Lorg/msgpack/type/IntegerValue;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/IntegerValue", "getByte", "()B");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l13);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/Short;"));
+                mv.visitJumpInsn(IF_ACMPNE, l9);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asIntegerValue", "()Lorg/msgpack/type/IntegerValue;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/IntegerValue", "getShort", "()S");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l4);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitTypeInsn(NEW, "java/util/HashMap");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asMapValue", "()Lorg/msgpack/type/MapValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/MapValue", "keySet", "()Ljava/util/Set;");
+                mv.visitVarInsn(ASTORE, 5);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set", "iterator", "()Ljava/util/Iterator;");
+                mv.visitVarInsn(ASTORE, 6);
+                Label l14 = new Label();
+                mv.visitLabel(l14);
+                mv.visitFrame(Opcodes.F_APPEND, 3, new Object[]{Opcodes.TOP, "java/util/Set", "java/util/Iterator"}, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z");
+                Label l15 = new Label();
+                mv.visitJumpInsn(IFEQ, l15);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "org/msgpack/type/Value");
+                mv.visitVarInsn(ASTORE, 7);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asMapValue", "()Lorg/msgpack/type/MapValue;");
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/MapValue", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "org/msgpack/type/Value");
+                mv.visitVarInsn(ASTORE, 8);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitTypeInsn(CHECKCAST, "java/util/Map");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/String;"));
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 8);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l14);
+                mv.visitLabel(l15);
+                mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l5);
+                mv.visitFrame(Opcodes.F_CHOP, 2, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn(Type.getType("Ljava/lang/String;"));
+                Label l16 = new Label();
+                mv.visitJumpInsn(IF_ACMPNE, l16);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asRawValue", "()Lorg/msgpack/type/RawValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/RawValue", "getString", "()Ljava/lang/String;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l16);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "newInstance", "()Ljava/lang/Object;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitLdcInsn("_decode_");
+                mv.visitInsn(ICONST_1);
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/Class");
+                mv.visitInsn(DUP);
+                mv.visitInsn(ICONST_0);
+                mv.visitLdcInsn(Type.getType("[B"));
+                mv.visitInsn(AASTORE);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;");
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitInsn(ICONST_1);
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+                mv.visitInsn(DUP);
+                mv.visitInsn(ICONST_0);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asRawValue", "()Lorg/msgpack/type/RawValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/RawValue", "getByteArray", "()[B");
+                mv.visitInsn(AASTORE);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l9);
+                mv.visitLabel(l6);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitTypeInsn(NEW, "java/io/IOException");
+                mv.visitInsn(DUP);
+                mv.visitLdcInsn("Cannot decode message");
+                mv.visitMethodInsn(INVOKESPECIAL, "java/io/IOException", "<init>", "(Ljava/lang/String;)V");
+                mv.visitInsn(ATHROW);
+                mv.visitLabel(l9);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitInsn(ARETURN);
+                mv.visitMaxs(6, 9);
+                mv.visitEnd();
+
+                mv = cv.visitMethod(ACC_PUBLIC, "_decodeString_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;", null, new String[] { "java/io/IOException", "java/lang/InstantiationException", "java/lang/IllegalAccessException", "java/lang/NoSuchMethodException", "java/lang/IllegalArgumentException", "java/lang/reflect/InvocationTargetException" });
+                mv.visitCode();
+                mv.visitInsn(ACONST_NULL);
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitFieldInsn(GETSTATIC, currentClass + "$1", "$SwitchMap$org$msgpack$type$ValueType", "[I");
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "getType", "()Lorg/msgpack/type/ValueType;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/ValueType", "ordinal", "()I");
+                mv.visitInsn(IALOAD);
+                l0 = new Label();
+                l1 = new Label();
+                l2 = new Label();
+                l3 = new Label();
+                mv.visitTableSwitchInsn(1, 7, l1, new Label[] { l0, l1, l1, l1, l2, l3, l1 });
+                mv.visitLabel(l0);
+                mv.visitFrame(Opcodes.F_APPEND,1, new Object[] {"java/lang/Object"}, 0, null);
+                mv.visitTypeInsn(NEW, "java/util/ArrayList");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asArrayValue", "()Lorg/msgpack/type/ArrayValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/ArrayValue", "getElementArray", "()[Lorg/msgpack/type/Value;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitInsn(ICONST_0);
+                mv.visitVarInsn(ISTORE, 4);
+                l4 = new Label();
+                mv.visitLabel(l4);
+                mv.visitFrame(Opcodes.F_APPEND,2, new Object[] {"[Lorg/msgpack/type/Value;", Opcodes.INTEGER}, 0, null);
+                mv.visitVarInsn(ILOAD, 4);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitInsn(ARRAYLENGTH);
+                l5 = new Label();
+                mv.visitJumpInsn(IF_ICMPGE, l5);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitTypeInsn(CHECKCAST, "java/util/List");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitVarInsn(ILOAD, 4);
+                mv.visitInsn(AALOAD);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decodeString_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitIincInsn(4, 1);
+                mv.visitJumpInsn(GOTO, l4);
+                mv.visitLabel(l5);
+                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
+                l6 = new Label();
+                mv.visitJumpInsn(GOTO, l6);
+                mv.visitLabel(l2);
+                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
+                mv.visitTypeInsn(NEW, "java/util/HashMap");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asMapValue", "()Lorg/msgpack/type/MapValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/MapValue", "keySet", "()Ljava/util/Set;");
+                mv.visitVarInsn(ASTORE, 4);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set", "iterator", "()Ljava/util/Iterator;");
+                mv.visitVarInsn(ASTORE, 5);
+                l7 = new Label();
+                mv.visitLabel(l7);
+                mv.visitFrame(Opcodes.F_APPEND,3, new Object[] {Opcodes.TOP, "java/util/Set", "java/util/Iterator"}, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z");
+                l8 = new Label();
+                mv.visitJumpInsn(IFEQ, l8);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "org/msgpack/type/Value");
+                mv.visitVarInsn(ASTORE, 6);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asMapValue", "()Lorg/msgpack/type/MapValue;");
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/MapValue", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "org/msgpack/type/Value");
+                mv.visitVarInsn(ASTORE, 7);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitTypeInsn(CHECKCAST, "java/util/Map");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decodeString_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decodeString_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l7);
+                mv.visitLabel(l8);
+                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
+                mv.visitJumpInsn(GOTO, l6);
+                mv.visitLabel(l3);
+                mv.visitFrame(Opcodes.F_CHOP,2, null, 0, null);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asRawValue", "()Lorg/msgpack/type/RawValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/RawValue", "getString", "()Ljava/lang/String;");
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitJumpInsn(GOTO, l6);
+                mv.visitLabel(l1);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitTypeInsn(NEW, "java/io/IOException");
+                mv.visitInsn(DUP);
+                mv.visitLdcInsn("Cannot decode message");
+                mv.visitMethodInsn(INVOKESPECIAL, "java/io/IOException", "<init>", "(Ljava/lang/String;)V");
+                mv.visitInsn(ATHROW);
+                mv.visitLabel(l6);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitInsn(ARETURN);
+                mv.visitMaxs(4, 8);
+                mv.visitEnd();
+
+                mv = cv.visitMethod(ACC_PUBLIC, "_decodeBoolean_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;", null, new String[] { "java/io/IOException", "java/lang/InstantiationException", "java/lang/IllegalAccessException", "java/lang/NoSuchMethodException", "java/lang/IllegalArgumentException", "java/lang/reflect/InvocationTargetException" });
+                mv.visitCode();
+                mv.visitInsn(ACONST_NULL);
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitFieldInsn(GETSTATIC, currentClass + "$1", "$SwitchMap$org$msgpack$type$ValueType", "[I");
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "getType", "()Lorg/msgpack/type/ValueType;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/type/ValueType", "ordinal", "()I");
+                mv.visitInsn(IALOAD);
+                l0 = new Label();
+                l1 = new Label();
+                l2 = new Label();
+                l3 = new Label();
+                mv.visitTableSwitchInsn(1, 7, l2, new Label[] { l0, l1, l2, l2, l3, l2, l2 });
+                mv.visitLabel(l0);
+                mv.visitFrame(Opcodes.F_APPEND,1, new Object[] {"java/lang/Object"}, 0, null);
+                mv.visitTypeInsn(NEW, "java/util/ArrayList");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asArrayValue", "()Lorg/msgpack/type/ArrayValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/ArrayValue", "getElementArray", "()[Lorg/msgpack/type/Value;");
+                mv.visitVarInsn(ASTORE, 3);
+                mv.visitInsn(ICONST_0);
+                mv.visitVarInsn(ISTORE, 4);
+                l4 = new Label();
+                mv.visitLabel(l4);
+                mv.visitFrame(Opcodes.F_APPEND,2, new Object[] {"[Lorg/msgpack/type/Value;", Opcodes.INTEGER}, 0, null);
+                mv.visitVarInsn(ILOAD, 4);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitInsn(ARRAYLENGTH);
+                l5 = new Label();
+                mv.visitJumpInsn(IF_ICMPGE, l5);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitTypeInsn(CHECKCAST, "java/util/List");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitVarInsn(ILOAD, 4);
+                mv.visitInsn(AALOAD);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decodeBoolean_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitIincInsn(4, 1);
+                mv.visitJumpInsn(GOTO, l4);
+                mv.visitLabel(l5);
+                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
+                l6 = new Label();
+                mv.visitJumpInsn(GOTO, l6);
+                mv.visitLabel(l1);
+                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asBooleanValue", "()Lorg/msgpack/type/BooleanValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/BooleanValue", "getBoolean", "()Z");
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;");
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitJumpInsn(GOTO, l6);
+                mv.visitLabel(l3);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitTypeInsn(NEW, "java/util/HashMap");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 2);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asMapValue", "()Lorg/msgpack/type/MapValue;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/MapValue", "keySet", "()Ljava/util/Set;");
+                mv.visitVarInsn(ASTORE, 4);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set", "iterator", "()Ljava/util/Iterator;");
+                mv.visitVarInsn(ASTORE, 5);
+                l7 = new Label();
+                mv.visitLabel(l7);
+                mv.visitFrame(Opcodes.F_APPEND,3, new Object[] {Opcodes.TOP, "java/util/Set", "java/util/Iterator"}, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z");
+                l8 = new Label();
+                mv.visitJumpInsn(IFEQ, l8);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "org/msgpack/type/Value");
+                mv.visitVarInsn(ASTORE, 6);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/Value", "asMapValue", "()Lorg/msgpack/type/MapValue;");
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/type/MapValue", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "org/msgpack/type/Value");
+                mv.visitVarInsn(ASTORE, 7);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitTypeInsn(CHECKCAST, "java/util/Map");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decodeString_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;");
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decodeBoolean_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l7);
+                mv.visitLabel(l8);
+                mv.visitFrame(Opcodes.F_CHOP,1, null, 0, null);
+                mv.visitJumpInsn(GOTO, l6);
+                mv.visitLabel(l2);
+                mv.visitFrame(Opcodes.F_CHOP,2, null, 0, null);
+                mv.visitTypeInsn(NEW, "java/io/IOException");
+                mv.visitInsn(DUP);
+                mv.visitLdcInsn("Cannot decode message");
+                mv.visitMethodInsn(INVOKESPECIAL, "java/io/IOException", "<init>", "(Ljava/lang/String;)V");
+                mv.visitInsn(ATHROW);
+                mv.visitLabel(l6);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitInsn(ARETURN);
+                mv.visitMaxs(4, 8);
+                mv.visitEnd();
+
+                mv = cv.visitMethod(ACC_PRIVATE, "_encodeList_", "(Ljava/util/List;Ljava/util/List;Ljava/lang/Class;)V", null, new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException", "java/lang/IllegalArgumentException", "java/lang/reflect/InvocationTargetException"});
+                mv.visitCode();
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;");
+                mv.visitVarInsn(ASTORE, 4);
+                l0 = new Label();
+                mv.visitLabel(l0);
+                mv.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"java/util/Iterator"}, 0, null);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z");
+                l1 = new Label();
+                mv.visitJumpInsn(IFEQ, l1);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;");
+                mv.visitVarInsn(ASTORE, 5);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/util/List");
+                l2 = new Label();
+                mv.visitJumpInsn(IFEQ, l2);
+                mv.visitTypeInsn(NEW, "java/util/ArrayList");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 6);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(CHECKCAST, "java/util/List");
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeList_", "(Ljava/util/List;Ljava/util/List;Ljava/lang/Class;)V");
+                l3 = new Label();
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l2);
+                mv.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"java/lang/Object"}, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/util/Map");
+                l4 = new Label();
+                mv.visitJumpInsn(IFEQ, l4);
+                mv.visitTypeInsn(NEW, "java/util/HashMap");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 6);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(CHECKCAST, "java/util/Map");
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeMap_", "(Ljava/util/Map;Ljava/util/Map;Ljava/lang/Class;)V");
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l4);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Boolean");
+                l5 = new Label();
+                mv.visitJumpInsn(IFEQ, l5);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l5);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Byte");
+                l6 = new Label();
+                mv.visitJumpInsn(IFEQ, l6);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l6);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Short");
+                l7 = new Label();
+                mv.visitJumpInsn(IFEQ, l7);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l7);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Integer");
+                l8 = new Label();
+                mv.visitJumpInsn(IFEQ, l8);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l8);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Float");
+                l9 = new Label();
+                mv.visitJumpInsn(IFEQ, l9);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l9);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Long");
+                l10 = new Label();
+                mv.visitJumpInsn(IFEQ, l10);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l10);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Double");
+                l11 = new Label();
+                mv.visitJumpInsn(IFEQ, l11);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l11);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/String");
+                l12 = new Label();
+                mv.visitJumpInsn(IFEQ, l12);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l12);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitLdcInsn("_encode_");
+                mv.visitInsn(ICONST_0);
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/Class");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;");
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitInsn(ICONST_0);
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "[B");
+                mv.visitTypeInsn(CHECKCAST, "[B");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z");
+                mv.visitInsn(POP);
+                mv.visitLabel(l3);
+                mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                mv.visitJumpInsn(GOTO, l0);
+                mv.visitLabel(l1);
+                mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                mv.visitInsn(RETURN);
+                mv.visitMaxs(4, 7);
+                mv.visitEnd();
+
+                mv = cv.visitMethod(ACC_PRIVATE, "_encodeMap_", "(Ljava/util/Map;Ljava/util/Map;Ljava/lang/Class;)V", null, new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException", "java/lang/IllegalArgumentException", "java/lang/reflect/InvocationTargetException"});
+                mv.visitCode();
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "keySet", "()Ljava/util/Set;");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Set", "iterator", "()Ljava/util/Iterator;");
+                mv.visitVarInsn(ASTORE, 4);
+                l0 = new Label();
+                mv.visitLabel(l0);
+                mv.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"java/util/Iterator"}, 0, null);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z");
+                l1 = new Label();
+                mv.visitJumpInsn(IFEQ, l1);
+                mv.visitVarInsn(ALOAD, 4);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;");
+                mv.visitVarInsn(ASTORE, 5);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitVarInsn(ASTORE, 6);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/util/List");
+                l2 = new Label();
+                mv.visitJumpInsn(IFEQ, l2);
+                mv.visitTypeInsn(NEW, "java/util/ArrayList");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 7);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(CHECKCAST, "java/util/List");
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeList_", "(Ljava/util/List;Ljava/util/List;Ljava/lang/Class;)V");
+                l3 = new Label();
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l2);
+                mv.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"java/lang/Object", "java/lang/Object"}, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/util/Map");
+                l4 = new Label();
+                mv.visitJumpInsn(IFEQ, l4);
+                mv.visitTypeInsn(NEW, "java/util/HashMap");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 7);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 7);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(CHECKCAST, "java/util/Map");
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeMap_", "(Ljava/util/Map;Ljava/util/Map;Ljava/lang/Class;)V");
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l4);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Boolean");
+                l5 = new Label();
+                mv.visitJumpInsn(IFEQ, l5);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l5);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Byte");
+                l6 = new Label();
+                mv.visitJumpInsn(IFEQ, l6);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l6);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Short");
+                l7 = new Label();
+                mv.visitJumpInsn(IFEQ, l7);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l7);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Integer");
+                l8 = new Label();
+                mv.visitJumpInsn(IFEQ, l8);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l8);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Float");
+                l9 = new Label();
+                mv.visitJumpInsn(IFEQ, l9);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l9);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Long");
+                l10 = new Label();
+                mv.visitJumpInsn(IFEQ, l10);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l10);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/Double");
+                l11 = new Label();
+                mv.visitJumpInsn(IFEQ, l11);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l11);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitTypeInsn(INSTANCEOF, "java/lang/String");
+                l12 = new Label();
+                mv.visitJumpInsn(IFEQ, l12);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, l3);
+                mv.visitLabel(l12);
+                mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 5);
+                mv.visitVarInsn(ALOAD, 3);
+                mv.visitLdcInsn("_encode_");
+                mv.visitInsn(ICONST_0);
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/Class");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;");
+                mv.visitVarInsn(ALOAD, 6);
+                mv.visitInsn(ICONST_0);
+                mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitTypeInsn(CHECKCAST, "[B");
+                mv.visitTypeInsn(CHECKCAST, "[B");
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+                mv.visitInsn(POP);
+                mv.visitLabel(l3);
+                mv.visitFrame(Opcodes.F_CHOP, 2, null, 0, null);
+                mv.visitJumpInsn(GOTO, l0);
+                mv.visitLabel(l1);
+                mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+                mv.visitInsn(RETURN);
+                mv.visitMaxs(5, 8);
+                mv.visitEnd();
+
+                mv = cv.visitMethod(ACC_PUBLIC, "_encode_", "()[B", null, new String[]{"java/io/IOException", "java/lang/NoSuchMethodException", "java/lang/IllegalAccessException", "java/lang/IllegalArgumentException", "java/lang/reflect/InvocationTargetException"});
+                mv.visitCode();
+                mv.visitTypeInsn(NEW, "java/io/ByteArrayOutputStream");
+                mv.visitInsn(DUP);
+                mv.visitMethodInsn(INVOKESPECIAL, "java/io/ByteArrayOutputStream", "<init>", "()V");
+                mv.visitVarInsn(ASTORE, 1);
+                mv.visitFieldInsn(GETSTATIC, currentClass, "_MSG_PACK_", "Lorg/msgpack/MessagePack;");
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/MessagePack", "createPacker", "(Ljava/io/OutputStream;)Lorg/msgpack/packer/Packer;");
+                mv.visitVarInsn(ASTORE, 2);
+
+                for (Tuple tuple : fields) {
+                    String sig;
+
+                    switch (tuple.getType()) {
+                        case "Z":
+                        case "B":
+                        case "S":
+                        case "I":
+                        case "F":
+                        case "J":
+                        case "D":
+                        case "Ljava/lang/String;":
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(" + tuple.getType() + ")Lorg/msgpack/packer/Packer;");
+                            mv.visitInsn(POP);
+                            break;
+                        case "[B":
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "([B)Lorg/msgpack/packer/Packer;");
+                            mv.visitInsn(POP);
+                            break;
+                        case "[Z":
+                        case "[S":
+                        case "[I":
+                        case "[F":
+                        case "[J":
+                        case "[D":
+                        case "[Ljava/lang/String;":
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
+                            mv.visitInsn(POP);
+                            break;
+                        case "Ljava/util/List;":
+                            sig = getType(tuple.getSignature());
+                            switch (sig) {
+                                case "Ljava/lang/Boolean;":
+                                case "Ljava/lang/Byte;":
+                                case "Ljava/lang/Short;":
+                                case "Ljava/lang/Integer;":
+                                case "Ljava/lang/Float;":
+                                case "Ljava/lang/Long;":
+                                case "Ljava/lang/Double;":
+                                case "Ljava/lang/String;":
+                                    mv.visitVarInsn(ALOAD, 2);
+                                    mv.visitVarInsn(ALOAD, 0);
+                                    mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                                    mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
+                                    mv.visitInsn(POP);
+                                    break;
+                                default:
+                                    mv.visitTypeInsn(NEW, "java/util/ArrayList");
+                                    mv.visitInsn(DUP);
+                                    mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V");
+                                    mv.visitVarInsn(ASTORE, 4);
+                                    mv.visitVarInsn(ALOAD, 0);
+                                    mv.visitVarInsn(ALOAD, 4);
+                                    mv.visitVarInsn(ALOAD, 0);
+                                    mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                                    mv.visitLdcInsn(Type.getType(sig));
+                                    mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeList_", "(Ljava/util/List;Ljava/util/List;Ljava/lang/Class;)V");
+                                    mv.visitVarInsn(ALOAD, 2);
+                                    mv.visitVarInsn(ALOAD, 4);
+                                    mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
+                                    mv.visitInsn(POP);
+                                    break;
+                            }
+                            break;
+                        case "Ljava/util/Map;":
+                            sig = getType(tuple.getSignature());
+                            switch (sig) {
+                                case "Ljava/lang/Boolean;":
+                                case "Ljava/lang/Byte;":
+                                case "Ljava/lang/Short;":
+                                case "Ljava/lang/Integer;":
+                                case "Ljava/lang/Float;":
+                                case "Ljava/lang/Long;":
+                                case "Ljava/lang/Double;":
+                                case "Ljava/lang/String;":
+                                    mv.visitVarInsn(ALOAD, 2);
+                                    mv.visitVarInsn(ALOAD, 0);
+                                    mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                                    mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
+                                    mv.visitInsn(POP);
+                                    break;
+                                default:
+                                    mv.visitTypeInsn(NEW, "java/util/HashMap");
+                                    mv.visitInsn(DUP);
+                                    mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V");
+                                    mv.visitVarInsn(ASTORE, 6);
+                                    mv.visitVarInsn(ALOAD, 0);
+                                    mv.visitVarInsn(ALOAD, 6);
+                                    mv.visitVarInsn(ALOAD, 0);
+                                    mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                                    mv.visitLdcInsn(Type.getType(sig));
+                                    mv.visitMethodInsn(INVOKESPECIAL, currentClass, "_encodeMap_", "(Ljava/util/Map;Ljava/util/Map;Ljava/lang/Class;)V");
+                                    mv.visitVarInsn(ALOAD, 2);
+                                    mv.visitVarInsn(ALOAD, 6);
+                                    mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(Ljava/lang/Object;)Lorg/msgpack/packer/Packer;");
+                                    mv.visitInsn(POP);
+                                    break;
+                            }
+                            break;
+                        default:
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                            mv.visitMethodInsn(INVOKEVIRTUAL, tuple.getType(), "_encode_", "()[B");
+                            mv.visitVarInsn(ASTORE, 3);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitVarInsn(ALOAD, 3);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "([B)Lorg/msgpack/packer/Packer;");
+                            mv.visitInsn(POP);
+                            break;
+                    }
+                }
+
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/ByteArrayOutputStream", "toByteArray", "()[B");
+                mv.visitInsn(ARETURN);
+                mv.visitMaxs(4, 8);
+                mv.visitEnd();
+
+                mv = cv.visitMethod(ACC_PUBLIC, "_decode_", "([B)V", null, new String[]{"java/io/IOException", "java/lang/InstantiationException", "java/lang/IllegalAccessException", "java/lang/NoSuchMethodException", "java/lang/IllegalArgumentException", "java/lang/reflect/InvocationTargetException"});
+
+//                mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+//                mv.visitLdcInsn("Decoding");
+//                mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+
+                mv.visitCode();
+                mv.visitFieldInsn(GETSTATIC, currentClass, "_MSG_PACK_", "Lorg/msgpack/MessagePack;");
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "org/msgpack/MessagePack", "createBufferUnpacker", "([B)Lorg/msgpack/unpacker/BufferUnpacker;");
+                mv.visitVarInsn(ASTORE, 2);
+
+                for (Tuple tuple : fields) {
+                    String sig;
+
+                    switch (tuple.getType()) {
+                        case "Z":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+//                            mv.visitLdcInsn(Type.getType("Ljava/lang/Boolean;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decodeBoolean_", "(Lorg/msgpack/type/Value;)Ljava/lang/Object;");
+//                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/Boolean");
+                            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()" + tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "B":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType("Ljava/lang/Byte;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/Byte");
+                            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()" + tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "S":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType("Ljava/lang/Short;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/Short");
+                            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Short", "shortValue", "()" + tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "I":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType("Ljava/lang/Integer;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/Integer");
+                            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()" + tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "F":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType("Ljava/lang/Float;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/Float");
+                            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()" + tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "J":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType("Ljava/lang/Long;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/Long");
+                            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()" + tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "D":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType("Ljava/lang/Double;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/Double");
+                            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()" + tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "Ljava/lang/String;":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType("Ljava/lang/String;"));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/lang/String");
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "[Z":
+                        case "[B":
+                        case "[S":
+                        case "[I":
+                        case "[F":
+                        case "[J":
+                        case "[D":
+                        case "[Ljava/lang/String;":
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitLdcInsn(Type.getType(tuple.getType()));
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "read", "(Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, tuple.getType());
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                        case "Ljava/util/List;":
+                            sig = getType(tuple.getSignature());
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType(sig));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/util/List");
+                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "addAll", "(Ljava/util/Collection;)Z");
+                            mv.visitInsn(POP);
+                            break;
+                        case "Ljava/util/Map;":
+                            sig = getType(tuple.getSignature());
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType(sig));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, "java/util/Map");
+                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "putAll", "(Ljava/util/Map;)V");
+                            break;
+                        default:
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 0);
+                            mv.visitVarInsn(ALOAD, 2);
+                            mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/unpacker/Unpacker", "readValue", "()Lorg/msgpack/type/Value;");
+                            mv.visitLdcInsn(Type.getType(tuple.getType()));
+                            mv.visitMethodInsn(INVOKEVIRTUAL, currentClass, "_decode_", "(Lorg/msgpack/type/Value;Ljava/lang/Class;)Ljava/lang/Object;");
+                            mv.visitTypeInsn(CHECKCAST, tuple.getType().substring(1, tuple.getType().length() - 1));
+                            mv.visitFieldInsn(PUTFIELD, currentClass, tuple.getName(), tuple.getType());
+                            break;
+                    }
+                }
+
+                mv.visitInsn(RETURN);
+                mv.visitMaxs(4, 3);
+                mv.visitEnd();
+            }
+
+            cv.visitEnd();
+        }
+    }
+
+    private String getType(String signature) {
+        String[] arr = signature.split("<");
+        String type = arr[arr.length - 1];
+        arr = type.split(">");
+        type = arr[0];
+
+        String[] mapSplit = type.split(";");
+        if(mapSplit.length > 1) {
+            type = mapSplit[1] + ";";
+        }
+        
+        return type;
+    }
+
+    private class Tuple {
+
+        private final String name;
+        private final String type;
+        private final String signature;
+
+        public Tuple(String name, String type, String signature) {
+            this.name = name;
+            this.type = type;
+            this.signature = signature;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getSignature() {
+            return signature;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        @Override
+        public String toString() {
+            return name + " : " + type + " : " + signature;
+        }
+    }
+}

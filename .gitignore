@@ -1,5 +1,6 @@
 bin
 target
 *.log
+*.swp
 dependency-reduced-pom.xml
 *~

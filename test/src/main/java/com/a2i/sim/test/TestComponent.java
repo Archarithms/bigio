@@ -4,8 +4,9 @@
  * and open the template in the editor.
  */
 
-package com.a2i.sim;
+package com.a2i.sim.test;
 
+import com.a2i.sim.Speaker;
 import com.a2i.sim.core.MessageListener;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
