@@ -18,6 +18,7 @@ public class Envelope<T> {
     private int executeTime;
     private int millisecondsSinceMidnight;
     private String topic;
+    private String className;
     private byte[] payload;
 
     private boolean decoded = false;
@@ -133,5 +134,19 @@ public class Envelope<T> {
      */
     public void setMillisecondsSinceMidnight(int millisecondsSinceMidnight) {
         this.millisecondsSinceMidnight = millisecondsSinceMidnight;
+    }
+
+    /**
+     * @return the className
+     */
+    public String getClassName() {
+        return className;
+    }
+
+    /**
+     * @param className the className to set
+     */
+    public void setClassName(String className) {
+        this.className = className;
     }
 }

@@ -23,6 +23,7 @@ import org.msgpack.unpacker.Unpacker;
 public class GossipDecoder {
 
     private static final MessagePack msgPack = new MessagePack();
+    
     private static final Template<Map<String, String>> mapTemplate = 
             Templates.tMap(Templates.TString, Templates.TString);
     private static final Template<List<List<Integer>>> listTemplate = 
@@ -38,53 +39,18 @@ public class GossipDecoder {
 
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
 
-        GossipMessage message = new GossipMessage();
+        return decode(unpacker);
 
-        message.setSequence(unpacker.readInt());
-        
-        StringBuilder ipBuilder = new StringBuilder();
-        ipBuilder.append(
-                unpacker.readInt())
-                .append(".")
-                .append(unpacker.readInt())
-                .append(".")
-                .append(unpacker.readInt())
-                .append(".")
-                .append(unpacker.readInt());
-        
-        message.setIp(ipBuilder.toString());
-        message.setGossipPort(unpacker.readInt());
-        message.setDataPort(unpacker.readInt());
-        message.setMillisecondsSinceMidnight(unpacker.readInt());
-        message.getTags().putAll(unpacker.read(mapTemplate));
-        
-        List<List<Integer>> member = unpacker.read(listTemplate);
-        for(List<Integer> m : member) {
-            ipBuilder = new StringBuilder();
-            ipBuilder.append(
-                    m.get(0))
-                    .append(".")
-                    .append(m.get(1))
-                    .append(".")
-                    .append(m.get(2))
-                    .append(".")
-                    .append(m.get(3))
-                    .append(":")
-                    .append(m.get(4))
-                    .append(":")
-                    .append(m.get(5));
-            message.getMembers().add(ipBuilder.toString());
-        }
-        
-        message.getListeners().putAll(unpacker.read(mapTemplate));
-
-        return message;
     }
 
     public static GossipMessage decode(byte[] bytes) throws IOException {
 
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
+        
+        return decode(unpacker);
+    }
 
+    private static GossipMessage decode(Unpacker unpacker) throws IOException {
         GossipMessage message = new GossipMessage();
 
         message.setSequence(unpacker.readInt());

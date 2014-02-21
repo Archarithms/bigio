@@ -9,6 +9,8 @@ import com.a2i.sim.core.codec.EnvelopeEncoder;
 import com.a2i.sim.core.codec.GossipEncoder;
 import com.a2i.sim.Parameters;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +46,8 @@ public class RemoteMember extends AbstractMember {
     private static final String DEFAULT_RETRY_INTERVAL = "2000";
     private static final String DEFAULT_CONNECTION_TIMEOUT = "5000";
     private static final int CLIENT_THREAD_POOL_SIZE = 2;
+    private static final int GOSSIP_WORKER_THREADS = 2;
+    private static final int DATA_WORKER_THREADS = 2;
     private static final Logger LOG = LoggerFactory.getLogger(RemoteMember.class);
 
     private int maxRetry;
@@ -94,7 +99,7 @@ public class RemoteMember extends AbstractMember {
     public void send(final Envelope message) throws IOException {
         byte[] bytes = EnvelopeEncoder.encode(message);
         if(dataChannel != null) {
-            dataChannel.writeAndFlush(bytes);
+            dataChannel.writeAndFlush(Unpooled.wrappedBuffer(bytes));
         }
     }
 
@@ -127,7 +132,7 @@ public class RemoteMember extends AbstractMember {
     private void initializeGossipClient() {
         LOG.debug("Initializing gossip client");
 
-        gossipWorkerGroup = new NioEventLoopGroup();
+        gossipWorkerGroup = new NioEventLoopGroup(GOSSIP_WORKER_THREADS);
             
         Bootstrap b = new Bootstrap();
         b.group(gossipWorkerGroup);
@@ -137,6 +142,7 @@ public class RemoteMember extends AbstractMember {
         b.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
+                ch.config().setAllocator(new PooledByteBufAllocator());
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new GossipExceptionHandler());
@@ -168,16 +174,20 @@ public class RemoteMember extends AbstractMember {
     private void initializeDataClient() {
         LOG.debug("Initializing data client");
 
-        dataWorkerGroup = new NioEventLoopGroup();
+        dataWorkerGroup = new NioEventLoopGroup(DATA_WORKER_THREADS);
             
         Bootstrap b = new Bootstrap();
-        b.group(dataWorkerGroup);
-        b.channel(NioSocketChannel.class);
-        b.option(ChannelOption.SO_KEEPALIVE, true);
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout);
-        b.handler(new ChannelInitializer<SocketChannel>() {
+        b.group(dataWorkerGroup)
+         .channel(NioSocketChannel.class)
+         .option(ChannelOption.SO_SNDBUF, 262144)
+         .option(ChannelOption.SO_RCVBUF, 262144)
+         .option(ChannelOption.SO_KEEPALIVE, true)
+         .option(ChannelOption.TCP_NODELAY, true)
+         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
+         .handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
+                ch.config().setAllocator(new PooledByteBufAllocator());
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new DataExceptionHandler());
@@ -201,6 +211,12 @@ public class RemoteMember extends AbstractMember {
             retryDataConnection();
         } else {
             dataChannel = future.channel();
+
+            try {
+                dataChannel.closeFuture().sync();
+            } catch (InterruptedException ex) {
+                LOG.warn("Interrupted waiting for client to shutdown.", ex);
+            }
         }
     }
 

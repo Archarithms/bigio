@@ -6,15 +6,14 @@
 
 package com.a2i.sim.test;
 
+import com.a2i.sim.Parameters;
 import com.a2i.sim.Speaker;
 import com.a2i.sim.core.Envelope;
-import com.a2i.sim.core.MemberKey;
 import com.a2i.sim.core.MessageListener;
 import com.a2i.sim.core.TimeUtil;
 import com.a2i.sim.core.codec.EnvelopeEncoder;
 import com.a2i.sim.core.codec.GenericEncoder;
 import java.io.IOException;
-import java.util.logging.Level;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,9 +25,9 @@ import org.springframework.stereotype.Component;
  * @author atrimble
  */
 @Component
-public class TestComponent {
+public class BenchmarkComponent {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestComponent.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BenchmarkComponent.class);
     
     @Autowired
     private Speaker speaker;
@@ -36,6 +35,7 @@ public class TestComponent {
     private boolean running = true;
     private long time;
     private long messageCount = 0;
+    private long sendCount = 0;
 
     Thread senderThread = new Thread() {
         @Override
@@ -43,8 +43,8 @@ public class TestComponent {
             time = System.currentTimeMillis();
             while(running) {
                 try {
-//                    Thread.sleep(100l);
-                    speaker.send("HelloWorld", new SimpleMessage("This message should be en/decoded"));
+//                    Thread.sleep(1l);
+                    speaker.send("HelloWorld", new SimpleMessage("This message should be en/decoded", ++sendCount));
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -52,8 +52,23 @@ public class TestComponent {
         }
     };
 
-    public TestComponent() {
-        SimpleMessage m = new SimpleMessage("This message should be en/decoded");
+    Thread localThread = new Thread() {
+        @Override
+        public void run() {
+            time = System.currentTimeMillis();
+            while(running) {
+                try {
+//                    Thread.sleep(100l);
+                    speaker.send("HelloWorldLocal", new SimpleMessage("This message should be en/decoded", ++sendCount));
+                } catch(Exception ex) {
+                    LOG.debug("Error", ex);
+                }
+            }
+        }
+    };
+
+    public BenchmarkComponent() {
+        SimpleMessage m = new SimpleMessage("This message should be en/decoded", 0);
         try {
             byte[] payload = GenericEncoder.encode(m);
             Envelope envelope = new Envelope();
@@ -82,6 +97,7 @@ public class TestComponent {
                 
                 try {
                     senderThread.join();
+                    localThread.join();
                 } catch(InterruptedException ex) {
                     ex.printStackTrace();
                 }
@@ -89,26 +105,55 @@ public class TestComponent {
                 time = System.currentTimeMillis() - time;
 
                 long count = messageCount;
+                long send = sendCount;
 
                 long seconds = time / 1000;
                 long bandwidth = count / seconds;
+                long sendBandwidth = send / seconds;
 
                 LOG.info("Received " + count + " messages in " + seconds + 
                         " seconds for a bandwidth of " + bandwidth + " m/s");
+
+                LOG.info("Sent " + send + " messages in " + seconds + 
+                        " seconds for a bandwidth of " + sendBandwidth + " m/s");
             }
         });
     }
 
     @PostConstruct
     public void go() {
-        speaker.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
-            @Override
-            public void receive(SimpleMessage message) {
-                ++messageCount;
-                //LOG.debug("Woo Hoo!!! Got a message. '" + message.getString() + "'");
-            }
-        });
+        String role = Parameters.INSTANCE.getProperty("com.a2i.benchmark.role", "local");
 
-        senderThread.start();
+        if(role.equals("producer")) {
+            LOG.info("Running as a producer");
+            senderThread.start();
+        } else if(role.equals("consumer")) {
+            LOG.info("Running as a consumer");
+            speaker.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
+                long lastReceived = 0;
+                @Override
+                public void receive(SimpleMessage message) {
+                    if(messageCount == 0) {
+                        time = System.currentTimeMillis();
+                    } else {
+                        if(message.getSequence() - lastReceived > 1) {
+                            LOG.info("Dropped " + (message.getSequence() - lastReceived) + " messages");
+                        }
+                        lastReceived = message.getSequence();
+                    }
+                    ++messageCount;
+                }
+            });
+        } else {
+            LOG.info("Running in VM only");
+            speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
+                @Override
+                public void receive(SimpleMessage message) {
+                    ++messageCount;
+                }
+            });
+
+            localThread.start();
+        }
     }
 }

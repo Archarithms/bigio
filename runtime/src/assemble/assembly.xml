@@ -24,6 +24,12 @@
                 <exclude>com.a2i:a2isim-runtime</exclude>
             </excludes>
         </dependencySet>
+        <dependencySet>
+            <outputDirectory>components</outputDirectory>
+            <includes>
+                <include>com.a2i:a2isim-benchmark</include>
+            </includes>
+        </dependencySet>
     </dependencySets>
     <!--fileSets>
         <fileSet>
@@ -51,6 +57,13 @@
             <excludes>
                 <exclude>*/**</exclude>
             </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>config</directory>
+            <outputDirectory>/config</outputDirectory>
+            <includes>
+                <include>*/**</include>
+            </includes>
         </fileSet>
     </fileSets>
     <files>

@@ -19,6 +19,7 @@ import java.util.Set;
 import org.msgpack.MessagePack;
 import org.msgpack.packer.Packer;
 import org.msgpack.type.Value;
+import org.msgpack.type.ValueType;
 import org.msgpack.unpacker.Unpacker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,25 +100,22 @@ public class TestMessage implements Serializable {
     public Object decode(final Value value, final Class expectedType) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
         Object ret = null;
 
-        switch(value.getType()) {
-            case ARRAY:
+        //switch(value.getType()) {
+        if(value.getType() == ValueType.ARRAY) {
                 ret = new ArrayList();
                 Value[] elements = value.asArrayValue().getElementArray();
                 for(int i = 0; i < elements.length; ++i) {
                     ((List)ret).add(decode(elements[i], expectedType));
                 }
-                break;
-            case BOOLEAN:
+        } else if(value.getType() == ValueType.BOOLEAN) {
                 ret = value.asBooleanValue().getBoolean();
-                break;
-            case FLOAT:
+        } else if(value.getType() == ValueType.FLOAT) {
                 if(expectedType == Float.class) {
                     ret = value.asFloatValue().getFloat();
                 } else if(expectedType == Double.class) {
                     ret = value.asFloatValue().getDouble();
                 }
-                break;
-            case INTEGER:
+        } else if(value.getType() == ValueType.INTEGER) {
                 if(expectedType == Integer.class) {
                     ret = value.asIntegerValue().getInt();
                 } else if(expectedType == Long.class) {
@@ -127,95 +125,91 @@ public class TestMessage implements Serializable {
                 } else if(expectedType == Short.class) {
                     ret = value.asIntegerValue().getShort();
                 }
-                break;
-            case MAP:
+        } else if(value.getType() == ValueType.MAP) {
                 ret = new HashMap();
                 Set<Value> keys = value.asMapValue().keySet();
                 for(Value k : keys) {
                     Value v = value.asMapValue().get(k);
                     ((Map)ret).put(decode(k, String.class), decode(v, expectedType));
                 }
-                break;
-            case RAW:
+        } else if(value.getType() == ValueType.RAW) {
                 if(expectedType == String.class) {
                     ret = value.asRawValue().getString();
                 } else {
                     ret = expectedType.newInstance();
                     expectedType.getMethod("decode", byte[].class).invoke(ret, value.asRawValue().getByteArray());
                 }
-                break;
-            case NIL:
-            default:
+        } else {
                 throw new IOException("Cannot decode message");
         }
 
         return ret;
     }
 
-    public Object decodeString(final Value value) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
-        Object ret = null;
-
-        switch(value.getType()) {
-            case ARRAY:
-                ret = new ArrayList();
-                Value[] elements = value.asArrayValue().getElementArray();
-                for(int i = 0; i < elements.length; ++i) {
-                    ((List)ret).add(decodeString(elements[i]));
-                }
-                break;
-            case MAP:
-                ret = new HashMap();
-                Set<Value> keys = value.asMapValue().keySet();
-                for(Value k : keys) {
-                    Value v = value.asMapValue().get(k);
-                    ((Map)ret).put(decodeString(k), decodeString(v));
-                }
-                break;
-            case RAW:
-                ret = value.asRawValue().getString();
-                break;
-            case NIL:
-            default:
-                throw new IOException("Cannot decode message");
-        }
-
-        return ret;
-    }
-    
-    public Object decodeBoolean(final Value value) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
-        Object ret = null;
-
-        switch(value.getType()) {
-            case ARRAY:
-                ret = new ArrayList();
-                Value[] elements = value.asArrayValue().getElementArray();
-                for(int i = 0; i < elements.length; ++i) {
-                    ((List)ret).add(decodeBoolean(elements[i]));
-                }
-                break;
-            case BOOLEAN:
-                ret = value.asBooleanValue().getBoolean();
-                break;
-            case MAP:
-                ret = new HashMap();
-                Set<Value> keys = value.asMapValue().keySet();
-                for(Value k : keys) {
-                    Value v = value.asMapValue().get(k);
-                    ((Map)ret).put(decodeString(k), decodeBoolean(v));
-                }
-                break;
-            case NIL:
-            default:
-                throw new IOException("Cannot decode message");
-        }
-
-        return ret;
-    }
+//    public Object decodeString(final Value value) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
+//        Object ret = null;
+//
+//        switch(value.getType()) {
+//            case ARRAY:
+//                ret = new ArrayList();
+//                Value[] elements = value.asArrayValue().getElementArray();
+//                for(int i = 0; i < elements.length; ++i) {
+//                    ((List)ret).add(decodeString(elements[i]));
+//                }
+//                break;
+//            case MAP:
+//                ret = new HashMap();
+//                Set<Value> keys = value.asMapValue().keySet();
+//                for(Value k : keys) {
+//                    Value v = value.asMapValue().get(k);
+//                    ((Map)ret).put(decodeString(k), decodeString(v));
+//                }
+//                break;
+//            case RAW:
+//                ret = value.asRawValue().getString();
+//                break;
+//            case NIL:
+//            default:
+//                throw new IOException("Cannot decode message");
+//        }
+//
+//        return ret;
+//    }
+//    
+//    public Object decodeBoolean(final Value value) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
+//        Object ret = null;
+//
+//        switch(value.getType()) {
+//            case ARRAY:
+//                ret = new ArrayList();
+//                Value[] elements = value.asArrayValue().getElementArray();
+//                for(int i = 0; i < elements.length; ++i) {
+//                    ((List)ret).add(decodeBoolean(elements[i]));
+//                }
+//                break;
+//            case BOOLEAN:
+//                ret = value.asBooleanValue().getBoolean();
+//                break;
+//            case MAP:
+//                ret = new HashMap();
+//                Set<Value> keys = value.asMapValue().keySet();
+//                for(Value k : keys) {
+//                    Value v = value.asMapValue().get(k);
+//                    ((Map)ret).put(decodeString(k), decodeBoolean(v));
+//                }
+//                break;
+//            case NIL:
+//            default:
+//                throw new IOException("Cannot decode message");
+//        }
+//
+//        return ret;
+//    }
 
     public void decode(byte[] bytes) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
         
-        booleanValue = (boolean)decodeBoolean(unpacker.readValue());
+        booleanValue = (boolean)decode(unpacker.readValue(), Boolean.class);
         byteValue = (byte)decode(unpacker.readValue(), Byte.class);
         shortValue = (short)decode(unpacker.readValue(), Short.class);
         intValue = (int)decode(unpacker.readValue(), Integer.class);
@@ -235,7 +229,7 @@ public class TestMessage implements Serializable {
         doubleArray = unpacker.read(double[].class);
         stringArray = unpacker.read(String[].class);
 
-        booleanList.addAll((List)decodeBoolean(unpacker.readValue()));
+        booleanList.addAll((List)decode(unpacker.readValue(), Boolean.class));
         byteList.addAll((List)decode(unpacker.readValue(), Byte.class));
         shortList.addAll((List)decode(unpacker.readValue(), Short.class));
         intList.addAll((List)decode(unpacker.readValue(), Integer.class));
@@ -245,7 +239,7 @@ public class TestMessage implements Serializable {
         stringList.addAll((List)decode(unpacker.readValue(), String.class));
         ecefList.addAll((List)decode(unpacker.readValue(), ECEF.class));
 
-        boolean2DList.addAll((List)decodeBoolean(unpacker.readValue()));
+        boolean2DList.addAll((List)decode(unpacker.readValue(), Boolean.class));
         byte2DList.addAll((List)decode(unpacker.readValue(), Byte.class));
         short2DList.addAll((List)decode(unpacker.readValue(), Short.class));
         int2DList.addAll((List)decode(unpacker.readValue(), Integer.class));
@@ -255,7 +249,7 @@ public class TestMessage implements Serializable {
         string2DList.addAll((List)decode(unpacker.readValue(), String.class));
         ecef2DList.addAll((List)decode(unpacker.readValue(), ECEF.class));
 
-        booleanMap.putAll((Map)decodeBoolean(unpacker.readValue()));
+        booleanMap.putAll((Map)decode(unpacker.readValue(), Boolean.class));
         byteMap.putAll((Map)decode(unpacker.readValue(), Byte.class));
         shortMap.putAll((Map)decode(unpacker.readValue(), Short.class));
         intMap.putAll((Map)decode(unpacker.readValue(), Integer.class));
@@ -265,7 +259,7 @@ public class TestMessage implements Serializable {
         stringMap.putAll((Map)decode(unpacker.readValue(), String.class));
         ecefMap.putAll((Map)decode(unpacker.readValue(), ECEF.class));
 
-        booleanListMap.putAll((Map)decodeBoolean(unpacker.readValue()));
+        booleanListMap.putAll((Map)decode(unpacker.readValue(), Boolean.class));
         byteListMap.putAll((Map)decode(unpacker.readValue(), Byte.class));
         shortListMap.putAll((Map)decode(unpacker.readValue(), Short.class));
         intListMap.putAll((Map)decode(unpacker.readValue(), Integer.class));

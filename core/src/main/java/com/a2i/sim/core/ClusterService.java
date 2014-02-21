@@ -14,6 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import reactor.core.processor.Operation;
+import reactor.core.processor.Processor;
+import reactor.core.processor.spec.ProcessorSpec;
+import reactor.function.Consumer;
+import reactor.function.Supplier;
 
 /**
  *
@@ -33,6 +38,30 @@ public class ClusterService {
     private Gossiper gossiper;
 
     private static final Logger LOG = LoggerFactory.getLogger(ClusterService.class);
+
+//    private final Processor<Frame> processor = new ProcessorSpec<Frame>().dataSupplier(new Supplier<Frame>() {
+//            @Override
+//            public Frame get() {
+//                return new Frame();
+//            }
+//        }).consume(new Consumer<Frame>() {
+//            @Override
+//            public void accept(Frame f) {
+//                try {
+//                    if(me.equals(f.member)) {
+//                        f.envelope.setMessage(f.message);
+//                        f.envelope.setDecoded(true);
+//                    } else {
+//                        f.envelope.setPayload(GenericEncoder.encode(f.message));
+//                        f.envelope.setDecoded(false);
+//                    }
+//
+//                    f.member.send(f.envelope);
+//                } catch(IOException ex) {
+//                    LOG.error("Error sending message.", ex);
+//                }
+//            }
+//        }).get();
     
     public ClusterService() {
         
@@ -51,15 +80,24 @@ public class ClusterService {
         envelope.setSenderKey(MemberKey.getKey(me));
         envelope.setSequence(me.getSequence().getAndIncrement());
         envelope.setTopic(topic);
+        envelope.setClassName(message.getClass().getName());
 
         for(Member member : ListenerRegistry.INSTANCE.getRegisteredMembers(topic)) {
-//            if(me.equals(member)) {
-//                envelope.setMessage(message);
-//                envelope.setDecoded(true);
-//            } else {
+            
+//            Operation<Frame> op = processor.prepare();
+//            Frame f = op.get();
+//            f.member = member;
+//            f.envelope = envelope;
+//            f.message = message;
+//            op.commit();
+            
+            if(me.equals(member)) {
+                envelope.setMessage(message);
+                envelope.setDecoded(true);
+            } else {
                 envelope.setPayload(GenericEncoder.encode(message));
                 envelope.setDecoded(false);
-//            }
+            }
 
             member.send(envelope);
         }
@@ -153,7 +191,7 @@ public class ClusterService {
 
     public void shutdown() {
         multicast.shutdown();
-        me.shutdown();
+//        me.shutdown();
         for(Member member : MemberHolder.INSTANCE.getAllMembers()) {
             ((AbstractMember)member).shutdown();
         }
@@ -176,4 +214,10 @@ public class ClusterService {
                     MemberHolder.INSTANCE.getMember(key));
         }
     }
+
+//    private class Frame {
+//        Member member;
+//        Envelope envelope;
+//        Object message;
+//    }
 }

@@ -6,12 +6,11 @@
 
 package com.a2i.sim.core.codec;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import org.msgpack.MessagePack;
-import org.msgpack.packer.Packer;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +22,19 @@ public class GenericEncoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(GenericEncoder.class);
 
-    private static final MessagePack msgPack = new MessagePack();
-    
+    private static final Map<Class, Method> METHODS = new HashMap<>();
+
     public static byte[] encode(Object message) throws IOException {
+
         if(message.getClass().getAnnotation(com.a2i.sim.core.Message.class) != null) {
             try {
-                Method method = message.getClass().getMethod("_encode_");
+                Method method = METHODS.get(message.getClass());
+
+                if(method == null) {
+                    method = message.getClass().getMethod("_encode_");
+                    METHODS.put(message.getClass(), method);
+                }
+
                 byte[] ret = (byte[])method.invoke(message);
                 return ret;
             } catch (NoSuchMethodException ex) {
@@ -43,12 +49,5 @@ public class GenericEncoder {
         }
 
         return null;
-
-//        ByteArrayOutputStream out = new ByteArrayOutputStream();
-//        
-//        Packer packer = msgPack.createPacker(out);
-//        packer.write("Hello World!");
-//
-//        return out.toByteArray();
     }
 }

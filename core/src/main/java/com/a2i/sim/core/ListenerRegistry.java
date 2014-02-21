@@ -85,7 +85,7 @@ public enum ListenerRegistry {
     protected void send(Envelope envelope) throws IOException {
         if(!envelope.isDecoded()) {
             // decode actual message
-            envelope.setMessage(GenericDecoder.decode(envelope.getPayload()));
+            envelope.setMessage(GenericDecoder.decode(envelope.getClassName(), envelope.getPayload()));
             envelope.setDecoded(true);
         }
 

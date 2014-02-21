@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,18 +31,21 @@ import org.slf4j.LoggerFactory;
 public enum Parameters {
     INSTANCE;
     
-    private static final Logger LOG = LoggerFactory.getLogger(Parameters.class);
-
-    private static final int MAX_DEPTH = 10;
-
-    private final Properties properties = new Properties();
-    
-    private final FileSystem fileSystem = FileSystems.getDefault();
-    private final Path configDir = fileSystem.getPath("config");
+    private final Logger LOG;
+    private final int MAX_DEPTH;
+    private final Properties properties;
+    private final FileSystem fileSystem;
+    private final Path configDir;
 
     private static OperatingSystem os;
 
     Parameters() {
+        LOG = LoggerFactory.getLogger(Parameters.class);
+        MAX_DEPTH = 10;
+        properties = new Properties();
+        fileSystem = FileSystems.getDefault();
+        configDir = fileSystem.getPath("config");
+    
         init();
     }
 
@@ -88,7 +92,7 @@ public enum Parameters {
             Files.walkFileTree(configDir, options, MAX_DEPTH, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if(file.endsWith("properties")) {
+                    if(file.getFileName().toString().endsWith("properties")) {
                         LOG.debug("Loading configuration file '" + file.toString() + "'");
 
                         try (BufferedReader in = Files.newBufferedReader(file, Charset.defaultCharset())) {
@@ -99,10 +103,13 @@ public enum Parameters {
                     return FileVisitResult.CONTINUE;
                 }
             });
+
+            for(Entry<Object, Object> entry : properties.entrySet()) {
+                System.getProperties().setProperty(entry.getKey().toString(), entry.getValue().toString());
+            }
+
         } catch(IOException ex) {
             LOG.error("Error while loading configuration.", ex);
         }
     }
-
-    
 }

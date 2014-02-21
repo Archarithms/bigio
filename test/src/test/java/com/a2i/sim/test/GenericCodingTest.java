@@ -39,110 +39,110 @@ public class GenericCodingTest {
     private final Random rand = new Random();
 
 //    @Test
-    public void testSizes() throws Exception {
-        int runs = 100000;
-        long sizeSum = 0;
-        int encodeTimeSum = 0;
-        int decodeTimeSum = 0;
-        
-        long time;
-        double avgSize;
-        double avgEncodeTime;
-        double avgDecodeTime;
+//    public void testSizes() throws Exception {
+//        int runs = 100000;
+//        long sizeSum = 0;
+//        int encodeTimeSum = 0;
+//        int decodeTimeSum = 0;
+//        
+//        long time;
+//        double avgSize;
+//        double avgEncodeTime;
+//        double avgDecodeTime;
+//
+//        for (int i = 0; i < runs; ++i) {
+//            TestMessage m1 = createMessage();
+//            TestMessage m2 = new TestMessage();
+//
+//            time = System.currentTimeMillis();
+//            byte[] arr = m1.encode();
+//            encodeTimeSum += System.currentTimeMillis() - time;
+//            sizeSum += arr.length;
+//
+//            time = System.currentTimeMillis();
+//            m2.decode(arr);
+//            decodeTimeSum += System.currentTimeMillis() - time;
+//        }
+//
+//        avgEncodeTime = (double) encodeTimeSum / (double) runs;
+//        avgDecodeTime = (double) decodeTimeSum / (double) runs;
+//        avgSize = (double) sizeSum / (double) runs;
+//
+//        LOG.info("MsgPack Serialize");
+//        LOG.info("Average Size: " + avgSize);
+//        LOG.info("Average Encode Time: " + avgEncodeTime);
+//        LOG.info("Average Decode Time: " + avgDecodeTime);
+//        LOG.info("Total Encode Time: " + encodeTimeSum);
+//        LOG.info("Total Decode Time: " + decodeTimeSum);
+//
+//        encodeTimeSum = 0;
+//        decodeTimeSum = 0;
+//        
+//        for(int i = 0; i < runs; ++i) {
+//            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//            ObjectOutput out = null;
+//            byte[] arr;
+//            try {
+//                out = new ObjectOutputStream(bos);
+//                TestMessage m = createMessage();
+//
+//                time = System.currentTimeMillis();
+//                out.writeObject(m);
+//                arr = bos.toByteArray();
+//                encodeTimeSum += System.currentTimeMillis() - time;
+//                sizeSum += arr.length;
+//            } finally {
+//                try {
+//                    if (out != null) {
+//                        out.close();
+//                    }
+//                } catch (IOException ex) {
+//                    // ignore close exception
+//                }
+//                try {
+//                    bos.close();
+//                } catch (IOException ex) {
+//                    // ignore close exception
+//                }
+//            }
+//
+//            ByteArrayInputStream bis = new ByteArrayInputStream(arr);
+//            ObjectInput in = null;
+//            try {
+//              in = new ObjectInputStream(bis);
+//
+//              time = System.currentTimeMillis();
+//              Object o = in.readObject(); 
+//              decodeTimeSum += System.currentTimeMillis() - time;
+//            } finally {
+//              try {
+//                bis.close();
+//              } catch (IOException ex) {
+//                // ignore close exception
+//              }
+//              try {
+//                if (in != null) {
+//                  in.close();
+//                }
+//              } catch (IOException ex) {
+//                // ignore close exception
+//              }
+//            }
+//        }
+//
+//        avgEncodeTime = (double) encodeTimeSum / (double) runs;
+//        avgDecodeTime = (double) decodeTimeSum / (double) runs;
+//        avgSize = (double) sizeSum / (double) runs;
+//
+//        LOG.info("Java Serialize");
+//        LOG.info("Average Size: " + avgSize);
+//        LOG.info("Average Encode Time: " + avgEncodeTime);
+//        LOG.info("Average Decode Time: " + avgDecodeTime);
+//        LOG.info("Total Encode Time: " + encodeTimeSum);
+//        LOG.info("Total Decode Time: " + decodeTimeSum);
+//    }
 
-        for (int i = 0; i < runs; ++i) {
-            TestMessage m1 = createMessage();
-            TestMessage m2 = new TestMessage();
-
-            time = System.currentTimeMillis();
-            byte[] arr = m1.encode();
-            encodeTimeSum += System.currentTimeMillis() - time;
-            sizeSum += arr.length;
-
-            time = System.currentTimeMillis();
-            m2.decode(arr);
-            decodeTimeSum += System.currentTimeMillis() - time;
-        }
-
-        avgEncodeTime = (double) encodeTimeSum / (double) runs;
-        avgDecodeTime = (double) decodeTimeSum / (double) runs;
-        avgSize = (double) sizeSum / (double) runs;
-
-        LOG.info("MsgPack Serialize");
-        LOG.info("Average Size: " + avgSize);
-        LOG.info("Average Encode Time: " + avgEncodeTime);
-        LOG.info("Average Decode Time: " + avgDecodeTime);
-        LOG.info("Total Encode Time: " + encodeTimeSum);
-        LOG.info("Total Decode Time: " + decodeTimeSum);
-
-        encodeTimeSum = 0;
-        decodeTimeSum = 0;
-        
-        for(int i = 0; i < runs; ++i) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutput out = null;
-            byte[] arr;
-            try {
-                out = new ObjectOutputStream(bos);
-                TestMessage m = createMessage();
-
-                time = System.currentTimeMillis();
-                out.writeObject(m);
-                arr = bos.toByteArray();
-                encodeTimeSum += System.currentTimeMillis() - time;
-                sizeSum += arr.length;
-            } finally {
-                try {
-                    if (out != null) {
-                        out.close();
-                    }
-                } catch (IOException ex) {
-                    // ignore close exception
-                }
-                try {
-                    bos.close();
-                } catch (IOException ex) {
-                    // ignore close exception
-                }
-            }
-
-            ByteArrayInputStream bis = new ByteArrayInputStream(arr);
-            ObjectInput in = null;
-            try {
-              in = new ObjectInputStream(bis);
-
-              time = System.currentTimeMillis();
-              Object o = in.readObject(); 
-              decodeTimeSum += System.currentTimeMillis() - time;
-            } finally {
-              try {
-                bis.close();
-              } catch (IOException ex) {
-                // ignore close exception
-              }
-              try {
-                if (in != null) {
-                  in.close();
-                }
-              } catch (IOException ex) {
-                // ignore close exception
-              }
-            }
-        }
-
-        avgEncodeTime = (double) encodeTimeSum / (double) runs;
-        avgDecodeTime = (double) decodeTimeSum / (double) runs;
-        avgSize = (double) sizeSum / (double) runs;
-
-        LOG.info("Java Serialize");
-        LOG.info("Average Size: " + avgSize);
-        LOG.info("Average Encode Time: " + avgEncodeTime);
-        LOG.info("Average Decode Time: " + avgDecodeTime);
-        LOG.info("Total Encode Time: " + encodeTimeSum);
-        LOG.info("Total Decode Time: " + decodeTimeSum);
-    }
-
-    @Test
+//    @Test
     public void testGeneratedSizes() throws Exception {
         int runs = 100000;
         long sizeSum = 0;
@@ -260,14 +260,14 @@ public class GenericCodingTest {
         testMessageEquality(message, decodedMessage);
     }
 
-    @Test
-    public void testEncode() throws Exception {
-        TestMessage message = createMessage();
-        TestMessage decodedMessage = new TestMessage();
-        decodedMessage.decode(message.encode());
-
-        testMessageEquality(message, decodedMessage);
-    }
+//    @Test
+//    public void testEncode() throws Exception {
+//        TestMessage message = createMessage();
+//        TestMessage decodedMessage = new TestMessage();
+//        decodedMessage.decode(message.encode());
+//
+//        testMessageEquality(message, decodedMessage);
+//    }
 
     private void testMessageEquality(TestMessage m1, TestMessage m2) {
         assertTrue(m1.isBooleanValue() == m2.isBooleanValue());

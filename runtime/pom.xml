@@ -23,6 +23,16 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>a2isim-benchmark</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!--dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>a2isim-test</artifactId>
+            <version>${project.version}</version>
+        </dependency-->
+        <dependency>
             <groupId>org.msgpack</groupId>
             <artifactId>msgpack</artifactId>
         </dependency>
