@@ -6,6 +6,7 @@
 
 package com.a2i.sim;
 
+import com.a2i.sim.core.OperatingSystem;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;

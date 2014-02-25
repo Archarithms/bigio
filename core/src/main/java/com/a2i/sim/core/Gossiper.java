@@ -22,7 +22,7 @@ public class Gossiper {
 
     private static final String GOSSIP_INTERVAL_PROPERTY = "com.a2i.gossip.interval";
     private static final String CLEANUP_INTERVAL_PROPERTY = "com.a2i.gossip.cleanup";
-    private static final String DEFAULT_GOSSIP_INTERVAL = "200";
+    private static final String DEFAULT_GOSSIP_INTERVAL = "250";
     private static final String DEFAULT_CLEANUP_INTERVAL = "10000";
     
     private static final Logger LOG = LoggerFactory.getLogger(Gossiper.class);
@@ -59,7 +59,7 @@ public class Gossiper {
 
         if (member != null) {
             GossipMessage memberList = new GossipMessage();
-            memberList.setSequence(me.getSequence().getAndIncrement());
+            memberList.setSequence(me.getSequence().incrementAndGet());
             memberList.setIp(me.getIp());
             memberList.setGossipPort(me.getGossipPort());
             memberList.setDataPort(me.getDataPort());
@@ -70,7 +70,7 @@ public class Gossiper {
                 memberList.getMembers().add(MemberKey.getKey(m));
             }
 
-            for(String topic : ListenerRegistry.INSTANCE.getAllLocalTopics()) {
+            for(String topic : ListenerRegistry.INSTANCE.getLocalTopicsOfInterest()) {
                 memberList.getListeners().put(MemberKey.getKey(me), topic);
             }
 

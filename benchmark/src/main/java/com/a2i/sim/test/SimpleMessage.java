@@ -6,7 +6,7 @@
 
 package com.a2i.sim.test;
 
-import com.a2i.sim.core.Message;
+import com.a2i.sim.Message;
 
 /**
  *
@@ -19,6 +19,10 @@ public class SimpleMessage {
     private long sequence;
 
     private String hugeString = 
+            "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +
+            "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +
+            "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +
+            "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +
             "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +
             "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +
             "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +

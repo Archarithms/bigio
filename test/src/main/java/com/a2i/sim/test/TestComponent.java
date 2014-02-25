@@ -8,13 +8,11 @@ package com.a2i.sim.test;
 
 import com.a2i.sim.Speaker;
 import com.a2i.sim.core.Envelope;
-import com.a2i.sim.core.MemberKey;
 import com.a2i.sim.core.MessageListener;
 import com.a2i.sim.core.TimeUtil;
 import com.a2i.sim.core.codec.EnvelopeEncoder;
 import com.a2i.sim.core.codec.GenericEncoder;
 import java.io.IOException;
-import java.util.logging.Level;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +41,7 @@ public class TestComponent {
             time = System.currentTimeMillis();
             while(running) {
                 try {
-//                    Thread.sleep(100l);
+                    Thread.sleep(1000l);
                     speaker.send("HelloWorld", new SimpleMessage("This message should be en/decoded"));
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
@@ -61,7 +59,6 @@ public class TestComponent {
             envelope.setExecuteTime(0);
             envelope.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
             envelope.setSenderKey("192.168.1.1:55200:55200");
-            envelope.setSequence(1);
             envelope.setTopic("HelloWorld");
             envelope.setClassName(SimpleMessage.class.getName());
             envelope.setPayload(payload);
@@ -101,11 +98,13 @@ public class TestComponent {
 
     @PostConstruct
     public void go() {
+        LOG.info("Adding listener");
+
         speaker.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
             @Override
             public void receive(SimpleMessage message) {
                 ++messageCount;
-                //LOG.debug("Woo Hoo!!! Got a message. '" + message.getString() + "'");
+                LOG.debug("Woo Hoo!!! Got a message. '" + message.getString() + "'");
             }
         });
 

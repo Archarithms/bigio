@@ -21,29 +21,22 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.ReplayingDecoder;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
 import reactor.core.Reactor;
-import reactor.core.processor.Operation;
-import reactor.core.processor.Processor;
-import reactor.core.processor.spec.ProcessorSpec;
 import reactor.core.spec.Reactors;
 import reactor.event.Event;
 import reactor.function.Consumer;
-import reactor.function.Supplier;
 
 /**
  *
@@ -71,28 +64,6 @@ public class MeMember extends AbstractMember {
     private Reactor reactor;
     private Reactor decoderReactor;
 
-    private int msgCount = 0;
-    private int decoderCount = 0;
-    private long totalTime = 0;
-
-    private final Processor<Frame> processor = new ProcessorSpec<Frame>().dataSupplier(new Supplier<Frame>() {
-            @Override
-            public Frame get() {
-                return new Frame();
-            }
-        }).consume(new Consumer<Frame>() {
-            @Override
-            public void accept(Frame f) {
-                try {
-                    Envelope message = EnvelopeDecoder.decode(f.bytes);
-                    message.setDecoded(false);
-                    send(message);
-                } catch (IOException ex) {
-                    LOG.error("Error decoding message.", ex);
-                }
-            }
-        }).get();
-
     public MeMember() {
         super();
     }
@@ -118,10 +89,6 @@ public class MeMember extends AbstractMember {
 
     @Override
     public void shutdown() {
-        LOG.info("Received " + msgCount + " messages");
-        LOG.info("Decoder ran " + decoderCount + " times");
-        LOG.info("Reactor time " + totalTime);
-        LOG.info("Individual reactor time " + ((double)totalTime / (double)msgCount));
         gossipBossGroup.shutdownGracefully();
         gossipWorkerGroup.shutdownGracefully();
         dataBossGroup.shutdownGracefully();
@@ -224,13 +191,8 @@ public class MeMember extends AbstractMember {
                             @Override
                             public void initChannel(SocketChannel ch) throws Exception {
                                 ch.config().setAllocator(new PooledByteBufAllocator());
-
 //                                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
-//                                ch.pipeline().addLast(new DataMessageDecoder());
-//                                ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(32768, 0, 2, 0, 2));
-//                                ch.pipeline().addLast("decoder", new Decoder());
-//                                ch.pipeline().addLast(new EnvelopeHandler());
                                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                                 ch.pipeline().addLast(new DataMessageHandler());
                             }
@@ -299,65 +261,14 @@ public class MeMember extends AbstractMember {
         }
     }
 
-//    private class Decoder extends ByteToMessageDecoder {
-//        @Override
-//        protected void decode(ChannelHandlerContext chc, ByteBuf bb, List<Object> list) throws Exception {
-//            Envelope message = EnvelopeDecoder.decode(bb);
-//            list.add(message);
-//        }
-//    }
-//
-//    private class DataMessageDecoder extends ReplayingDecoder {
-//
-//        @Override
-//        protected void decode(ChannelHandlerContext chc, ByteBuf bb, List<Object> list) throws Exception {
-//            ++decoderCount;
-//            int length = bb.readShort();
-//            list.add(bb.readBytes(length));
-//        }
-//    }
-
-//    @Sharable
-//    private class EnvelopeHandler extends SimpleChannelInboundHandler<Envelope> {
-//        @Override
-//        public void channelRead0(ChannelHandlerContext ctx, Envelope envelope) {
-//            msgCount++;
-//            try {
-//                send(envelope);
-//            } catch (IOException ex) {
-//                LOG.warn("Error sending message.", ex);
-//            }
-//        }
-//    }
-
     @Sharable
     private class DataMessageHandler extends SimpleChannelInboundHandler<byte[]> {
-        long time = 0;
         
         @Override
         public void channelRead0(ChannelHandlerContext ctx, byte[] bytes) {
-            msgCount++;
 
-            // Reactor based
-            time = System.currentTimeMillis();
             decoderReactor.notify(Event.wrap(bytes));
-            totalTime += System.currentTimeMillis() - time;
-//            decoderReactor.notify(Event.wrap(bytes));
             
-//            // Ring buffer based
-//            Operation<Frame> op = processor.prepare();
-//            Frame f = op.get();
-//            f.bytes = Arrays.copyOf(bytes, bytes.length);
-//            op.commit();
-//
-//            // Direct decoding
-//            try {
-//                Envelope message = EnvelopeDecoder.decode(bytes);
-//                message.setDecoded(false);
-//                send(message);
-//            } catch (IOException ex) {
-//                LOG.error("Error decoding message.", ex);
-//            }
         }
 
         @Override
@@ -365,54 +276,5 @@ public class MeMember extends AbstractMember {
             LOG.error("Error in TCP Client", cause);
             ctx.close();
         }
-    }
-
-//    private class DataMessageHandler extends ChannelInboundHandlerAdapter {
-//
-//        @Override
-//        public void channelRead(ChannelHandlerContext ctx, Object msg) {
-//            msgCount++;
-//            if(msg instanceof byte[]) {
-//                decoderReactor.notify(Event.wrap((byte[])msg));
-////                Operation<Frame> op = processor.prepare();
-////                Frame f = op.get();
-////                f.bytes = Arrays.copyOf((byte[])msg, ((byte[])msg).length);
-////                op.commit();
-////                ReferenceCountUtil.release(msg);
-//                
-////                try {
-////                    byte[] bytes = (byte[]) msg;
-////                    Envelope message = EnvelopeDecoder.decode(bytes);
-////                    message.setDecoded(false);
-////                    send(message);
-////                } catch (IOException ex) {
-////                    LOG.error("Error decoding message.", ex);
-////                }
-//            } else if (msg instanceof ByteBuf) {
-//                try {
-//                    ByteBuf bytes = (ByteBuf)msg;
-//                    Envelope message = EnvelopeDecoder.decode(bytes);
-//                    message.setDecoded(false);
-//                    send(message);
-//                } catch (IOException ex) {
-//                    LOG.error("Error decoding message.", ex);
-//                } finally {
-//                    ReferenceCountUtil.release(msg);
-//                }
-//            } else {
-//                LOG.trace(msg.getClass().getName());
-//                ReferenceCountUtil.release(msg);
-//            }
-//        }
-//
-//        @Override
-//        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-//            LOG.error("Error in TCP Client", cause);
-//            ctx.close();
-//        }
-//    }
-
-    private class Frame {
-        byte[] bytes;
     }
 }

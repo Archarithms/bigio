@@ -14,11 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import reactor.core.processor.Operation;
-import reactor.core.processor.Processor;
-import reactor.core.processor.spec.ProcessorSpec;
-import reactor.function.Consumer;
-import reactor.function.Supplier;
 
 /**
  *
@@ -39,37 +34,21 @@ public class ClusterService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClusterService.class);
 
-//    private final Processor<Frame> processor = new ProcessorSpec<Frame>().dataSupplier(new Supplier<Frame>() {
-//            @Override
-//            public Frame get() {
-//                return new Frame();
-//            }
-//        }).consume(new Consumer<Frame>() {
-//            @Override
-//            public void accept(Frame f) {
-//                try {
-//                    if(me.equals(f.member)) {
-//                        f.envelope.setMessage(f.message);
-//                        f.envelope.setDecoded(true);
-//                    } else {
-//                        f.envelope.setPayload(GenericEncoder.encode(f.message));
-//                        f.envelope.setDecoded(false);
-//                    }
-//
-//                    f.member.send(f.envelope);
-//                } catch(IOException ex) {
-//                    LOG.error("Error sending message.", ex);
-//                }
-//            }
-//        }).get();
-    
     public ClusterService() {
         
     }
 
     public <T> void addListener(String topic, MessageListener<T> consumer) {
         ListenerRegistry.INSTANCE.registerMemberForTopic(topic, me);
-        ListenerRegistry.INSTANCE.addListener(topic, consumer);
+        ListenerRegistry.INSTANCE.addLocalListener(topic, consumer);
+    }
+
+    public <T> void removeListener(MessageListener<T> consumer) {
+        ListenerRegistry.INSTANCE.removeLocalListener(consumer);
+    }
+
+    public void removeAllListeners(String topic) {
+        ListenerRegistry.INSTANCE.removeAllLocalListeners(topic);
     }
 
     public <T> void sendMessage(String topic, T message) throws IOException {
@@ -78,18 +57,10 @@ public class ClusterService {
         envelope.setExecuteTime(0);
         envelope.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
         envelope.setSenderKey(MemberKey.getKey(me));
-        envelope.setSequence(me.getSequence().getAndIncrement());
         envelope.setTopic(topic);
         envelope.setClassName(message.getClass().getName());
 
         for(Member member : ListenerRegistry.INSTANCE.getRegisteredMembers(topic)) {
-            
-//            Operation<Frame> op = processor.prepare();
-//            Frame f = op.get();
-//            f.member = member;
-//            f.envelope = envelope;
-//            f.message = message;
-//            op.commit();
             
             if(me.equals(member)) {
                 envelope.setMessage(message);
@@ -113,6 +84,10 @@ public class ClusterService {
     
     public Collection<Member> getDeadMembers() {
         return MemberHolder.INSTANCE.getDeadMembers();
+    }
+
+    public Member getMe() {
+        return me;
     }
 
     public void initialize() {
@@ -190,34 +165,43 @@ public class ClusterService {
     }
 
     public void shutdown() {
-        multicast.shutdown();
-//        me.shutdown();
+        try {
+            multicast.shutdown();
+        } catch (InterruptedException ex) {
+            LOG.warn("Interrupted while shutting down multicast agent.", ex);
+        }
+
         for(Member member : MemberHolder.INSTANCE.getAllMembers()) {
             ((AbstractMember)member).shutdown();
         }
     }
 
     private void handleGossipMessage(GossipMessage message) {
-        for(String key : message.getMembers()) {
-            Member m = MemberHolder.INSTANCE.getMember(key);
-            if(m == null) {
-                m = MemberKey.decode(key);
-                ((AbstractMember)m).initialize();
+        int mySequence = me.getSequence().get();
+        int messageSequence = message.getSequence();
+
+        if(messageSequence > mySequence) {
+            // a new message
+            int newSequence = Math.max(mySequence, messageSequence) + 1;
+            me.getSequence().set(newSequence);
+
+            for(String key : message.getMembers()) {
+                Member m = MemberHolder.INSTANCE.getMember(key);
+                if(m == null) {
+                    m = MemberKey.decode(key);
+                    ((AbstractMember)m).initialize();
+                }
+
+                MemberHolder.INSTANCE.updateMemberStatus(m);
             }
 
-            MemberHolder.INSTANCE.updateMemberStatus(m);
-        }
+            for(String key : message.getListeners().keySet()) {
+                ListenerRegistry.INSTANCE.registerMemberForTopic(
+                        message.getListeners().get(key), 
+                        MemberHolder.INSTANCE.getMember(key));
+            }
+        } 
 
-        for(String key : message.getListeners().keySet()) {
-            ListenerRegistry.INSTANCE.registerMemberForTopic(
-                    message.getListeners().get(key), 
-                    MemberHolder.INSTANCE.getMember(key));
-        }
+        // else an old message - discard
     }
-
-//    private class Frame {
-//        Member member;
-//        Envelope envelope;
-//        Object message;
-//    }
 }

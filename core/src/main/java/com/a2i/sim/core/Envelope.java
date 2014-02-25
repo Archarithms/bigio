@@ -14,7 +14,6 @@ package com.a2i.sim.core;
 public class Envelope<T> {
     
     private String senderKey;
-    private int sequence;
     private int executeTime;
     private int millisecondsSinceMidnight;
     private String topic;
@@ -36,20 +35,6 @@ public class Envelope<T> {
      */
     public void setSenderKey(String senderKey) {
         this.senderKey = senderKey;
-    }
-
-    /**
-     * @return the sequence
-     */
-    public int getSequence() {
-        return sequence;
-    }
-
-    /**
-     * @param sequence the sequence to set
-     */
-    public void setSequence(int sequence) {
-        this.sequence = sequence;
     }
 
     /**

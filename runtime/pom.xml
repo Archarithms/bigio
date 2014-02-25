@@ -22,16 +22,16 @@
             <artifactId>a2isim-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
+        <!--dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>a2isim-benchmark</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <!--dependency>
+        </dependency-->
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>a2isim-test</artifactId>
             <version>${project.version}</version>
-        </dependency-->
+        </dependency>
         <dependency>
             <groupId>org.msgpack</groupId>
             <artifactId>msgpack</artifactId>

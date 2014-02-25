@@ -9,6 +9,8 @@ package com.a2i.sim.core.codec;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,15 +21,23 @@ import org.slf4j.LoggerFactory;
 public class GenericDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(GenericDecoder.class);
+
+    private static final Map<Class, Method> METHODS = new HashMap<>();
     
     public static Object decode(String className, byte[] bytes) throws IOException {
 
         try {
             Class clazz = Class.forName(className);
 
-            if(clazz.getAnnotation(com.a2i.sim.core.Message.class) != null) {
+            if(clazz.getAnnotation(com.a2i.sim.Message.class) != null) {
                 try {
-                    Method method = clazz.getMethod("_decode_", byte[].class);
+                    Method method = METHODS.get(clazz);
+
+                    if(method == null) {
+                        method = clazz.getMethod("_decode_", byte[].class);
+                        METHODS.put(clazz, method);
+                    }
+                    
                     Object obj = clazz.newInstance();
                     method.invoke(obj, bytes);
                     return obj;

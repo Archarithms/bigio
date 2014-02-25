@@ -26,7 +26,7 @@ public class GenericEncoder {
 
     public static byte[] encode(Object message) throws IOException {
 
-        if(message.getClass().getAnnotation(com.a2i.sim.core.Message.class) != null) {
+        if(message.getClass().getAnnotation(com.a2i.sim.Message.class) != null) {
             try {
                 Method method = METHODS.get(message.getClass());
 

@@ -33,6 +33,7 @@ public class NetworkUtil {
     private static final String NETWORK_INTERFACE_PROPETY = "com.a2i.network";
     
     private static NetworkInterface nic = null;
+    private static InetAddress inetAddress = null;
 
     private static String ip;
 
@@ -64,6 +65,14 @@ public class NetworkUtil {
         }
 
         return nic;
+    }
+
+    public static InetAddress getInetAddress() {
+        if(nic == null) {
+            findNIC();
+        }
+
+        return inetAddress;
     }
 
     public static int getFreePort() {
@@ -128,6 +137,7 @@ public class NetworkUtil {
                 String address = i.getHostAddress();
 
                 if(!address.startsWith("fe")) {
+                    inetAddress = i;
                     ip = address;
                 }
             }

@@ -10,12 +10,7 @@ package com.a2i.sim;
  *
  * @author atrimble
  */
-public enum OperatingSystem {
-    WIN_64, WIN_32, LINUX_64, LINUX_32, MAC_64, MAC_32;
-    
-    
-
-    OperatingSystem() {
-        
-    }
+public interface CommandLine {
+    public String getCommand();
+    public void execute(String... args);
 }

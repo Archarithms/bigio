@@ -24,10 +24,10 @@ import org.springframework.stereotype.Component;
  *
  * @author atrimble
  */
-//@Component
-public class BenchmarkComponent {
+@Component
+public class PingPong {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BenchmarkComponent.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PingPong.class);
     
     @Autowired
     private Speaker speaker;
@@ -37,24 +37,13 @@ public class BenchmarkComponent {
     private long messageCount = 0;
     private long sendCount = 0;
 
-    private int messagesPerSecond = 100000;
-
-    Thread senderThread = new Thread() {
+    Thread injectThread = new Thread() {
         @Override
         public void run() {
-            try {
-                Thread.sleep(1000l);
-            } catch(Exception ex) {
-
-            }
-
-            time = System.currentTimeMillis();
             while(running) {
                 try {
-                    for(int i = 0; i < messagesPerSecond; ++i) {
-                        speaker.send("HelloWorld", new SimpleMessage("This message should be en/decoded", ++sendCount));
-                    }
                     Thread.sleep(1000l);
+                    speaker.send("HelloWorldConsumer", new SimpleMessage("This message should be en/decoded", ++sendCount));
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -68,7 +57,6 @@ public class BenchmarkComponent {
             time = System.currentTimeMillis();
             while(running) {
                 try {
-//                    Thread.sleep(100l);
                     speaker.send("HelloWorldLocal", new SimpleMessage("This message should be en/decoded", ++sendCount));
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
@@ -77,7 +65,7 @@ public class BenchmarkComponent {
         }
     };
 
-    public BenchmarkComponent() {
+    public PingPong() {
         SimpleMessage m = new SimpleMessage("This message should be en/decoded", 0);
         try {
             byte[] payload = GenericEncoder.encode(m);
@@ -105,7 +93,7 @@ public class BenchmarkComponent {
                 running = false;
                 
                 try {
-                    senderThread.join();
+                    injectThread.join();
                     localThread.join();
                 } catch(InterruptedException ex) {
                     ex.printStackTrace();
@@ -135,22 +123,41 @@ public class BenchmarkComponent {
 
         if(role.equals("producer")) {
             LOG.info("Running as a producer");
-            senderThread.start();
-        } else if(role.equals("consumer")) {
-            LOG.info("Running as a consumer");
-            speaker.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
-                long lastReceived = 0;
+            speaker.addListener("HelloWorldProducer", new MessageListener<SimpleMessage>() {
                 @Override
                 public void receive(SimpleMessage message) {
                     if(messageCount == 0) {
                         time = System.currentTimeMillis();
-                    } else {
-                        if(message.getSequence() - lastReceived > 1) {
-                            LOG.info("Dropped " + (message.getSequence() - lastReceived) + " messages");
-                        }
-                        lastReceived = message.getSequence();
                     }
+                    
                     ++messageCount;
+                    try {
+                        if(running) {
+                            speaker.send("HelloWorldConsumer", new SimpleMessage("Hello from the producer", ++sendCount));
+                        }
+                    } catch (Exception ex) {
+                        LOG.error("Error", ex);
+                    }
+                }
+            });
+            injectThread.start();
+        } else if(role.equals("consumer")) {
+            LOG.info("Running as a consumer");
+            speaker.addListener("HelloWorldConsumer", new MessageListener<SimpleMessage>() {
+                @Override
+                public void receive(SimpleMessage message) {
+                    if(messageCount == 0) {
+                        time = System.currentTimeMillis();
+                    }
+                    
+                    ++messageCount;
+                    try {
+                        if(running) {
+                            speaker.send("HelloWorldProducer", new SimpleMessage("Hello from the consumer", ++sendCount));
+                        }
+                    } catch (Exception ex) {
+                        LOG.error("Error", ex);
+                    }
                 }
             });
         } else {

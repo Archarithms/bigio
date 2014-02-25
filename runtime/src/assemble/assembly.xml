@@ -27,7 +27,7 @@
         <dependencySet>
             <outputDirectory>components</outputDirectory>
             <includes>
-                <include>com.a2i:a2isim-benchmark</include>
+                <include>com.a2i:a2isim-test</include>
             </includes>
         </dependencySet>
     </dependencySets>

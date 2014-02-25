@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.a2i.sim.core;
+package com.a2i.sim;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

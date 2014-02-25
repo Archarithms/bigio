@@ -1,13 +1,11 @@
 package com.a2i.sim.core;
 
-import java.io.PrintWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
-import javassist.bytecode.Opcode;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -18,7 +16,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.TraceClassVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +41,7 @@ public class MessageTransformer implements ClassFileTransformer {
         ClassVisitor cv = new MessageAdapter(cw);
         cr.accept(cv, 0);
         if (((MessageAdapter) cv).wasMessage()) {
-//            LOG.info("Returning transformed class");
+//            LOG.info("Returning transformed class for '" + className + "'");
 
 //            cr = new ClassReader(cw.toByteArray());
 //            cv = new TraceClassVisitor(new PrintWriter(System.out));
@@ -93,7 +90,7 @@ public class MessageTransformer implements ClassFileTransformer {
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-            if (desc.equals("Lcom/a2i/sim/core/Message;")) {
+            if (desc.equals("Lcom/a2i/sim/Message;")) {
                 isMessage = true;
             }
 

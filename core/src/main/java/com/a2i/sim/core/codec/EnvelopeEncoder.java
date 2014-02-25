@@ -35,7 +35,6 @@ public class EnvelopeEncoder {
         packer.write(Integer.parseInt(keys[1]));
         packer.write(Integer.parseInt(keys[2]));
 
-        packer.write(message.getSequence());
         packer.write(message.getExecuteTime());
         packer.write(message.getMillisecondsSinceMidnight());
         packer.write(message.getTopic());

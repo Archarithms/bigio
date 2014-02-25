@@ -74,9 +74,10 @@ public class MCDiscovery extends Thread {
         }
     }
 
-    public void shutdown() {
+    public void shutdown() throws InterruptedException {
         if(isEnabled()) {
             workerGroup.shutdownGracefully();
+            join();
         }
     }
 
@@ -131,7 +132,7 @@ public class MCDiscovery extends Thread {
             LOG.info("Announcing");
             try {
                 GossipMessage message = new GossipMessage(
-                        me.getSequence().getAndIncrement(),
+                        me.getSequence().incrementAndGet(),
                         me.getIp(),
                         me.getGossipPort(),
                         me.getDataPort());

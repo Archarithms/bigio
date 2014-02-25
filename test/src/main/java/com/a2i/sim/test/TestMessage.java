@@ -6,7 +6,7 @@
 
 package com.a2i.sim.test;
 
-import com.a2i.sim.core.Message;
+import com.a2i.sim.Message;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;

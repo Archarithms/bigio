@@ -249,7 +249,7 @@ public class GenericCodingTest {
         LOG.info("Total Decode Time: " + decodeTimeSum);
     }
 
-    @Test
+//    @Test
     public void test_Encode() throws Exception {
         TestMessage message = createMessage();
         TestMessage decodedMessage = new TestMessage();

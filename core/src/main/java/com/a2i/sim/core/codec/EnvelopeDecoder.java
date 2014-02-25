@@ -51,7 +51,6 @@ public class EnvelopeDecoder {
                 .append(":")
                 .append(unpacker.readInt());
         message.setSenderKey(keyBuilder.toString());
-        message.setSequence(unpacker.readInt());
         message.setExecuteTime(unpacker.readInt());
         message.setMillisecondsSinceMidnight(unpacker.readInt());
         message.setTopic(unpacker.readString());
