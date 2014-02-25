@@ -10,7 +10,7 @@ import com.a2i.sim.Parameters;
 import com.a2i.sim.Speaker;
 import com.a2i.sim.core.Envelope;
 import com.a2i.sim.core.MessageListener;
-import com.a2i.sim.core.TimeUtil;
+import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.EnvelopeEncoder;
 import com.a2i.sim.core.codec.GenericEncoder;
 import java.io.IOException;

@@ -5,6 +5,7 @@
  */
 package com.a2i.sim.core;
 
+import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.Parameters;
 import java.io.IOException;
 import java.util.Iterator;

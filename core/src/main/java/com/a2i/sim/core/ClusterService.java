@@ -6,6 +6,8 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.util.NetworkUtil;
+import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.GenericEncoder;
 import com.a2i.sim.Parameters;
 import java.io.IOException;
