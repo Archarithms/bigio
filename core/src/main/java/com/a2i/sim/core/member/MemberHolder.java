@@ -6,10 +6,10 @@
 
 package com.a2i.sim.core.member;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +22,9 @@ public enum MemberHolder {
 
     private static final Logger LOG = LoggerFactory.getLogger(MemberHolder.class);
     
-    private final Map<String, Member> members = new ConcurrentHashMap<>();
-    private final Map<String, Member> activeMembers = new ConcurrentHashMap<>();
-    private final Map<String, Member> deadMembers = new ConcurrentHashMap<>();
+    private final Map<String, Member> members = new TreeMap<>();
+    private final Map<String, Member> activeMembers = new TreeMap<>();
+    private final Map<String, Member> deadMembers = new TreeMap<>();
 
     public Member getMember(String key) {
         Member m;
@@ -34,16 +34,22 @@ public enum MemberHolder {
         return m;
     }
 
-    public Collection<Member> getAllMembers() {
-        return Collections.unmodifiableCollection(members.values());
+    public List<Member> getAllMembers() {
+        List<Member> ret = new ArrayList<>();
+        ret.addAll(members.values());
+        return ret;
     }
 
-    public Collection<Member> getActiveMembers() {
-        return Collections.unmodifiableCollection(activeMembers.values());
+    public List<Member> getActiveMembers() {
+        List<Member> ret = new ArrayList<>();
+        ret.addAll(activeMembers.values());
+        return ret;
     }
 
-    public Collection<Member> getDeadMembers() {
-        return Collections.unmodifiableCollection(deadMembers.values());
+    public List<Member> getDeadMembers() {
+        List<Member> ret = new ArrayList<>();
+        ret.addAll(deadMembers.values());
+        return ret;
     }
 
     public void updateMemberStatus(Member member) {

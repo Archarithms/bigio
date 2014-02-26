@@ -139,13 +139,13 @@ public class MCDiscovery extends Thread {
             LOG.info("Announcing");
             try {
                 GossipMessage message = new GossipMessage(
-                        me.getSequence().incrementAndGet(),
                         me.getIp(),
                         me.getGossipPort(),
                         me.getDataPort());
                 message.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
                 message.getTags().putAll(me.getTags());
                 message.getMembers().add(MemberKey.getKey(me));
+                message.getClock().add(me.getSequence().incrementAndGet());
 
                 sendMessage(message);
             } catch (IOException ex) {

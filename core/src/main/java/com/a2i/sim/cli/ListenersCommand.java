@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
  * @author atrimble
  */
 @Component
-public class ListenersMessage implements CommandLine {
+public class ListenersCommand implements CommandLine {
 
     @Override
     public String getCommand() {

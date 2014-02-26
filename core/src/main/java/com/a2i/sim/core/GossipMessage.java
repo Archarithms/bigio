@@ -20,21 +20,20 @@ public class GossipMessage {
 
     private static final Logger LOG = LoggerFactory.getLogger(GossipMessage.class);
 
-    private int sequence;
     private String ip;
     private int gossipPort;
     private int dataPort;
     private int millisecondsSinceMidnight;
     private final Map<String, String> tags = new HashMap<>();
     private final List<String> members = new ArrayList<>();
-    private final Map<String, String> listeners = new HashMap<>();
+    private final List<Integer> clock = new ArrayList<>();
+    private final Map<String, List<String>> listeners = new HashMap<>();
 
     public GossipMessage() {
         
     }
 
-    public GossipMessage(int sequence, String ip, int gossipPort, int dataPort) {
-        this.sequence = sequence;
+    public GossipMessage(String ip, int gossipPort, int dataPort) {
         this.ip = ip;
         this.gossipPort = gossipPort;
         this.dataPort = dataPort;
@@ -44,7 +43,6 @@ public class GossipMessage {
     public String toString() {
         StringBuilder buff = new StringBuilder();
         buff.append("GossipMessage: ").append("\n")
-                .append("Sequence: ").append(getSequence()).append("\n")
                 .append("Address: ").append(getIp()).append("\n")
                 .append("GossipPort: ").append(getGossipPort()).append("\n")
                 .append("DataPort: ").append(getDataPort()).append("\n")
@@ -54,12 +52,15 @@ public class GossipMessage {
             buff.append("    ").append(key).append(" -> ").append(getTags().get(key)).append("\n");
         }
         buff.append("Members: ").append("\n");
-        for(String member : getMembers()) {
-            buff.append("    ").append(member).append("\n");
+        for(int i = 0; i < getMembers().size(); ++i) {
+            buff.append("    ").append(getMembers().get(i)).append(" -- ").append(getClock().get(i)).append("\n");
         }
         buff.append("Listeners: ").append("\n");
         for(String key : getListeners().keySet()) {
-            buff.append("    ").append(key).append(" -> ").append(getListeners().get(key)).append("\n");
+            buff.append("    ").append(key).append("\n");
+            for(String topic : getListeners().get(key)) {
+                buff.append("        ").append(topic).append("\n");
+            }
         }
         return buff.toString();
     }
@@ -114,20 +115,6 @@ public class GossipMessage {
     }
 
     /**
-     * @return the sequence
-     */
-    public int getSequence() {
-        return sequence;
-    }
-
-    /**
-     * @param sequence the sequence to set
-     */
-    public void setSequence(int sequence) {
-        this.sequence = sequence;
-    }
-
-    /**
      * @return the members
      */
     public List<String> getMembers() {
@@ -137,7 +124,7 @@ public class GossipMessage {
     /**
      * @return the listeners
      */
-    public Map<String, String> getListeners() {
+    public Map<String, List<String>> getListeners() {
         return listeners;
     }
 
@@ -146,6 +133,13 @@ public class GossipMessage {
      */
     public int getMillisecondsSinceMidnight() {
         return millisecondsSinceMidnight;
+    }
+
+    /**
+     * @return the clock
+     */
+    public List<Integer> getClock() {
+        return clock;
     }
 
     /**

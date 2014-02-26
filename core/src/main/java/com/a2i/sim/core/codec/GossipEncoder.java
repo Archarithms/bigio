@@ -42,7 +42,6 @@ public class GossipEncoder {
         }
 
         Packer packer = msgPack.createPacker(msgBuffer);
-        packer.write(message.getSequence());
         packer.write(Integer.parseInt(splitIp[0]));
         packer.write(Integer.parseInt(splitIp[1]));
         packer.write(Integer.parseInt(splitIp[2]));
@@ -52,6 +51,7 @@ public class GossipEncoder {
         packer.write(message.getMillisecondsSinceMidnight());
         packer.write(message.getTags());
         packer.write(members);
+        packer.write(message.getClock());
         packer.write(message.getListeners());
 
         out.write((short)msgBuffer.size() >>> 8);

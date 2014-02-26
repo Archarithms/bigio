@@ -19,6 +19,7 @@ import com.a2i.sim.Parameters;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -190,72 +191,45 @@ public class ClusterService {
 
     private void handleGossipMessage(GossipMessage message) {
 
+//        LOG.info("Received: " + message.toString());
 
-        int mySequence = me.getSequence().get();
-        int messageSequence = message.getSequence();
+        for(int i = 0; i < message.getMembers().size(); ++i) {
 
-        if(messageSequence > mySequence) {
-        
-//            LOG.info("Received: " + message.toString());
+            String key = message.getMembers().get(i);
 
-            // a new message
-            int newSequence = Math.max(mySequence, messageSequence) + 1;
-            me.getSequence().set(newSequence);
-
-            for(String key : message.getMembers()) {
-                Member m = MemberHolder.INSTANCE.getMember(key);
-                if(m == null) {
-                    m = MemberKey.decode(key);
-                    ((AbstractMember)m).initialize();
-                }
-
-                MemberHolder.INSTANCE.updateMemberStatus(m);
+            Member m = MemberHolder.INSTANCE.getMember(key);
+            if(m == null) {
+                m = MemberKey.decode(key);
+                ((AbstractMember)m).initialize();
             }
 
-            for(String memberKey : message.getListeners().keySet()) {
-            
-                boolean found = false;
+            MemberHolder.INSTANCE.updateMemberStatus(m);
 
+            int memberClock = message.getClock().get(i);
+            int knownMemberClock = m.getSequence().get();
+
+            if(memberClock > knownMemberClock) {
+                m.getSequence().set(memberClock);
+                List<String> topics = message.getListeners().get(key);
+                if(topics == null) {
+                    topics = Collections.emptyList();
+                }
+
+                List<Registration> toRemove = new ArrayList<>();
                 for(Registration reg : ListenerRegistry.INSTANCE.getAllRegistrations()) {
-                    if(MemberKey.getKey(reg.getMember()).equals(memberKey) &&
-                            reg.getTopic().equals(message.getListeners().get(memberKey))) {
-                        found = true;
-                        break;
+                    if(reg.getMember().equals(m)) {
+                        if(!topics.contains(reg.getTopic())) {
+                            toRemove.add(reg);
+                        }
                     }
                 }
-
-                if(!found) {
-                    ListenerRegistry.INSTANCE.registerMemberForTopic(
-                            message.getListeners().get(memberKey), 
-                            MemberHolder.INSTANCE.getMember(memberKey));
+                ListenerRegistry.INSTANCE.removeRegistrations(toRemove);
+                for(String topic : topics) {
+                    if(!ListenerRegistry.INSTANCE.getRegisteredMembers(topic).contains(m)) {
+                        ListenerRegistry.INSTANCE.registerMemberForTopic(topic, m);
+                    }
                 }
             }
-
-//            List<Registration> toRemove = null;
-//
-//            for(Registration reg : ListenerRegistry.INSTANCE.getAllRegistrations()) {
-//                boolean found = false;
-//
-//                for(String memberKey : message.getListeners().keySet()) {
-//                    if(MemberKey.getKey(reg.getMember()).equals(memberKey) &&
-//                            reg.getTopic().equals(message.getListeners().get(memberKey))) {
-//                        found = true;
-//                        break;
-//                    }
-//                }
-//
-//                //if(!found && !reg.getMember().equals(me)) {
-//                if(!found) {
-//                    if(toRemove == null) {
-//                        toRemove = new ArrayList<>();
-//                    }
-//                    toRemove.add(reg);
-//                }
-//            }
-//
-//            ListenerRegistry.INSTANCE.removeRegistrations(toRemove);
-        } 
-
-        // else an old message - discard
+        }
     }
 }

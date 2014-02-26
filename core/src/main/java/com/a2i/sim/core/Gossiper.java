@@ -12,6 +12,7 @@ import com.a2i.sim.core.member.RemoteMember;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.Parameters;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -27,8 +28,7 @@ public class Gossiper {
 
     private static final String GOSSIP_INTERVAL_PROPERTY = "com.a2i.gossip.interval";
     private static final String CLEANUP_INTERVAL_PROPERTY = "com.a2i.gossip.cleanup";
-    //private static final String DEFAULT_GOSSIP_INTERVAL = "250";
-    private static final String DEFAULT_GOSSIP_INTERVAL = "2000";
+    private static final String DEFAULT_GOSSIP_INTERVAL = "250";
     private static final String DEFAULT_CLEANUP_INTERVAL = "10000";
     
     private static final Logger LOG = LoggerFactory.getLogger(Gossiper.class);
@@ -65,19 +65,29 @@ public class Gossiper {
 
         if (member != null) {
             GossipMessage memberList = new GossipMessage();
-            memberList.setSequence(me.getSequence().incrementAndGet());
             memberList.setIp(me.getIp());
             memberList.setGossipPort(me.getGossipPort());
             memberList.setDataPort(me.getDataPort());
             memberList.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
             memberList.getTags().putAll(me.getTags());
 
-            for(Member m : MemberHolder.INSTANCE.getActiveMembers()) {
+            for(int i = 0; i < MemberHolder.INSTANCE.getActiveMembers().size(); ++i) {
+                Member m = MemberHolder.INSTANCE.getActiveMembers().get(i);
                 memberList.getMembers().add(MemberKey.getKey(m));
+
+                if(m == me) {
+                    memberList.getClock().add(i, m.getSequence().incrementAndGet());
+                } else {
+                    memberList.getClock().add(i, m.getSequence().get());
+                }
             }
 
             for(Registration registration: ListenerRegistry.INSTANCE.getAllRegistrations()) {
-                memberList.getListeners().put(MemberKey.getKey(registration.getMember()), registration.getTopic());
+                String key = MemberKey.getKey(registration.getMember());
+                if(memberList.getListeners().get(key) == null) {
+                    memberList.getListeners().put(key, new ArrayList<String>());
+                }
+                memberList.getListeners().get(key).add(registration.getTopic());
             }
 
             try {
