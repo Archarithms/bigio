@@ -13,6 +13,9 @@ import com.a2i.sim.util.RelationalMap;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -29,10 +32,14 @@ import reactor.function.Consumer;
 public enum ListenerRegistry {
     INSTANCE;
 
+    private static final int THREAD_POOL_SIZE = 8;
+
     private static final Logger LOG = LoggerFactory.getLogger(ListenerRegistry.class);
     
     private final Environment env = new Environment();
     private final Reactor reactor;
+
+    private final ScheduledExecutorService futureExecutor = Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
 
     private Member me;
 
@@ -119,13 +126,22 @@ public enum ListenerRegistry {
         }
     }
 
-    public void send(Envelope envelope) throws IOException {
+    public void send(final Envelope envelope) throws IOException {
         if(!envelope.isDecoded()) {
             // decode actual message
             envelope.setMessage(GenericDecoder.decode(envelope.getClassName(), envelope.getPayload()));
             envelope.setDecoded(true);
         }
 
-        reactor.notify(envelope.getTopic(), Event.wrap(envelope));
+        if(envelope.getExecuteTime() > 0) {
+            futureExecutor.schedule(new Runnable() {
+               @Override
+               public void run() {
+                   reactor.notify(envelope.getTopic(), Event.wrap(envelope));
+               }
+            }, envelope.getExecuteTime(), TimeUnit.MILLISECONDS);
+        } else {
+            reactor.notify(envelope.getTopic(), Event.wrap(envelope));
+        }
     }
 }

@@ -42,6 +42,10 @@ public class Speaker {
         cluster.sendMessage(topic, message);
     }
 
+    public <T> void send(String topic, T message, int offsetMilliseconds) throws Exception {
+        cluster.sendMessage(topic, message, offsetMilliseconds);
+    }
+
     public <T> void addListener(String topic, MessageListener<T> listener) {
         cluster.addListener(topic, listener);
     }

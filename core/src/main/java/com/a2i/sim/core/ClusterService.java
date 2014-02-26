@@ -62,10 +62,10 @@ public class ClusterService {
         ListenerRegistry.INSTANCE.removeAllLocalListeners(topic);
     }
 
-    public <T> void sendMessage(String topic, T message) throws IOException {
+    public <T> void sendMessage(String topic, T message, int offsetMilliseconds) throws IOException {
         Envelope envelope = new Envelope();
         envelope.setDecoded(false);
-        envelope.setExecuteTime(0);
+        envelope.setExecuteTime(offsetMilliseconds);
         envelope.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
         envelope.setSenderKey(MemberKey.getKey(me));
         envelope.setTopic(topic);
@@ -83,6 +83,10 @@ public class ClusterService {
 
             member.send(envelope);
         }
+    }
+
+    public <T> void sendMessage(String topic, T message) throws IOException {
+        sendMessage(topic, message, 0);
     }
 
     public Collection<Member> getAllMembers() {
