@@ -20,7 +20,6 @@
 
     <modules>
         <module>core</module>
-        <module>message-compiler</module>
         <module>test</module>
         <module>benchmark</module>
         <module>runtime</module>
