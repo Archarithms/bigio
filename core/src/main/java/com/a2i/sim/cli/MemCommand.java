@@ -7,7 +7,6 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
-import com.a2i.sim.CommandLine;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;

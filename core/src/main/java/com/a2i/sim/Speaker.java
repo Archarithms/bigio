@@ -8,7 +8,6 @@ package com.a2i.sim;
 
 import com.a2i.sim.core.ClusterService;
 import com.a2i.sim.core.member.Member;
-import com.a2i.sim.core.member.MemberHolder;
 import com.a2i.sim.core.MessageListener;
 import java.util.Collection;
 import javax.annotation.PostConstruct;
