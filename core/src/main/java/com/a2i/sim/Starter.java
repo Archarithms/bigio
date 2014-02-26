@@ -8,7 +8,7 @@ package com.a2i.sim;
 
 import com.a2i.sim.Speaker;
 import com.a2i.sim.core.ClusterService;
-import com.a2i.sim.core.cli.CommandLineInterface;
+import com.a2i.sim.cli.CommandLineInterface;
 import java.lang.management.ManagementFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

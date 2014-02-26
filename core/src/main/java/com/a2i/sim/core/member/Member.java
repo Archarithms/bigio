@@ -4,8 +4,9 @@
  * and open the template in the editor.
  */
 
-package com.a2i.sim.core;
+package com.a2i.sim.core.member;
 
+import com.a2i.sim.core.Envelope;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;

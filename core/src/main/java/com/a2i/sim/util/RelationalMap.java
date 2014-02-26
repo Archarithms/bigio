@@ -42,9 +42,10 @@ public class RelationalMap<R extends Relation> {
         if(classes.isEmpty()) { // this is the first addition
             classes = new ArrayList<>(relations[0].getLength());
             for(int i = 0; i < relations[0].getLength(); ++i) {
-                if(classes.contains(relations[0].getClass(i)))
+                if(classes.contains(relations[0].getClass(i))) {
                     distinct = false;
-
+                }
+                
                 classes.add(i, relations[0].getClass(i));
                 mapping.put(i, new HashMap<Object, List<R>>());
             }
@@ -54,8 +55,9 @@ public class RelationalMap<R extends Relation> {
             relationList.add(relations[k]);
 
             for(int i = 0; i < relations[k].getLength(); ++i) {
-                if(mapping.get(i).get(relations[k].getItem(i)) == null)
+                if(mapping.get(i).get(relations[k].getItem(i)) == null) {
                     mapping.get(i).put(relations[k].getItem(i), new ArrayList<R>());
+                }
 
                 mapping.get(i).get(relations[k].getItem(i)).add(relations[k]);
             }
@@ -68,8 +70,9 @@ public class RelationalMap<R extends Relation> {
      * @param relations a collection of relations.
      */
     public void add(Collection<R> relations) {
-        for(R r : relations)
+        for(R r : relations) {
             add(r);
+        }
     }
 
     /**
@@ -83,8 +86,9 @@ public class RelationalMap<R extends Relation> {
             this.relationList.remove(relation);
             for(int i = 0; i < relation.getLength(); ++i) {
                 for(R r : mapping.get(i).get(relation.getItem(i))) {
-                    if(!r.getItem(i).equals(relation.getItem(i)))
+                    if(!r.getItem(i).equals(relation.getItem(i))) {
                         mapping.get(i).get(r.getItem(i)).remove(relation);
+                    }
                 }
                 mapping.get(i).get(relation.getItem(i)).remove(relation);
             }
@@ -97,8 +101,9 @@ public class RelationalMap<R extends Relation> {
      * @param relations a collection of relations.
      */
     public void remove(Collection<R> relations) {
-        for(R r : relations)
+        for(R r : relations) {
             remove(r);
+        }
     }
 
     /**
@@ -144,11 +149,13 @@ public class RelationalMap<R extends Relation> {
      * @see com.ng.mdeac.utilities.Range
      */
     public List<R> query(Object ... keys) {
-        if(!distinct && indices == null)
+        if(!distinct && indices == null) {
             throw new IllegalArgumentException("Classes not distinct.  Call setIndices() prior to searching.");
+        }
         
-        if(keys.length == 0)
+        if(keys.length == 0) {
             return asList();
+        }
 
         List<R> ret = get(keys, 0, keys.length - 1);
         indices = null;
@@ -169,8 +176,9 @@ public class RelationalMap<R extends Relation> {
      * @return the collection of relations containing the union of the keys.
      */
     private List<R> get(Object[] keys, int begin, int end) {
-        if(begin == end)
+        if(begin == end) {
             return get(keys[begin], indices == null ? -1 : indices[begin]);
+        }
 
         List ret = get(keys[begin], indices == null ? -1 : indices[begin]);
         ret.retainAll(get(keys, begin + 1, end));
@@ -186,15 +194,27 @@ public class RelationalMap<R extends Relation> {
      * @return the collection of keys containing the specified key.
      */
     private List<R> get(Object key, int index) {
-        if(distinct && !(key instanceof Range))
+        if(distinct && !(key instanceof Range)) {
             index = classes.indexOf(key.getClass());
-        if(key instanceof Range && index == -1)
-            throw new IllegalArgumentException("setIndices() must be called prior to querying on a range.");
+        }
 
-        if(index < 0 || mapping.get(index) == null)
+        Class sup = key.getClass().getSuperclass();
+        while(index == -1 && sup != null) {
+            index = classes.indexOf(sup);
+            sup = sup.getSuperclass();
+        }
+
+        if(key instanceof Range && index == -1) {
+            throw new IllegalArgumentException("setIndices() must be called prior to querying on a range.");
+        }
+
+        if(index < 0 || mapping.get(index) == null) {
             return Collections.emptyList();
-        if(mapping.get(index).get(key) == null && !(key instanceof Range))
+        }
+
+        if(mapping.get(index).get(key) == null && !(key instanceof Range)) {
             return Collections.emptyList();
+        }
             
         if(key instanceof Range) {
             Range range = (Range)key;

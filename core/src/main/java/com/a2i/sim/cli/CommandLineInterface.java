@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.a2i.sim.core.cli;
+package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
 import com.a2i.sim.Parameters;
@@ -99,7 +99,7 @@ public class CommandLineInterface {
                     Starter.exit();
                 }
 
-                if(!found) {
+                if(!found && !"".equals(args[0])) {
                     LOG.warn("Command not found '" + args[0] + "'");
                 }
             }

@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.a2i.sim.core;
+package com.a2i.sim.core.member;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,8 +24,8 @@ public abstract class AbstractMember implements Member {
     private int dataPort;
     private int gossipPort;
     
-    protected abstract void initialize();
-    protected abstract void shutdown();
+    public abstract void initialize();
+    public abstract void shutdown();
 
     public AbstractMember() {
 

@@ -3,8 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.a2i.sim.core;
+package com.a2i.sim.core.member;
 
+import com.a2i.sim.core.Envelope;
+import com.a2i.sim.core.GossipListener;
+import com.a2i.sim.core.GossipMessage;
+import com.a2i.sim.core.ListenerRegistry;
 import com.a2i.sim.core.codec.EnvelopeDecoder;
 import com.a2i.sim.core.codec.GossipDecoder;
 import io.netty.bootstrap.ServerBootstrap;
@@ -82,7 +86,7 @@ public class MeMember extends AbstractMember {
     }
 
     @Override
-    protected void initialize() {
+    public void initialize() {
         initializeReactor();
         initializeServers();
     }

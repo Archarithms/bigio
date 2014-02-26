@@ -6,12 +6,20 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.core.member.AbstractMember;
+import com.a2i.sim.core.member.Member;
+import com.a2i.sim.core.member.MemberKey;
+import com.a2i.sim.core.member.MemberHolder;
+import com.a2i.sim.core.member.MeMember;
+import com.a2i.sim.core.member.MemberStatus;
 import com.a2i.sim.util.NetworkUtil;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.GenericEncoder;
 import com.a2i.sim.Parameters;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,6 +152,8 @@ public class ClusterService {
 
         gossiper = new Gossiper(me);
 
+        ListenerRegistry.INSTANCE.setMe(me);
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -179,10 +189,15 @@ public class ClusterService {
     }
 
     private void handleGossipMessage(GossipMessage message) {
+
+
         int mySequence = me.getSequence().get();
         int messageSequence = message.getSequence();
 
         if(messageSequence > mySequence) {
+        
+//            LOG.info("Received: " + message.toString());
+
             // a new message
             int newSequence = Math.max(mySequence, messageSequence) + 1;
             me.getSequence().set(newSequence);
@@ -197,11 +212,48 @@ public class ClusterService {
                 MemberHolder.INSTANCE.updateMemberStatus(m);
             }
 
-            for(String key : message.getListeners().keySet()) {
-                ListenerRegistry.INSTANCE.registerMemberForTopic(
-                        message.getListeners().get(key), 
-                        MemberHolder.INSTANCE.getMember(key));
+            for(String memberKey : message.getListeners().keySet()) {
+            
+                boolean found = false;
+
+                for(Registration reg : ListenerRegistry.INSTANCE.getAllRegistrations()) {
+                    if(MemberKey.getKey(reg.getMember()).equals(memberKey) &&
+                            reg.getTopic().equals(message.getListeners().get(memberKey))) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(!found) {
+                    ListenerRegistry.INSTANCE.registerMemberForTopic(
+                            message.getListeners().get(memberKey), 
+                            MemberHolder.INSTANCE.getMember(memberKey));
+                }
             }
+
+//            List<Registration> toRemove = null;
+//
+//            for(Registration reg : ListenerRegistry.INSTANCE.getAllRegistrations()) {
+//                boolean found = false;
+//
+//                for(String memberKey : message.getListeners().keySet()) {
+//                    if(MemberKey.getKey(reg.getMember()).equals(memberKey) &&
+//                            reg.getTopic().equals(message.getListeners().get(memberKey))) {
+//                        found = true;
+//                        break;
+//                    }
+//                }
+//
+//                //if(!found && !reg.getMember().equals(me)) {
+//                if(!found) {
+//                    if(toRemove == null) {
+//                        toRemove = new ArrayList<>();
+//                    }
+//                    toRemove.add(reg);
+//                }
+//            }
+//
+//            ListenerRegistry.INSTANCE.removeRegistrations(toRemove);
         } 
 
         // else an old message - discard

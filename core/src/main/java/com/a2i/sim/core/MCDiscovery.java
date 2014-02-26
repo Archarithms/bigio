@@ -6,6 +6,11 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.core.member.AbstractMember;
+import com.a2i.sim.core.member.Member;
+import com.a2i.sim.core.member.MemberKey;
+import com.a2i.sim.core.member.MemberHolder;
+import com.a2i.sim.core.member.RemoteMember;
 import com.a2i.sim.util.NetworkUtil;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.GossipEncoder;

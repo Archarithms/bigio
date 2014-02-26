@@ -5,6 +5,10 @@
  */
 package com.a2i.sim.core;
 
+import com.a2i.sim.core.member.Member;
+import com.a2i.sim.core.member.MemberKey;
+import com.a2i.sim.core.member.MemberHolder;
+import com.a2i.sim.core.member.RemoteMember;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.Parameters;
 import java.io.IOException;
@@ -23,7 +27,8 @@ public class Gossiper {
 
     private static final String GOSSIP_INTERVAL_PROPERTY = "com.a2i.gossip.interval";
     private static final String CLEANUP_INTERVAL_PROPERTY = "com.a2i.gossip.cleanup";
-    private static final String DEFAULT_GOSSIP_INTERVAL = "250";
+    //private static final String DEFAULT_GOSSIP_INTERVAL = "250";
+    private static final String DEFAULT_GOSSIP_INTERVAL = "2000";
     private static final String DEFAULT_CLEANUP_INTERVAL = "10000";
     
     private static final Logger LOG = LoggerFactory.getLogger(Gossiper.class);
@@ -71,11 +76,12 @@ public class Gossiper {
                 memberList.getMembers().add(MemberKey.getKey(m));
             }
 
-            for(String topic : ListenerRegistry.INSTANCE.getLocalTopicsOfInterest()) {
-                memberList.getListeners().put(MemberKey.getKey(me), topic);
+            for(Registration registration: ListenerRegistry.INSTANCE.getAllRegistrations()) {
+                memberList.getListeners().put(MemberKey.getKey(registration.getMember()), registration.getTopic());
             }
 
             try {
+//                LOG.info("Sending: " + memberList.toString());
                 ((RemoteMember)member).gossip(memberList);
             } catch(IOException ex) {
                 LOG.error("Exception sending member list.", ex);

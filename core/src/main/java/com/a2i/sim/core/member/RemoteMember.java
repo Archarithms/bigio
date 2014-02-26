@@ -3,11 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.a2i.sim.core;
+package com.a2i.sim.core.member;
 
 import com.a2i.sim.core.codec.EnvelopeEncoder;
 import com.a2i.sim.core.codec.GossipEncoder;
 import com.a2i.sim.Parameters;
+import com.a2i.sim.core.Envelope;
+import com.a2i.sim.core.GossipMessage;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -72,7 +74,7 @@ public class RemoteMember extends AbstractMember {
     }
 
     @Override
-    protected void initialize() {
+    public void initialize() {
         maxRetry = Integer.parseInt(Parameters.INSTANCE.getProperty(
                 MAX_RETRY_COUNT_PROPERTY, DEFAULT_MAX_RETRY_COUNT));
         retryInterval = Long.parseLong(Parameters.INSTANCE.getProperty(
@@ -110,7 +112,7 @@ public class RemoteMember extends AbstractMember {
     }
 
     @Override
-    protected void shutdown() {
+    public void shutdown() {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Closing connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
         }

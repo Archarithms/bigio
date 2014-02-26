@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.a2i.sim.core.cli;
+package com.a2i.sim.cli;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.filter.ThresholdFilter;

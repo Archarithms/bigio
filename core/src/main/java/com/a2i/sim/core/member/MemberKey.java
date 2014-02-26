@@ -4,7 +4,9 @@
  * and open the template in the editor.
  */
 
-package com.a2i.sim.core;
+package com.a2i.sim.core.member;
+
+import com.a2i.sim.core.GossipMessage;
 
 /**
  *
