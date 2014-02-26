@@ -10,6 +10,7 @@ import com.a2i.sim.core.ClusterService;
 import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.MessageListener;
 import java.util.Collection;
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,5 +60,9 @@ public class Speaker {
 
     public Member getMe() {
         return cluster.getMe();
+    }
+
+    public Map<String, String> getTags() {
+        return cluster.getMe().getTags();
     }
 }

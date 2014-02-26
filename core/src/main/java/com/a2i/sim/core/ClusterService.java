@@ -193,6 +193,9 @@ public class ClusterService {
 
 //        LOG.info("Received: " + message.toString());
 
+        String senderKey = MemberKey.getKey(message);
+        boolean updateTags = false;
+
         for(int i = 0; i < message.getMembers().size(); ++i) {
 
             String key = message.getMembers().get(i);
@@ -209,6 +212,10 @@ public class ClusterService {
             int knownMemberClock = m.getSequence().get();
 
             if(memberClock > knownMemberClock) {
+                if(key.equals(senderKey)) {
+                    updateTags = true;
+                }
+
                 m.getSequence().set(memberClock);
                 List<String> topics = message.getListeners().get(key);
                 if(topics == null) {
@@ -230,6 +237,12 @@ public class ClusterService {
                     }
                 }
             }
+        }
+
+        if(updateTags) {
+            Member m = MemberHolder.INSTANCE.getMember(senderKey);
+            m.getTags().clear();
+            m.getTags().putAll(message.getTags());
         }
     }
 }
