@@ -10,6 +10,7 @@ import com.a2i.sim.core.codec.GossipEncoder;
 import com.a2i.sim.Parameters;
 import com.a2i.sim.core.Envelope;
 import com.a2i.sim.core.GossipMessage;
+import com.a2i.sim.util.RunningStatistics;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
@@ -65,6 +66,9 @@ public class RemoteMember extends AbstractMember {
     private EventLoopGroup gossipWorkerGroup = null;
     private EventLoopGroup dataWorkerGroup = null;
 
+    private final RunningStatistics gossipSizeStat = new RunningStatistics();
+    private final RunningStatistics dataSizeStat = new RunningStatistics();
+
     public RemoteMember() {
         super();
     }
@@ -99,6 +103,11 @@ public class RemoteMember extends AbstractMember {
     @Override
     public void send(final Envelope message) throws IOException {
         byte[] bytes = EnvelopeEncoder.encode(message);
+
+        if(LOG.isDebugEnabled()) {
+            dataSizeStat.push(bytes.length);
+        }
+        
         if(dataChannel != null) {
             dataChannel.writeAndFlush(Unpooled.wrappedBuffer(bytes));
         }
@@ -106,6 +115,11 @@ public class RemoteMember extends AbstractMember {
 
     public void gossip(final GossipMessage message) throws IOException {
         byte[] bytes = GossipEncoder.encode(message);
+
+        if(LOG.isDebugEnabled()) {
+            gossipSizeStat.push(bytes.length);
+        }
+
         if(gossipChannel != null) {
             gossipChannel.writeAndFlush(bytes);
         }
@@ -123,6 +137,11 @@ public class RemoteMember extends AbstractMember {
         
         if(dataWorkerGroup != null) {
             dataWorkerGroup.shutdownGracefully();
+        }
+
+        if(LOG.isDebugEnabled()) {
+            LOG.debug("Mean sent gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
+            LOG.debug("Mean sent data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
         }
     }
 

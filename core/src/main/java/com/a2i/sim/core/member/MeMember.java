@@ -11,6 +11,7 @@ import com.a2i.sim.core.GossipMessage;
 import com.a2i.sim.core.ListenerRegistry;
 import com.a2i.sim.core.codec.EnvelopeDecoder;
 import com.a2i.sim.core.codec.GossipDecoder;
+import com.a2i.sim.util.RunningStatistics;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -68,6 +69,9 @@ public class MeMember extends AbstractMember {
     private Reactor reactor;
     private Reactor decoderReactor;
 
+    private final RunningStatistics gossipSizeStat = new RunningStatistics();
+    private final RunningStatistics dataSizeStat = new RunningStatistics();
+
     public MeMember() {
         super();
     }
@@ -97,6 +101,11 @@ public class MeMember extends AbstractMember {
         gossipWorkerGroup.shutdownGracefully();
         dataBossGroup.shutdownGracefully();
         dataWorkerGroup.shutdownGracefully();
+
+        if(LOG.isDebugEnabled()) {
+            LOG.debug("Mean received gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
+            LOG.debug("Mean received data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
+        }
     }
 
     @Override
@@ -118,6 +127,11 @@ public class MeMember extends AbstractMember {
         decoderReactor.on(new Consumer<Event<byte[]>>() {
             @Override
             public void accept(Event<byte[]> m) {
+
+                if(LOG.isDebugEnabled()) {
+                    dataSizeStat.push(m.getData().length);
+                }
+
                 try {
                     Envelope message = EnvelopeDecoder.decode(m.getData());
                     message.setDecoded(false);
@@ -245,6 +259,10 @@ public class MeMember extends AbstractMember {
             if(msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
+                    if(LOG.isDebugEnabled()) {
+                        gossipSizeStat.push(bytes.length);
+                    }
+
                     GossipMessage message = GossipDecoder.decode(bytes);
                     reactor.notify(Event.wrap(message));
                 } catch (IOException ex) {
