@@ -62,6 +62,14 @@ public class Speaker {
         return cluster.getActiveMembers();
     }
 
+    public void addInterceptor(Interceptor interceptor) {
+        cluster.addInterceptor(interceptor);
+    }
+
+    public void addInterceptor(Interceptor interceptor, String topic) {
+        cluster.addInterceptor(interceptor, topic);
+    }
+
     public Member getMe() {
         return cluster.getMe();
     }

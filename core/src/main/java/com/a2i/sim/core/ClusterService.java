@@ -6,6 +6,7 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.Interceptor;
 import com.a2i.sim.core.member.AbstractMember;
 import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.member.MemberKey;
@@ -47,6 +48,14 @@ public class ClusterService {
 
     public ClusterService() {
         
+    }
+
+    public void addInterceptor(Interceptor interceptor) {
+        ListenerRegistry.INSTANCE.addInterceptor(interceptor);
+    }
+
+    public void addInterceptor(Interceptor interceptor, String topic) {
+        ListenerRegistry.INSTANCE.addInterceptor(interceptor, topic);
     }
 
     public <T> void addListener(String topic, MessageListener<T> consumer) {

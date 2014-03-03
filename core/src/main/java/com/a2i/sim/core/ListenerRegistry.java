@@ -6,16 +6,20 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.Interceptor;
 import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.member.MemberKey;
 import com.a2i.sim.core.codec.GenericDecoder;
 import com.a2i.sim.util.RelationalMap;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -36,7 +40,7 @@ public enum ListenerRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(ListenerRegistry.class);
     
-    private final Environment env = new Environment();
+    private final Environment environment = new Environment();
     private final Reactor reactor;
 
     private final ScheduledExecutorService futureExecutor = Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
@@ -45,11 +49,30 @@ public enum ListenerRegistry {
 
     private final RelationalMap<Registration> map = new RelationalMap<>();
 
+    private final Map<Pattern, List<Interceptor>> interceptors = new HashMap<>();
+
+    private final Pattern matchAll = Pattern.compile(".*");
+
     ListenerRegistry() {
         reactor = Reactors.reactor()
-                .env(env)
+                .env(environment)
                 .dispatcher(Environment.RING_BUFFER)
                 .get();
+    }
+
+    public void addInterceptor(Interceptor interceptor) {
+        if(interceptors.get(matchAll) == null) {
+            interceptors.put(matchAll, new ArrayList<Interceptor>());
+        }
+        interceptors.get(matchAll).add(interceptor);
+    }
+
+    public void addInterceptor(Interceptor interceptor, String topic) {
+        Pattern pattern = Pattern.compile(topic);
+        if(interceptors.get(pattern) == null) {
+            interceptors.put(pattern, new ArrayList<Interceptor>());
+        }
+        interceptors.get(pattern).add(interceptor);
     }
 
     public void setMe(Member me) {
@@ -126,18 +149,28 @@ public enum ListenerRegistry {
         }
     }
 
-    public void send(final Envelope envelope) throws IOException {
+    public void send(Envelope envelope) throws IOException {
         if(!envelope.isDecoded()) {
             // decode actual message
             envelope.setMessage(GenericDecoder.decode(envelope.getClassName(), envelope.getPayload()));
             envelope.setDecoded(true);
         }
 
+        for(Pattern pattern : interceptors.keySet()) {
+            if(pattern.matcher(envelope.getTopic()).matches()) {
+                for(Interceptor interceptor : interceptors.get(pattern)) {
+                    envelope = interceptor.intercept(envelope);
+                }
+            }
+        }
+
+        final Envelope env = envelope;
+
         if(envelope.getExecuteTime() > 0) {
             futureExecutor.schedule(new Runnable() {
                @Override
                public void run() {
-                   reactor.notify(envelope.getTopic(), Event.wrap(envelope));
+                   reactor.notify(env.getTopic(), Event.wrap(env));
                }
             }, envelope.getExecuteTime(), TimeUnit.MILLISECONDS);
         } else {
