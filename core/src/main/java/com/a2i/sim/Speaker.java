@@ -50,7 +50,7 @@ public class Speaker {
         cluster.addListener(topic, listener);
     }
 
-    public <T> void removeListener(String topic, MessageListener<T> listener) {
+    public <T> void removeListener(MessageListener<T> listener) {
         cluster.removeListener(listener);
     }
     
@@ -62,12 +62,8 @@ public class Speaker {
         return cluster.getActiveMembers();
     }
 
-    public void addInterceptor(Interceptor interceptor) {
-        cluster.addInterceptor(interceptor);
-    }
-
-    public void addInterceptor(Interceptor interceptor, String topic) {
-        cluster.addInterceptor(interceptor, topic);
+    public void addInterceptor(String topic, Interceptor interceptor) {
+        cluster.addInterceptor(topic, interceptor);
     }
 
     public Member getMe() {

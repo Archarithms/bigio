@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -49,9 +48,7 @@ public enum ListenerRegistry {
 
     private final RelationalMap<Registration> map = new RelationalMap<>();
 
-    private final Map<Pattern, List<Interceptor>> interceptors = new HashMap<>();
-
-    private final Pattern matchAll = Pattern.compile(".*");
+    private final Map<String, List<Interceptor>> interceptors = new HashMap<>();
 
     ListenerRegistry() {
         reactor = Reactors.reactor()
@@ -60,19 +57,11 @@ public enum ListenerRegistry {
                 .get();
     }
 
-    public void addInterceptor(Interceptor interceptor) {
-        if(interceptors.get(matchAll) == null) {
-            interceptors.put(matchAll, new ArrayList<Interceptor>());
+    public void addInterceptor(String topic, Interceptor interceptor) {
+        if(interceptors.get(topic) == null) {
+            interceptors.put(topic, new ArrayList<Interceptor>());
         }
-        interceptors.get(matchAll).add(interceptor);
-    }
-
-    public void addInterceptor(Interceptor interceptor, String topic) {
-        Pattern pattern = Pattern.compile(topic);
-        if(interceptors.get(pattern) == null) {
-            interceptors.put(pattern, new ArrayList<Interceptor>());
-        }
-        interceptors.get(pattern).add(interceptor);
+        interceptors.get(topic).add(interceptor);
     }
 
     public void setMe(Member me) {
@@ -86,7 +75,7 @@ public enum ListenerRegistry {
                 listener.receive((T)m.getData().getMessage());
             }
         };
-        reactor.on(Selectors.regex(topic), consumer);
+        reactor.on(Selectors.object(topic), consumer);
 
         List<Registration> regs = map.query(me, topic);
         if(!regs.isEmpty()) {
@@ -104,6 +93,7 @@ public enum ListenerRegistry {
             if(reg.getListener().equals(listener)) {
                 reactor.getConsumerRegistry().unregister(reg.getConsumer());
                 map.remove(reg);
+                LOG.info("Removing listener from topic " + reg.getTopic());
             }
         }
     }
@@ -113,6 +103,9 @@ public enum ListenerRegistry {
         
         if(!regs.isEmpty()) {
             LOG.info("Removing " + regs.size() + " registration");
+            for(Registration reg : regs) {
+                reactor.getConsumerRegistry().unregister(reg.getConsumer());
+            }
             map.remove(regs);
         } else {
             LOG.info("No listeners registered for topic " + topic);
@@ -156,11 +149,9 @@ public enum ListenerRegistry {
             envelope.setDecoded(true);
         }
 
-        for(Pattern pattern : interceptors.keySet()) {
-            if(pattern.matcher(envelope.getTopic()).matches()) {
-                for(Interceptor interceptor : interceptors.get(pattern)) {
-                    envelope = interceptor.intercept(envelope);
-                }
+        if(interceptors.containsKey(envelope.getTopic())) {
+            for(Interceptor interceptor : interceptors.get(envelope.getTopic())) {
+                envelope = interceptor.intercept(envelope);
             }
         }
 

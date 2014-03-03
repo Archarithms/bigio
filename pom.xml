@@ -20,6 +20,7 @@
 
     <modules>
         <module>core</module>
+        <module>agent</module>
         <module>test</module>
         <module>benchmark</module>
         <module>runtime</module>
@@ -109,6 +110,12 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter</artifactId>
                 <version>1.0.0.RC3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>4.0.1.RELEASE</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>

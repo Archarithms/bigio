@@ -22,6 +22,11 @@
             <artifactId>a2isim-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>a2isim-agent</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!--dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>a2isim-benchmark</artifactId>

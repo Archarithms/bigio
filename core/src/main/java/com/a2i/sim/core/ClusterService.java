@@ -50,12 +50,8 @@ public class ClusterService {
         
     }
 
-    public void addInterceptor(Interceptor interceptor) {
-        ListenerRegistry.INSTANCE.addInterceptor(interceptor);
-    }
-
-    public void addInterceptor(Interceptor interceptor, String topic) {
-        ListenerRegistry.INSTANCE.addInterceptor(interceptor, topic);
+    public void addInterceptor(String topic, Interceptor interceptor) {
+        ListenerRegistry.INSTANCE.addInterceptor(topic, interceptor);
     }
 
     public <T> void addListener(String topic, MessageListener<T> consumer) {

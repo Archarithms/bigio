@@ -12,6 +12,7 @@
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>com.a2i:a2isim-core</include>
+                <include>com.a2i:a2isim-agent</include>
             </includes>
             <excludes>
                 <exclude>com.a2i:a2isim-runtime</exclude>
@@ -21,6 +22,7 @@
             <outputDirectory>lib</outputDirectory>
             <excludes>
                 <exclude>com.a2i:a2isim-core</exclude>
+                <exclude>com.a2i:a2isim-agent</exclude>
                 <exclude>com.a2i:a2isim-runtime</exclude>
             </excludes>
         </dependencySet>
