@@ -21,8 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A utility class providing network tools.
+ * 
+ * @author Andy Trimble
  */
 public class NetworkUtil {
 
@@ -49,6 +50,11 @@ public class NetworkUtil {
         Collections.shuffle(PORTS);
     }
 
+    /**
+     * Get the IP address of this instance.
+     * 
+     * @return the IP address associated with the selected network interface
+     */
     public static String getIp() {
         if(nic == null) {
             findNIC();
@@ -57,6 +63,11 @@ public class NetworkUtil {
         return ip;
     }
 
+    /**
+     * Get the configured network interface.
+     * 
+     * @return the network interface this member is using
+     */
     public static NetworkInterface getNetworkInterface() {
         if(nic == null) {
             findNIC();
@@ -65,6 +76,11 @@ public class NetworkUtil {
         return nic;
     }
 
+    /**
+     * Get the InetAddress object.
+     * 
+     * @return the InetAddress object
+     */
     public static InetAddress getInetAddress() {
         if(nic == null) {
             findNIC();
@@ -73,6 +89,11 @@ public class NetworkUtil {
         return inetAddress;
     }
 
+    /**
+     * Get a random unused port between START_PORT and END_PORT.
+     * 
+     * @return a random unused port
+     */
     public static int getFreePort() {
         for (int i = 0; i < NUM_CANDIDATES; i ++) {
             int port = nextCandidatePort();
