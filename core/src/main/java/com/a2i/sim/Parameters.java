@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2014 Archarithms Inc.
  */
 
 package com.a2i.sim;
@@ -26,8 +24,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This singleton class manages all of the configurable parameters. Configuration
+ * files are loaded from the 'config' directory. Any property in the directory
+ * structure that ends with '.properties' will be loaded by this class and 
+ * their contents will be available through this API.
+ * 
+ * @author Andy Trimble
  */
 public enum Parameters {
     INSTANCE;
@@ -40,6 +42,9 @@ public enum Parameters {
 
     private static OperatingSystem os;
 
+    /**
+     * Protected constructor.
+     */
     Parameters() {
         LOG = LoggerFactory.getLogger(Parameters.class);
         MAX_DEPTH = 10;
@@ -50,18 +55,41 @@ public enum Parameters {
         init();
     }
 
+    /**
+     * Get a property.
+     * 
+     * @param name the name of the property.
+     * @return the property value, or null if the property does not exist.
+     */
     public String getProperty(String name) {
         return properties.getProperty(name);
     }
     
+    /**
+     * Get a property. If the property doesn't exist, the default value will
+     * be returned.
+     * 
+     * @param name the name of the property.
+     * @param defaultValue the default value of the property.
+     * @return the value should the property exist, or the default property 
+     * if it does not.
+     */
     public String getProperty(String name, String defaultValue) {
         return properties.getProperty(name, defaultValue);
     }
 
+    /**
+     * Get the operating system.
+     * 
+     * @return the operating system.
+     */
     public OperatingSystem currentOS() {
         return os;
     }
 
+    /**
+     * Load the configuration.
+     */
     private void init() {
         String osName = System.getProperty("os.name");
         String osArch = System.getProperty("os.arch");

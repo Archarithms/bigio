@@ -1,3 +1,7 @@
+/*
+ * Copyright 2014 Archarithms Inc.
+ */
+
 package com.a2i.sim.util;
 
 import java.io.Serializable;

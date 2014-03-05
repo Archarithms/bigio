@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2014 Archarithms Inc.
  */
 
 package com.a2i.sim;
@@ -9,9 +7,19 @@ package com.a2i.sim;
 import com.a2i.sim.core.Envelope;
 
 /**
- *
- * @author atrimble
+ * This interface defines a message interceptor. Interceptors are used to 
+ * intercept messages before they are sent to consumers. The messages may be
+ * transformed by an interceptor.
+ * 
+ * @author Andy Trimble
  */
 public interface Interceptor {
+
+    /**
+     * Intercept a message.
+     * 
+     * @param envelope the message.
+     * @return a transformation of the received message.
+     */
     public Envelope intercept(Envelope envelope);
 }
