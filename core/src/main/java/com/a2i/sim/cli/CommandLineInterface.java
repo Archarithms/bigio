@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 /**
  *
- * @author atrimble
+ * @author Andy Trimble
  */
 @Component
 public class CommandLineInterface {
