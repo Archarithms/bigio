@@ -26,12 +26,12 @@
                 <exclude>com.a2i:a2isim-runtime</exclude>
             </excludes>
         </dependencySet>
-        <dependencySet>
+        <!--dependencySet>
             <outputDirectory>components</outputDirectory>
             <includes>
                 <include>com.a2i:a2isim-test</include>
             </includes>
-        </dependencySet>
+        </dependencySet-->
     </dependencySets>
     <!--fileSets>
         <fileSet>
