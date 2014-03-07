@@ -142,7 +142,7 @@ public class NetworkUtil {
                         break;
                     case MAC_64:
                     case MAC_32:
-                        networkInterfaceName = "eth0";
+                        networkInterfaceName = "en0";
                         break;
                     default:
                         LOG.error("Cannot determine operating system. Cluster cannot form.");
@@ -150,15 +150,21 @@ public class NetworkUtil {
             }
             
             nic = NetworkInterface.getByName(networkInterfaceName);
-            Enumeration e = nic.getInetAddresses();
-            while(e.hasMoreElements()) {
-                InetAddress i = (InetAddress) e.nextElement();
-                String address = i.getHostAddress();
 
-                if(!address.startsWith("fe")) {
-                    inetAddress = i;
-                    ip = address;
+            if(nic != null) {
+                Enumeration e = nic.getInetAddresses();
+                while(e.hasMoreElements()) {
+                    InetAddress i = (InetAddress) e.nextElement();
+                    String address = i.getHostAddress();
+
+                    if(!address.startsWith("fe")) {
+                        inetAddress = i;
+                        ip = address;
+                        break;
+                    }
                 }
+            } else {
+                LOG.error("Cannot find network interface '" + networkInterfaceName + "'");
             }
         } catch(SocketException ex) {
             LOG.error("Unable to determine IP address", ex);
