@@ -33,25 +33,25 @@ public class MessageTest {
 
     private static final String MESSAGE = "This is a test";
 
-    private final BlockingQueue<TestMessage> queue = new ArrayBlockingQueue<>(1);
+    private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
 
-    private final TestMessageListener listener = new TestMessageListener();
+    private final MyMessageListener listener = new MyMessageListener();
     private final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
     @Test
     public void testMessage() throws Exception {
         speaker.addListener("MyTopic", listener);
-        speaker.send("MyTopic", new TestMessage(MESSAGE + "1"));
-        TestMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "1"));
+        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
 
-        speaker.send("BadTopic", new TestMessage(MESSAGE + "2"));
+        speaker.send("BadTopic", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
         speaker.removeListener(listener);
-        speaker.send("MyTopic", new TestMessage(MESSAGE + "3"));
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "3"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
     }
@@ -59,8 +59,8 @@ public class MessageTest {
     @Test
     public void testDelay() throws Exception {
         speaker.addListener("DelayedTopic", delayedListener);
-        speaker.send("DelayedTopic", new TestMessage(MESSAGE + "1"), 2000);
-        TestMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
+        speaker.send("DelayedTopic", new MyMessage(MESSAGE + "1"), 2000);
+        MyMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
         m = queue.poll(2500l, TimeUnit.MILLISECONDS);
@@ -68,10 +68,10 @@ public class MessageTest {
         assertEquals(m.getMessage(), MESSAGE + "1");
     }
 
-    private class TestMessageListener implements MessageListener<TestMessage> {
+    private class MyMessageListener implements MessageListener<MyMessage> {
 
         @Override
-        public void receive(TestMessage message) {
+        public void receive(MyMessage message) {
             LOG.info("Got a message " + message.getMessage());
             
             boolean success = queue.offer(message);
@@ -82,10 +82,10 @@ public class MessageTest {
         }
     }
 
-    private class DelayedMessageListener implements MessageListener<TestMessage> {
+    private class DelayedMessageListener implements MessageListener<MyMessage> {
 
         @Override
-        public void receive(TestMessage message) {
+        public void receive(MyMessage message) {
             LOG.info("Got a message " + message.getMessage());
             
             boolean success = queue.offer(message);
@@ -96,15 +96,15 @@ public class MessageTest {
         }
     }
 
-    private static final class TestMessage {
+    private static final class MyMessage {
 
         private String message;
 
-        public TestMessage() {
+        public MyMessage() {
 
         }
 
-        public TestMessage(String message) {
+        public MyMessage(String message) {
             this.message = message;
         }
 

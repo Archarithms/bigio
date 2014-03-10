@@ -104,6 +104,8 @@ public class TestMessage implements Serializable {
     public Object decode(final Value value, final Class expectedType) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
         Object ret = null;
 
+        System.out.println(value.getType());
+
         if(value.getType() == ValueType.ARRAY) {
                 ret = new ArrayList();
                 Value[] elements = value.asArrayValue().getElementArray();
@@ -140,6 +142,8 @@ public class TestMessage implements Serializable {
         } else if(value.getType() == ValueType.RAW) {
                 if(expectedType == String.class) {
                     ret = value.asRawValue().getString();
+                } else if(expectedType.isEnum()) {
+                    ret = decode(msgPack.createBufferUnpacker(value.asRawValue().getByteArray()).readValue(), expectedType);
                 } else {
                     ret = expectedType.newInstance();
                     expectedType.getMethod("decode", byte[].class).invoke(ret, value.asRawValue().getByteArray());

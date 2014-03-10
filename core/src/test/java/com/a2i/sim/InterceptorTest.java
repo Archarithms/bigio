@@ -32,8 +32,8 @@ public class InterceptorTest {
     @Autowired
     private Speaker speaker;
 
-    private final BlockingQueue<TestMessage> queue = new ArrayBlockingQueue<>(1);
-    private final TestMessageListener listener = new TestMessageListener();
+    private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
+    private final MyMessageListener listener = new MyMessageListener();
     private final TestInterceptor interceptor = new TestInterceptor();
 
     @Test
@@ -41,8 +41,8 @@ public class InterceptorTest {
         speaker.addInterceptor("InterceptTopic", interceptor);
         speaker.addListener("InterceptTopic", listener);
 
-        speaker.send("InterceptTopic", new TestMessage("1"));
-        TestMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
+        speaker.send("InterceptTopic", new MyMessage("1"));
+        MyMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
         m = queue.poll(2500l, TimeUnit.MILLISECONDS);
@@ -58,10 +58,10 @@ public class InterceptorTest {
         }
     }
     
-    private class TestMessageListener implements MessageListener<TestMessage> {
+    private class MyMessageListener implements MessageListener<MyMessage> {
 
         @Override
-        public void receive(TestMessage message) {
+        public void receive(MyMessage message) {
             boolean success = queue.offer(message);
 
             if (!success) {
@@ -70,15 +70,15 @@ public class InterceptorTest {
         }
     }
 
-    private static final class TestMessage {
+    private static final class MyMessage {
 
         private String message;
 
-        public TestMessage() {
+        public MyMessage() {
 
         }
 
-        public TestMessage(String message) {
+        public MyMessage(String message) {
             this.message = message;
         }
 

@@ -27,14 +27,7 @@ public class EncodeTest {
     private final Random rand = new Random();
 
     @Test
-    public void testTest() {
-        new NewMessage();
-    }
-    
-//    @Test
     public void testEncodeDecode() throws Exception {
-//        ECEFPos ecef = new ECEFPos();
-//        byte[] bs = (byte[])ecef.getClass().getMethod("_encode_").invoke(ecef);
 
         RepMessage message = createMessage();
         RepMessage decodedMessage = new RepMessage();
