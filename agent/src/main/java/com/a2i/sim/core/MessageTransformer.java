@@ -1,5 +1,6 @@
 package com.a2i.sim.core;
 
+import java.io.PrintWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
@@ -16,6 +17,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.util.TraceClassVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,10 @@ public class MessageTransformer implements ClassFileTransformer {
     public byte[] transform(ClassLoader loader, String className,
             Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
             byte[] b) throws IllegalClassFormatException {
+
+//        if(className.contains("com/a2i/sim")) {
+//            LOG.info("**** Working on " + className + " ****");
+//        }
             
         ClassReader cr = new ClassReader(b);
         ClassWriter cw = new ClassWriter(cr, 0);
@@ -144,7 +150,13 @@ public class MessageTransformer implements ClassFileTransformer {
         @Override
         public void visitEnd() {
 
-            if(!clinitFound) {
+            if(isMessage && !clinitFound) {
+                if(!msgPackDefined) {
+                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL + ACC_STATIC, "_MSG_PACK_", "Lorg/msgpack/MessagePack;", null, null);
+                    fv.visitEnd();
+                    msgPackDefined = true;
+                }
+
                 MethodVisitor mv = cv.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
                 mv.visitCode();
                 mv.visitTypeInsn(NEW, "org/msgpack/MessagePack");
@@ -896,6 +908,48 @@ public class MessageTransformer implements ClassFileTransformer {
                             }
                             break;
                         default:
+//                            try {
+//                                String formalName = tuple.getType().substring(1, tuple.getType().length() - 1).replace('/', '.');
+//                                if(Class.forName(formalName).isEnum()) {
+//                                    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+//                                    mv.visitLdcInsn(tuple.getName() + "...");
+//                                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "print", "(Ljava/lang/String;)V");
+//                                    
+//                                    mv.visitVarInsn(ALOAD, 2);
+//                                    mv.visitVarInsn(ALOAD, 0);
+//                                    mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+//                                    mv.visitMethodInsn(INVOKEVIRTUAL, tuple.getType().substring(1, tuple.getType().length() - 1), "ordinal", "()I");
+//                                    mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "(I)Lorg/msgpack/packer/Packer;");
+//
+//                                    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+//                                    mv.visitLdcInsn("done");
+//                                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+//                                    
+//                                    mv.visitInsn(POP);
+//                                } else {
+//                                    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+//                                    mv.visitLdcInsn(tuple.getName() + "...");
+//                                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+//                
+//                                    mv.visitVarInsn(ALOAD, 0);
+//                                    mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
+//                                    mv.visitMethodInsn(INVOKEVIRTUAL, tuple.getType(), "_encode_", "()[B");
+//                                    mv.visitVarInsn(ASTORE, 3);
+//                                    mv.visitVarInsn(ALOAD, 2);
+//                                    mv.visitVarInsn(ALOAD, 3);
+//                                    mv.visitMethodInsn(INVOKEINTERFACE, "org/msgpack/packer/Packer", "write", "([B)Lorg/msgpack/packer/Packer;");
+//
+//                                    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+//                                    mv.visitLdcInsn("done");
+//                                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V");
+//                                    
+//                                    mv.visitInsn(POP);
+//                                }
+//                            } catch(ClassNotFoundException ex) {
+//                                LOG.error("Unable to find class.", ex);
+//                            }
+//                            break;
+                            
                             mv.visitVarInsn(ALOAD, 0);
                             mv.visitFieldInsn(GETFIELD, currentClass, tuple.getName(), tuple.getType());
                             mv.visitMethodInsn(INVOKEVIRTUAL, tuple.getType(), "_encode_", "()[B");

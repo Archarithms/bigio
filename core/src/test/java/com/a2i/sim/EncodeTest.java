@@ -3,256 +3,41 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.a2i.sim.test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Method;
+package com.a2i.sim;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 import org.apache.commons.collections.CollectionUtils;
-import static org.junit.Assert.*;
 import org.junit.Test;
-import org.msgpack.MessagePack;
-import org.msgpack.io.EndOfBufferException;
-import org.msgpack.template.Templates;
-import org.msgpack.type.ValueType;
-import org.msgpack.unpacker.Unpacker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.Assert.*;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  *
  * @author atrimble
  */
-public class GenericCodingTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GenericCodingTest.class);
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = TestConfiguration.class)
+public class EncodeTest {
 
     private final Random rand = new Random();
 
-//    @Test
-//    public void testSizes() throws Exception {
-//        int runs = 100000;
-//        long sizeSum = 0;
-//        int encodeTimeSum = 0;
-//        int decodeTimeSum = 0;
-//        
-//        long time;
-//        double avgSize;
-//        double avgEncodeTime;
-//        double avgDecodeTime;
-//
-//        for (int i = 0; i < runs; ++i) {
-//            TestMessage m1 = createMessage();
-//            TestMessage m2 = new TestMessage();
-//
-//            time = System.currentTimeMillis();
-//            byte[] arr = m1.encode();
-//            encodeTimeSum += System.currentTimeMillis() - time;
-//            sizeSum += arr.length;
-//
-//            time = System.currentTimeMillis();
-//            m2.decode(arr);
-//            decodeTimeSum += System.currentTimeMillis() - time;
-//        }
-//
-//        avgEncodeTime = (double) encodeTimeSum / (double) runs;
-//        avgDecodeTime = (double) decodeTimeSum / (double) runs;
-//        avgSize = (double) sizeSum / (double) runs;
-//
-//        LOG.info("MsgPack Serialize");
-//        LOG.info("Average Size: " + avgSize);
-//        LOG.info("Average Encode Time: " + avgEncodeTime);
-//        LOG.info("Average Decode Time: " + avgDecodeTime);
-//        LOG.info("Total Encode Time: " + encodeTimeSum);
-//        LOG.info("Total Decode Time: " + decodeTimeSum);
-//
-//        encodeTimeSum = 0;
-//        decodeTimeSum = 0;
-//        
-//        for(int i = 0; i < runs; ++i) {
-//            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-//            ObjectOutput out = null;
-//            byte[] arr;
-//            try {
-//                out = new ObjectOutputStream(bos);
-//                TestMessage m = createMessage();
-//
-//                time = System.currentTimeMillis();
-//                out.writeObject(m);
-//                arr = bos.toByteArray();
-//                encodeTimeSum += System.currentTimeMillis() - time;
-//                sizeSum += arr.length;
-//            } finally {
-//                try {
-//                    if (out != null) {
-//                        out.close();
-//                    }
-//                } catch (IOException ex) {
-//                    // ignore close exception
-//                }
-//                try {
-//                    bos.close();
-//                } catch (IOException ex) {
-//                    // ignore close exception
-//                }
-//            }
-//
-//            ByteArrayInputStream bis = new ByteArrayInputStream(arr);
-//            ObjectInput in = null;
-//            try {
-//              in = new ObjectInputStream(bis);
-//
-//              time = System.currentTimeMillis();
-//              Object o = in.readObject(); 
-//              decodeTimeSum += System.currentTimeMillis() - time;
-//            } finally {
-//              try {
-//                bis.close();
-//              } catch (IOException ex) {
-//                // ignore close exception
-//              }
-//              try {
-//                if (in != null) {
-//                  in.close();
-//                }
-//              } catch (IOException ex) {
-//                // ignore close exception
-//              }
-//            }
-//        }
-//
-//        avgEncodeTime = (double) encodeTimeSum / (double) runs;
-//        avgDecodeTime = (double) decodeTimeSum / (double) runs;
-//        avgSize = (double) sizeSum / (double) runs;
-//
-//        LOG.info("Java Serialize");
-//        LOG.info("Average Size: " + avgSize);
-//        LOG.info("Average Encode Time: " + avgEncodeTime);
-//        LOG.info("Average Decode Time: " + avgDecodeTime);
-//        LOG.info("Total Encode Time: " + encodeTimeSum);
-//        LOG.info("Total Decode Time: " + decodeTimeSum);
-//    }
-
-//    @Test
-    public void testGeneratedSizes() throws Exception {
-        int runs = 100000;
-        long sizeSum = 0;
-        int encodeTimeSum = 0;
-        int decodeTimeSum = 0;
-        
-        long time;
-        double avgSize;
-        double avgEncodeTime;
-        double avgDecodeTime;
-
-        Method encodeMethod = TestMessage.class.getMethod("_encode_");
-        Method decodeMethod = TestMessage.class.getMethod("_decode_", byte[].class);
-
-        for (int i = 0; i < runs; ++i) {
-            TestMessage m1 = createMessage();
-            TestMessage m2 = new TestMessage();
-
-            time = System.currentTimeMillis();
-            byte[] arr = (byte[])encodeMethod.invoke(m1);
-            encodeTimeSum += System.currentTimeMillis() - time;
-            sizeSum += arr.length;
-
-            time = System.currentTimeMillis();
-            decodeMethod.invoke(m2, arr);
-            decodeTimeSum += System.currentTimeMillis() - time;
-        }
-
-        avgEncodeTime = (double) encodeTimeSum / (double) runs;
-        avgDecodeTime = (double) decodeTimeSum / (double) runs;
-        avgSize = (double) sizeSum / (double) runs;
-
-        LOG.info("MsgPack Serialize");
-        LOG.info("Average Size: " + avgSize);
-        LOG.info("Average Encode Time: " + avgEncodeTime);
-        LOG.info("Average Decode Time: " + avgDecodeTime);
-        LOG.info("Total Encode Time: " + encodeTimeSum);
-        LOG.info("Total Decode Time: " + decodeTimeSum);
-
-        encodeTimeSum = 0;
-        decodeTimeSum = 0;
-        
-        for(int i = 0; i < runs; ++i) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutput out = null;
-            byte[] arr;
-            try {
-                out = new ObjectOutputStream(bos);
-                TestMessage m = createMessage();
-
-                time = System.currentTimeMillis();
-                out.writeObject(m);
-                arr = bos.toByteArray();
-                encodeTimeSum += System.currentTimeMillis() - time;
-                sizeSum += arr.length;
-            } finally {
-                try {
-                    if (out != null) {
-                        out.close();
-                    }
-                } catch (IOException ex) {
-                    // ignore close exception
-                }
-                try {
-                    bos.close();
-                } catch (IOException ex) {
-                    // ignore close exception
-                }
-            }
-
-            ByteArrayInputStream bis = new ByteArrayInputStream(arr);
-            ObjectInput in = null;
-            try {
-              in = new ObjectInputStream(bis);
-
-              time = System.currentTimeMillis();
-              Object o = in.readObject(); 
-              decodeTimeSum += System.currentTimeMillis() - time;
-            } finally {
-              try {
-                bis.close();
-              } catch (IOException ex) {
-                // ignore close exception
-              }
-              try {
-                if (in != null) {
-                  in.close();
-                }
-              } catch (IOException ex) {
-                // ignore close exception
-              }
-            }
-        }
-
-        avgEncodeTime = (double) encodeTimeSum / (double) runs;
-        avgDecodeTime = (double) decodeTimeSum / (double) runs;
-        avgSize = (double) sizeSum / (double) runs;
-
-        LOG.info("Java Serialize");
-        LOG.info("Average Size: " + avgSize);
-        LOG.info("Average Encode Time: " + avgEncodeTime);
-        LOG.info("Average Decode Time: " + avgDecodeTime);
-        LOG.info("Total Encode Time: " + encodeTimeSum);
-        LOG.info("Total Decode Time: " + decodeTimeSum);
+    @Test
+    public void testTest() {
+        new NewMessage();
     }
-
+    
 //    @Test
-    public void test_Encode() throws Exception {
-        TestMessage message = createMessage();
-        TestMessage decodedMessage = new TestMessage();
+    public void testEncodeDecode() throws Exception {
+//        ECEFPos ecef = new ECEFPos();
+//        byte[] bs = (byte[])ecef.getClass().getMethod("_encode_").invoke(ecef);
+
+        RepMessage message = createMessage();
+        RepMessage decodedMessage = new RepMessage();
 
         byte[] bytes = (byte[])message.getClass().getMethod("_encode_").invoke(message);
         decodedMessage.getClass().getMethod("_decode_", byte[].class).invoke(decodedMessage, bytes);
@@ -260,16 +45,7 @@ public class GenericCodingTest {
         testMessageEquality(message, decodedMessage);
     }
 
-//    @Test
-    public void testEncode() throws Exception {
-        TestMessage message = createMessage();
-        TestMessage decodedMessage = new TestMessage();
-        decodedMessage.decode(message.encode());
-
-        testMessageEquality(message, decodedMessage);
-    }
-
-    private void testMessageEquality(TestMessage m1, TestMessage m2) {
+    private void testMessageEquality(RepMessage m1, RepMessage m2) {
         assertTrue(m1.isBooleanValue() == m2.isBooleanValue());
         assertTrue(m1.getByteValue() == m2.getByteValue());
         assertTrue(m1.getShortValue() == m2.getShortValue());
@@ -485,164 +261,8 @@ public class GenericCodingTest {
         }
     }
 
-//    @Test
-    public void test_Encode_() throws Exception {
-        TestMessage message = createMessage();
-
-        byte[] arr = (byte[]) message.getClass().getMethod("_encode_").invoke(message);
-
-        StringBuilder buff = new StringBuilder();
-        buff.append(arr.length).append(" bytes:").append("\n");
-        for (int i = 0; i < arr.length; ++i) {
-            buff.append(String.format("%02x ", arr[i] & 0xff));
-            if ((i + 1) % 16 == 0) {
-                buff.append("\n");
-            }
-        }
-        LOG.info(buff.toString());
-
-        MessagePack msgPack = new MessagePack();
-        Unpacker unpacker = msgPack.createBufferUnpacker(arr);
-
-        assertTrue(unpacker.readBoolean() == message.isBooleanValue());
-        assertTrue(unpacker.readByte() == message.getByteValue());
-        assertTrue(unpacker.readShort() == message.getShortValue());
-        assertTrue(unpacker.readInt() == message.getIntValue());
-        assertTrue(unpacker.readFloat() == message.getFloatValue());
-        assertTrue(unpacker.readLong() == message.getLongValue());
-        assertTrue(unpacker.readDouble() == message.getDoubleValue());
-        assertTrue(unpacker.readString().equals(message.getStringValue()));
-
-        byte[] ecefArr = unpacker.readByteArray();
-        Unpacker ecefUnpacker = msgPack.createBufferUnpacker(ecefArr);
-        assertTrue(ecefUnpacker.readDouble() == message.getEcefValue().getX());
-        assertTrue(ecefUnpacker.readDouble() == message.getEcefValue().getY());
-        assertTrue(ecefUnpacker.readDouble() == message.getEcefValue().getZ());
-
-        boolean throwed = false;
-        try {
-            assertTrue(ecefUnpacker.getNextType() == ValueType.NIL);
-        } catch (EndOfBufferException ex) {
-            throwed = true;
-        }
-        assertTrue(throwed);
-
-        boolean[] booleanArr = unpacker.read(boolean[].class);
-        assertTrue(booleanArr.length == message.getBooleanArray().length);
-        for (int i = 0; i < booleanArr.length; ++i) {
-            assertTrue(booleanArr[i] == message.getBooleanArray()[i]);
-        }
-
-        byte[] byteArr = unpacker.read(byte[].class);
-        assertTrue(byteArr.length == message.getByteArray().length);
-        for (int i = 0; i < byteArr.length; ++i) {
-            assertTrue(byteArr[i] == message.getByteArray()[i]);
-        }
-
-        short[] shortArr = unpacker.read(short[].class);
-        assertTrue(shortArr.length == message.getShortArray().length);
-        for (int i = 0; i < shortArr.length; ++i) {
-            assertTrue(shortArr[i] == message.getShortArray()[i]);
-        }
-
-        int[] intArr = unpacker.read(int[].class);
-        assertTrue(intArr.length == message.getIntArray().length);
-        for (int i = 0; i < intArr.length; ++i) {
-            assertTrue(intArr[i] == message.getIntArray()[i]);
-        }
-
-        float[] floatArr = unpacker.read(float[].class);
-        assertTrue(floatArr.length == message.getFloatArray().length);
-        for (int i = 0; i < floatArr.length; ++i) {
-            assertTrue(floatArr[i] == message.getFloatArray()[i]);
-        }
-
-        long[] longArr = unpacker.read(long[].class);
-        assertTrue(longArr.length == message.getLongArray().length);
-        for (int i = 0; i < longArr.length; ++i) {
-            assertTrue(longArr[i] == message.getLongArray()[i]);
-        }
-
-        double[] doubleArr = unpacker.read(double[].class);
-        assertTrue(doubleArr.length == message.getDoubleArray().length);
-        for (int i = 0; i < doubleArr.length; ++i) {
-            assertTrue(doubleArr[i] == message.getDoubleArray()[i]);
-        }
-
-        String[] stringArr = unpacker.read(String[].class);
-        assertTrue(stringArr.length == message.getStringArray().length);
-        for (int i = 0; i < stringArr.length; ++i) {
-            assertTrue(stringArr[i].equals(message.getStringArray()[i]));
-        }
-
-        List<Boolean> booleanList = unpacker.read(Templates.tList(Templates.TBoolean));
-        assertTrue(booleanList.size() == message.getBooleanList().size());
-        for (int i = 0; i < booleanList.size(); ++i) {
-            assertTrue(booleanList.get(i) == message.getBooleanList().get(i));
-        }
-
-        List<Byte> byteList = unpacker.read(Templates.tList(Templates.TByte));
-        assertTrue(byteList.size() == message.getByteList().size());
-        for (int i = 0; i < byteList.size(); ++i) {
-            assertTrue(byteList.get(i) == message.getByteList().get(i));
-        }
-
-        List<Short> shortList = unpacker.read(Templates.tList(Templates.TShort));
-        assertTrue(shortList.size() == message.getShortList().size());
-        for (int i = 0; i < shortList.size(); ++i) {
-            assertTrue(shortList.get(i).equals(message.getShortList().get(i)));
-        }
-
-        List<Integer> intList = unpacker.read(Templates.tList(Templates.TInteger));
-        assertTrue(intList.size() == message.getIntList().size());
-        for (int i = 0; i < intList.size(); ++i) {
-            assertTrue(intList.get(i).equals(message.getIntList().get(i)));
-        }
-
-        List<Float> floatList = unpacker.read(Templates.tList(Templates.TFloat));
-        assertTrue(floatList.size() == message.getFloatList().size());
-        for (int i = 0; i < floatList.size(); ++i) {
-            assertTrue(floatList.get(i).equals(message.getFloatList().get(i)));
-        }
-
-        List<Long> longList = unpacker.read(Templates.tList(Templates.TLong));
-        assertTrue(longList.size() == message.getLongList().size());
-        for (int i = 0; i < longList.size(); ++i) {
-            assertTrue(longList.get(i).equals(message.getLongList().get(i)));
-        }
-
-        List<Double> doubleList = unpacker.read(Templates.tList(Templates.TDouble));
-        assertTrue(doubleList.size() == message.getDoubleList().size());
-        for (int i = 0; i < doubleList.size(); ++i) {
-            assertTrue(doubleList.get(i).equals(message.getDoubleList().get(i)));
-        }
-
-        List<String> stringList = unpacker.read(Templates.tList(Templates.TString));
-        assertTrue(stringList.size() == message.getStringList().size());
-        for (int i = 0; i < stringList.size(); ++i) {
-            assertTrue(stringList.get(i).equals(message.getStringList().get(i)));
-        }
-
-        List<byte[]> ecefList = unpacker.read(Templates.tList(Templates.TByteArray));
-        assertTrue(ecefList.size() == message.getEcefList().size());
-        for (int i = 0; i < ecefList.size(); ++i) {
-            ecefUnpacker = msgPack.createBufferUnpacker(ecefList.get(i));
-            assertTrue(ecefUnpacker.readDouble() == message.getEcefList().get(i).getX());
-            assertTrue(ecefUnpacker.readDouble() == message.getEcefList().get(i).getY());
-            assertTrue(ecefUnpacker.readDouble() == message.getEcefList().get(i).getZ());
-        }
-
-        throwed = false;
-        try {
-            assertTrue(unpacker.getNextType() == ValueType.NIL);
-        } catch (EndOfBufferException ex) {
-            throwed = true;
-        }
-        assertTrue(throwed);
-    }
-
-    private TestMessage createMessage() {
-        TestMessage ret = new TestMessage();
+    private RepMessage createMessage() {
+        RepMessage ret = new RepMessage();
         ret.setBooleanValue(rand.nextBoolean());
         ret.setByteValue(Byte.decode("0x10"));
         ret.setShortValue((short) rand.nextInt());
@@ -651,7 +271,7 @@ public class GenericCodingTest {
         ret.setLongValue(rand.nextLong());
         ret.setDoubleValue(rand.nextDouble());
         ret.setStringValue("Andy is the greatest");
-        ret.setEcefValue(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.setEcefValue(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
         ret.setBooleanArray(new boolean[]{true, false});
         ret.setByteArray(new byte[]{Byte.decode("0x12"), Byte.decode("0x13")});
         ret.setShortArray(new short[]{(short) rand.nextInt(), (short) rand.nextInt()});
@@ -660,7 +280,7 @@ public class GenericCodingTest {
         ret.setLongArray(new long[]{rand.nextLong(), rand.nextLong(), rand.nextLong(), rand.nextLong()});
         ret.setDoubleArray(new double[]{rand.nextDouble(), rand.nextDouble()});
         ret.setStringArray(new String[]{"Andy", "is", "absolutely", "rad"});
-        ret.setEnumValue(TestMessage.TestEnum.Test);
+        ret.setEnumValue(RepMessage.TestEnum.Test);
 
         ret.getBooleanList().add(true);
         ret.getBooleanList().add(false);
@@ -686,9 +306,9 @@ public class GenericCodingTest {
         ret.getStringList().add("Hi");
         ret.getStringList().add("there");
         ret.getStringList().add("world");
-        ret.getEcefList().add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcefList().add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcefList().add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcefList().add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcefList().add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcefList().add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
 
         ret.getBoolean2DList().add(new ArrayList<Boolean>());
         ret.getBoolean2DList().get(0).add(true);
@@ -770,15 +390,15 @@ public class GenericCodingTest {
         ret.getString2DList().get(2).add(Double.toString(rand.nextDouble()));
         ret.getString2DList().get(2).add(Double.toString(rand.nextDouble()));
 
-        ret.getEcef2DList().add(new ArrayList<ECEF>());
-        ret.getEcef2DList().get(0).add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcef2DList().get(0).add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcef2DList().add(new ArrayList<ECEF>());
-        ret.getEcef2DList().get(1).add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcef2DList().get(1).add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcef2DList().add(new ArrayList<ECEF>());
-        ret.getEcef2DList().get(2).add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcef2DList().get(2).add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcef2DList().add(new ArrayList<ECEFPos>());
+        ret.getEcef2DList().get(0).add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcef2DList().get(0).add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcef2DList().add(new ArrayList<ECEFPos>());
+        ret.getEcef2DList().get(1).add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcef2DList().get(1).add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcef2DList().add(new ArrayList<ECEFPos>());
+        ret.getEcef2DList().get(2).add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcef2DList().get(2).add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
 
         ret.getBooleanMap().put(Integer.toString(rand.nextInt()), Boolean.TRUE);
         ret.getBooleanMap().put(Integer.toString(rand.nextInt()), Boolean.TRUE);
@@ -812,9 +432,9 @@ public class GenericCodingTest {
         ret.getStringMap().put(Integer.toString(rand.nextInt()), Integer.toString(rand.nextInt()));
         ret.getStringMap().put(Integer.toString(rand.nextInt()), Integer.toString(rand.nextInt()));
 
-        ret.getEcefMap().put(Integer.toString(rand.nextInt()), new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcefMap().put(Integer.toString(rand.nextInt()), new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        ret.getEcefMap().put(Integer.toString(rand.nextInt()), new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcefMap().put(Integer.toString(rand.nextInt()), new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcefMap().put(Integer.toString(rand.nextInt()), new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        ret.getEcefMap().put(Integer.toString(rand.nextInt()), new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
 
         ArrayList l = new ArrayList();
         l.add(true);
@@ -921,16 +541,16 @@ public class GenericCodingTest {
         ret.getStringListMap().put(Integer.toString(rand.nextInt()), l);
 
         l = new ArrayList();
-        l.add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        l.add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        l.add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        l.add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
         ret.getEcefListMap().put(Integer.toString(rand.nextInt()), l);
         l = new ArrayList();
-        l.add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        l.add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        l.add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        l.add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
         ret.getEcefListMap().put(Integer.toString(rand.nextInt()), l);
         l = new ArrayList();
-        l.add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
-        l.add(new ECEF(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        l.add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
+        l.add(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
         ret.getEcefListMap().put(Integer.toString(rand.nextInt()), l);
 
         return ret;

@@ -30,10 +30,13 @@ import org.slf4j.LoggerFactory;
  */
 @Message
 public class TestMessage implements Serializable {
+
+    public static enum TestEnum { Test, SecondTest }
+
     private static final transient Logger LOG = LoggerFactory.getLogger(TestMessage.class);
 
     private static final transient MessagePack msgPack = new MessagePack();
-    
+
     private boolean booleanValue;
     private byte byteValue;
     private short shortValue;
@@ -43,6 +46,7 @@ public class TestMessage implements Serializable {
     private double doubleValue;
     private String stringValue;
     private ECEF ecefValue;
+    private TestEnum enumValue;
 
     private boolean[] booleanArray;
     private byte[] byteArray;
@@ -100,7 +104,6 @@ public class TestMessage implements Serializable {
     public Object decode(final Value value, final Class expectedType) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
         Object ret = null;
 
-        //switch(value.getType()) {
         if(value.getType() == ValueType.ARRAY) {
                 ret = new ArrayList();
                 Value[] elements = value.asArrayValue().getElementArray();
@@ -124,6 +127,8 @@ public class TestMessage implements Serializable {
                     ret = value.asIntegerValue().getByte();
                 } else if(expectedType == Short.class) {
                     ret = value.asIntegerValue().getShort();
+                } else if(expectedType.isEnum()) {
+                    ret = expectedType.getEnumConstants()[value.asIntegerValue().getInt()];
                 }
         } else if(value.getType() == ValueType.MAP) {
                 ret = new HashMap();
@@ -217,6 +222,7 @@ public class TestMessage implements Serializable {
         longValue = (long)decode(unpacker.readValue(), Long.class);
         doubleValue = (double)decode(unpacker.readValue(), Double.class);
         stringValue = (String)decode(unpacker.readValue(), String.class);
+        enumValue = (TestEnum)decode(unpacker.readValue(), TestEnum.class);
 
         ecefValue = (ECEF)decode(unpacker.readValue(), ECEF.class);
 
@@ -283,9 +289,9 @@ public class TestMessage implements Serializable {
         packer.write(longValue);
         packer.write(doubleValue);
         packer.write(stringValue);
+        packer.write(enumValue.ordinal());
 
         byte[] arr = (byte[])ecefValue.getClass().getMethod("encode").invoke(ecefValue);
-//        byte[] arr = ecefValue.test();
         packer.write(arr);
 
         packer.write(booleanArray);
@@ -379,6 +385,8 @@ public class TestMessage implements Serializable {
                     out.add(t);
                 } else if(t instanceof String) {
                     out.add(t);
+                } else if(t instanceof Enum) {
+                    out.add(((Enum)t).ordinal());
                 } else {
                     out.add((byte[])expectedType.getMethod("encode").invoke(t));
                 }
@@ -414,6 +422,8 @@ public class TestMessage implements Serializable {
                     out.put(k, v);
                 } else if(v instanceof Double) {
                     out.put(k, v);
+                } else if(v instanceof Enum) {
+                    out.put(k, ((Enum)v).ordinal());
                 } else if(v instanceof String) {
                     out.put(k, v);
                 } else {
@@ -911,5 +921,19 @@ public class TestMessage implements Serializable {
      */
     public Map<String, List<ECEF>> getEcefListMap() {
         return ecefListMap;
+    }
+
+    /**
+     * @return the enumValue
+     */
+    public TestEnum getEnumValue() {
+        return enumValue;
+    }
+
+    /**
+     * @param enumValue the enumValue to set
+     */
+    public void setEnumValue(TestEnum enumValue) {
+        this.enumValue = enumValue;
     }
 }
