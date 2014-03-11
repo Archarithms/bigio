@@ -131,7 +131,6 @@ public class MessageTransformer implements ClassFileTransformer {
 
             if(superName.equals("java/lang/Enum")) {
                 if(!name.startsWith("sun") && !name.startsWith("java") && !name.startsWith("org/spring") && !name.startsWith("org/junit")) {
-                    LOG.info("***** " + name + " is an enum");
                     isEnum = true;
                 }
             }
