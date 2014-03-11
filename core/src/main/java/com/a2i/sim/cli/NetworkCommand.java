@@ -5,6 +5,7 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.util.NetworkUtil;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -34,7 +35,11 @@ public class NetworkCommand implements CommandLine {
             while(enu.hasMoreElements()) {
                 NetworkInterface ifc = enu.nextElement();
                 System.out.println();
-                System.out.println(ifc.getName());
+                if(NetworkUtil.getNetworkInterface().getName().equals(ifc.getName())) {
+                    System.out.println(ifc.getName() + " *");
+                } else {
+                    System.out.println(ifc.getName());
+                }
                 System.out.println("    Display Name: " + ifc.getDisplayName());
                 System.out.println("    Loopback: " + ifc.isLoopback());
                 System.out.println("    Virtual: " + ifc.isVirtual());
