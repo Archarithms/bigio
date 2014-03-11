@@ -170,12 +170,6 @@ public class ClusterService {
         });
     }
 
-    public void members() {
-        for(Member member : getAllMembers()) {
-            LOG.info(member.toString());
-        }
-    }
-
     public void join(String ip) {
         
     }

@@ -67,10 +67,7 @@ public class CommandLineInterface {
 
                 String[] args = line.split("\\s+");
                 
-                if (line.equals("members")) {
-                    found = true;
-                    cluster.members();
-                } else if (line.contains("join")) {
+                if (line.contains("join")) {
                     found = true;
                     if (args.length < 2) {
                         System.out.println("Usage: join <some ip:port>");
