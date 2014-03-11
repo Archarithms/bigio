@@ -48,8 +48,6 @@ public class Starter implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        LOG.info("Vadam cito amici");
-
         if(args.length > 0 && args[0].equals("interactive")) {
             cli.init();
         }
