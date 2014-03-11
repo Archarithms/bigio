@@ -36,6 +36,8 @@ public class PingPong {
     private long time;
     private long messageCount = 0;
     private long sendCount = 0;
+    private long throwAway = 2000000l;
+    private boolean warmedUp = false;
 
     Thread injectThread = new Thread() {
         @Override
@@ -126,7 +128,10 @@ public class PingPong {
             speaker.addListener("HelloWorldProducer", new MessageListener<SimpleMessage>() {
                 @Override
                 public void receive(SimpleMessage message) {
-                    if(messageCount == 0) {
+                    if(messageCount >= throwAway && !warmedUp) {
+                        LOG.info("Reached the warm-up threshold: resetting stats");
+                        warmedUp = true;
+                        messageCount = 0;
                         time = System.currentTimeMillis();
                     }
                     
@@ -146,7 +151,10 @@ public class PingPong {
             speaker.addListener("HelloWorldConsumer", new MessageListener<SimpleMessage>() {
                 @Override
                 public void receive(SimpleMessage message) {
-                    if(messageCount == 0) {
+                    if(messageCount >= throwAway && !warmedUp) {
+                        LOG.info("Reached the warm-up threshold: resetting stats");
+                        warmedUp = true;
+                        messageCount = 0;
                         time = System.currentTimeMillis();
                     }
                     
@@ -165,6 +173,12 @@ public class PingPong {
             speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
                 @Override
                 public void receive(SimpleMessage message) {
+                    if(messageCount >= throwAway && !warmedUp) {
+                        LOG.info("Reached the warm-up threshold: resetting stats");
+                        warmedUp = true;
+                        messageCount = 0;
+                        time = System.currentTimeMillis();
+                    }
                     ++messageCount;
                 }
             });
