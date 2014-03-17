@@ -41,6 +41,7 @@ public class Gossiper {
 
     private final MembershipGossiper thread = new MembershipGossiper();
 
+    @SuppressWarnings("CallToThreadStartDuringObjectConstruction")
     public Gossiper(Member me) {
 
         this.me = me;

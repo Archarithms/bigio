@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
  *
  * @author atrimble
  */
-@Component
+//@Component
 public class PingPong {
 
     private static final Logger LOG = LoggerFactory.getLogger(PingPong.class);
@@ -35,9 +35,16 @@ public class PingPong {
     private boolean running = true;
     private long time;
     private long messageCount = 0;
-    private long sendCount = 0;
-    private long throwAway = 2000000l;
+    private final long throwAway = 2000000l;
+    private final long maxMessages = 1000000000 + throwAway;
     private boolean warmedUp = false;
+
+    private final SimpleMessage m = new SimpleMessage("m", 0, 0);
+
+    private int averageSize = 0;
+
+    private long usageTotal = 0;
+    private long usageSamples = 0;
 
     Thread injectThread = new Thread() {
         @Override
@@ -45,7 +52,7 @@ public class PingPong {
             while(running) {
                 try {
                     Thread.sleep(1000l);
-                    speaker.send("HelloWorldConsumer", new SimpleMessage("This message should be en/decoded", ++sendCount));
+                    speaker.send("HelloWorldConsumer", m);
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -59,7 +66,7 @@ public class PingPong {
             time = System.currentTimeMillis();
             while(running) {
                 try {
-                    speaker.send("HelloWorldLocal", new SimpleMessage("This message should be en/decoded", ++sendCount));
+                    speaker.send("HelloWorldConsumer", m);
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -67,8 +74,26 @@ public class PingPong {
         }
     };
 
+    Thread memThread = new Thread() {
+        Runtime runtime = Runtime.getRuntime();
+
+        @Override
+        public void run() {
+            while(running) {
+                ++usageSamples;
+                usageTotal += runtime.totalMemory() - runtime.freeMemory();
+
+                try {
+                    Thread.sleep(100l);
+                } catch(InterruptedException ex) {
+
+                }
+            }
+        }
+    };
+
     public PingPong() {
-        SimpleMessage m = new SimpleMessage("This message should be en/decoded", 0);
+        SimpleMessage m = new SimpleMessage("m", 0, 0);
         try {
             byte[] payload = GenericEncoder.encode(m);
             Envelope envelope = new Envelope();
@@ -85,6 +110,8 @@ public class PingPong {
             LOG.info("Typical message size: " + bytes.length);
             LOG.info("Typical payload size: " + payload.length);
             LOG.info("Typical header size: " + (bytes.length - payload.length));
+
+            averageSize = bytes.length;
         } catch (IOException ex) {
             LOG.error("IOException", ex);
         }
@@ -94,27 +121,29 @@ public class PingPong {
             public void run() {
                 running = false;
                 
+                time = System.currentTimeMillis() - time;
+                
                 try {
                     injectThread.join();
                     localThread.join();
+                    memThread.join();
                 } catch(InterruptedException ex) {
                     ex.printStackTrace();
                 }
 
-                time = System.currentTimeMillis() - time;
-
                 long count = messageCount;
-                long send = sendCount;
 
                 long seconds = time / 1000;
                 long bandwidth = count / seconds;
-                long sendBandwidth = send / seconds;
 
                 LOG.info("Received " + count + " messages in " + seconds + 
                         " seconds for a bandwidth of " + bandwidth + " m/s");
 
-                LOG.info("Sent " + send + " messages in " + seconds + 
-                        " seconds for a bandwidth of " + sendBandwidth + " m/s");
+                LOG.info((count * averageSize / 1024 / 1024 * 8) / seconds + " Mbit/s");
+                
+                double avgMemUsage = (double)usageTotal / (double)usageSamples;
+                
+                LOG.info("Average mem usage: " + (avgMemUsage / 1024 / 1024) + " MB");
             }
         });
     }
@@ -132,13 +161,20 @@ public class PingPong {
                         LOG.info("Reached the warm-up threshold: resetting stats");
                         warmedUp = true;
                         messageCount = 0;
+                        memThread.start();
                         time = System.currentTimeMillis();
                     }
-                    
+
                     ++messageCount;
+
+                    if(messageCount > maxMessages) {
+                        running = false;
+                        LOG.info("Finished");
+                    }
+
                     try {
                         if(running) {
-                            speaker.send("HelloWorldConsumer", new SimpleMessage("Hello from the producer", ++sendCount));
+                            speaker.send("HelloWorldConsumer", m);
                         }
                     } catch (Exception ex) {
                         LOG.error("Error", ex);
@@ -155,13 +191,20 @@ public class PingPong {
                         LOG.info("Reached the warm-up threshold: resetting stats");
                         warmedUp = true;
                         messageCount = 0;
+                        memThread.start();
                         time = System.currentTimeMillis();
                     }
                     
                     ++messageCount;
+
+                    if(messageCount > maxMessages) {
+                        running = false;
+                        LOG.info("Finished");
+                    }
+
                     try {
                         if(running) {
-                            speaker.send("HelloWorldProducer", new SimpleMessage("Hello from the consumer", ++sendCount));
+                            speaker.send("HelloWorldProducer", m);
                         }
                     } catch (Exception ex) {
                         LOG.error("Error", ex);
@@ -179,7 +222,13 @@ public class PingPong {
                         messageCount = 0;
                         time = System.currentTimeMillis();
                     }
+
                     ++messageCount;
+
+                    if(messageCount > maxMessages) {
+                        running = false;
+                        LOG.info("Finished");
+                    }
                 }
             });
 

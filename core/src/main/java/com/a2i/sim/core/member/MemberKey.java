@@ -29,9 +29,9 @@ public class MemberKey {
                 .append(message.getDataPort()).toString();
     }
 
-    public static RemoteMember decode(String key) {
+    public static RemoteMemberTCP decode(String key) {
         String[] values = key.split(":");
-        RemoteMember mem = new RemoteMember();
+        RemoteMemberTCP mem = new RemoteMemberTCP();
         mem.setIp(values[0]);
         mem.setGossipPort(Integer.parseInt(values[1]));
         mem.setDataPort(Integer.parseInt(values[2]));

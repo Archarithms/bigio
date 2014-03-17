@@ -52,7 +52,7 @@ public class BenchmarkComponent {
             while(running) {
                 try {
                     for(int i = 0; i < messagesPerSecond; ++i) {
-                        speaker.send("HelloWorld", new SimpleMessage("This message should be en/decoded", ++sendCount));
+                        speaker.send("HelloWorld", new SimpleMessage("This message should be en/decoded", ++sendCount, System.currentTimeMillis()));
                     }
                     Thread.sleep(1000l);
                 } catch(Exception ex) {
@@ -69,7 +69,7 @@ public class BenchmarkComponent {
             while(running) {
                 try {
 //                    Thread.sleep(100l);
-                    speaker.send("HelloWorldLocal", new SimpleMessage("This message should be en/decoded", ++sendCount));
+                    speaker.send("HelloWorldLocal", new SimpleMessage("This message should be en/decoded", ++sendCount, System.currentTimeMillis()));
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -78,7 +78,7 @@ public class BenchmarkComponent {
     };
 
     public BenchmarkComponent() {
-        SimpleMessage m = new SimpleMessage("This message should be en/decoded", 0);
+        SimpleMessage m = new SimpleMessage("This message should be en/decoded", 0, System.currentTimeMillis());
         try {
             byte[] payload = GenericEncoder.encode(m);
             Envelope envelope = new Envelope();

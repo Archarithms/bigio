@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -101,134 +102,77 @@ public class TestMessage implements Serializable {
         
     }
 
-    public Object decode(final Value value, final Class expectedType) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
+    public <T> T decode(final Value value, final Class<T> expectedType) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
         Object ret = null;
 
-        System.out.println(value.getType());
-
         if(value.getType() == ValueType.ARRAY) {
-                ret = new ArrayList();
-                Value[] elements = value.asArrayValue().getElementArray();
-                for(int i = 0; i < elements.length; ++i) {
-                    ((List)ret).add(decode(elements[i], expectedType));
-                }
+            ret = new ArrayList();
+            Value[] elements = value.asArrayValue().getElementArray();
+            for(int i = 0; i < elements.length; ++i) {
+                LOG.info("****");
+                LOG.info(expectedType.getTypeParameters()[0].getBounds()[0].toString());
+                LOG.info(expectedType.getTypeParameters()[0].getGenericDeclaration().toString());
+                LOG.info(expectedType.getTypeParameters()[0].getGenericDeclaration().getTypeParameters()[0].toString());
+                ((List)ret).add(decode(elements[i], expectedType.getTypeParameters()[0].getGenericDeclaration()));
+            }
         } else if(value.getType() == ValueType.BOOLEAN) {
-                ret = value.asBooleanValue().getBoolean();
+            ret = value.asBooleanValue().getBoolean();
         } else if(value.getType() == ValueType.FLOAT) {
-                if(expectedType == Float.class) {
-                    ret = value.asFloatValue().getFloat();
-                } else if(expectedType == Double.class) {
-                    ret = value.asFloatValue().getDouble();
-                }
+            if(expectedType == Float.class) {
+                ret = value.asFloatValue().getFloat();
+            } else if(expectedType == Double.class) {
+                ret = value.asFloatValue().getDouble();
+            }
         } else if(value.getType() == ValueType.INTEGER) {
-                if(expectedType == Integer.class) {
-                    ret = value.asIntegerValue().getInt();
-                } else if(expectedType == Long.class) {
-                    ret = value.asIntegerValue().getLong();
-                } else if(expectedType == Byte.class) {
-                    ret = value.asIntegerValue().getByte();
-                } else if(expectedType == Short.class) {
-                    ret = value.asIntegerValue().getShort();
-                } else if(expectedType.isEnum()) {
-                    ret = expectedType.getEnumConstants()[value.asIntegerValue().getInt()];
-                }
+            if(expectedType == Integer.class) {
+                ret = value.asIntegerValue().getInt();
+            } else if(expectedType == Long.class) {
+                ret = value.asIntegerValue().getLong();
+            } else if(expectedType == Byte.class) {
+                ret = value.asIntegerValue().getByte();
+            } else if(expectedType == Short.class) {
+                ret = value.asIntegerValue().getShort();
+            } else if(expectedType.isEnum()) {
+                ret = expectedType.getEnumConstants()[value.asIntegerValue().getInt()];
+            }
         } else if(value.getType() == ValueType.MAP) {
-                ret = new HashMap();
-                Set<Value> keys = value.asMapValue().keySet();
-                for(Value k : keys) {
-                    Value v = value.asMapValue().get(k);
-                    ((Map)ret).put(decode(k, String.class), decode(v, expectedType));
-                }
+            ret = new HashMap();
+            Set<Value> keys = value.asMapValue().keySet();
+            for(Value k : keys) {
+                Value v = value.asMapValue().get(k);
+                ((Map)ret).put(decode(k, String.class), decode(v, expectedType.getTypeParameters()[1].getGenericDeclaration()));
+            }
         } else if(value.getType() == ValueType.RAW) {
-                if(expectedType == String.class) {
-                    ret = value.asRawValue().getString();
-                } else if(expectedType.isEnum()) {
-                    ret = decode(msgPack.createBufferUnpacker(value.asRawValue().getByteArray()).readValue(), expectedType);
-                } else {
-                    ret = expectedType.newInstance();
-                    expectedType.getMethod("decode", byte[].class).invoke(ret, value.asRawValue().getByteArray());
-                }
+            if(expectedType == String.class) {
+                ret = value.asRawValue().getString();
+            } else if(expectedType.isEnum()) {
+                ret = decode(msgPack.createBufferUnpacker(value.asRawValue().getByteArray()).readValue(), expectedType);
+            } else {
+                ret = expectedType.newInstance();
+//                ((T)ret).notify();
+                expectedType.getMethod("decode", byte[].class).invoke(ret, value.asRawValue().getByteArray());
+            }
         } else {
-                throw new IOException("Cannot decode message");
+            throw new IOException("Cannot decode message");
         }
 
-        return ret;
+        return (T)ret;
     }
-
-//    public Object decodeString(final Value value) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
-//        Object ret = null;
-//
-//        switch(value.getType()) {
-//            case ARRAY:
-//                ret = new ArrayList();
-//                Value[] elements = value.asArrayValue().getElementArray();
-//                for(int i = 0; i < elements.length; ++i) {
-//                    ((List)ret).add(decodeString(elements[i]));
-//                }
-//                break;
-//            case MAP:
-//                ret = new HashMap();
-//                Set<Value> keys = value.asMapValue().keySet();
-//                for(Value k : keys) {
-//                    Value v = value.asMapValue().get(k);
-//                    ((Map)ret).put(decodeString(k), decodeString(v));
-//                }
-//                break;
-//            case RAW:
-//                ret = value.asRawValue().getString();
-//                break;
-//            case NIL:
-//            default:
-//                throw new IOException("Cannot decode message");
-//        }
-//
-//        return ret;
-//    }
-//    
-//    public Object decodeBoolean(final Value value) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
-//        Object ret = null;
-//
-//        switch(value.getType()) {
-//            case ARRAY:
-//                ret = new ArrayList();
-//                Value[] elements = value.asArrayValue().getElementArray();
-//                for(int i = 0; i < elements.length; ++i) {
-//                    ((List)ret).add(decodeBoolean(elements[i]));
-//                }
-//                break;
-//            case BOOLEAN:
-//                ret = value.asBooleanValue().getBoolean();
-//                break;
-//            case MAP:
-//                ret = new HashMap();
-//                Set<Value> keys = value.asMapValue().keySet();
-//                for(Value k : keys) {
-//                    Value v = value.asMapValue().get(k);
-//                    ((Map)ret).put(decodeString(k), decodeBoolean(v));
-//                }
-//                break;
-//            case NIL:
-//            default:
-//                throw new IOException("Cannot decode message");
-//        }
-//
-//        return ret;
-//    }
 
     public void decode(byte[] bytes) throws IOException, InstantiationException, IllegalAccessException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException {
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
         
-        booleanValue = (boolean)decode(unpacker.readValue(), Boolean.class);
-        byteValue = (byte)decode(unpacker.readValue(), Byte.class);
-        shortValue = (short)decode(unpacker.readValue(), Short.class);
-        intValue = (int)decode(unpacker.readValue(), Integer.class);
-        floatValue = (float)decode(unpacker.readValue(), Float.class);
-        longValue = (long)decode(unpacker.readValue(), Long.class);
-        doubleValue = (double)decode(unpacker.readValue(), Double.class);
-        stringValue = (String)decode(unpacker.readValue(), String.class);
-        enumValue = (TestEnum)decode(unpacker.readValue(), TestEnum.class);
+        booleanValue = decode(unpacker.readValue(), Boolean.class);
+        byteValue = decode(unpacker.readValue(), Byte.class);
+        shortValue = decode(unpacker.readValue(), Short.class);
+        intValue = decode(unpacker.readValue(), Integer.class);
+        floatValue = decode(unpacker.readValue(), Float.class);
+        longValue = decode(unpacker.readValue(), Long.class);
+        doubleValue = decode(unpacker.readValue(), Double.class);
+        stringValue = decode(unpacker.readValue(), String.class);
+        enumValue = decode(unpacker.readValue(), TestEnum.class);
 
-        ecefValue = (ECEF)decode(unpacker.readValue(), ECEF.class);
+        ecefValue = decode(unpacker.readValue(), ECEF.class);
 
         booleanArray = unpacker.read(boolean[].class);
         byteArray = unpacker.read(byte[].class);
@@ -239,45 +183,45 @@ public class TestMessage implements Serializable {
         doubleArray = unpacker.read(double[].class);
         stringArray = unpacker.read(String[].class);
 
-        booleanList.addAll((List)decode(unpacker.readValue(), Boolean.class));
-        byteList.addAll((List)decode(unpacker.readValue(), Byte.class));
-        shortList.addAll((List)decode(unpacker.readValue(), Short.class));
-        intList.addAll((List)decode(unpacker.readValue(), Integer.class));
-        floatList.addAll((List)decode(unpacker.readValue(), Float.class));
-        longList.addAll((List)decode(unpacker.readValue(), Long.class));
-        doubleList.addAll((List)decode(unpacker.readValue(), Double.class));
-        stringList.addAll((List)decode(unpacker.readValue(), String.class));
-        ecefList.addAll((List)decode(unpacker.readValue(), ECEF.class));
+        booleanList.addAll(decode(unpacker.readValue(), booleanList.getClass()));
+        byteList.addAll(decode(unpacker.readValue(), byteList.getClass()));
+        shortList.addAll(decode(unpacker.readValue(), shortList.getClass()));
+        intList.addAll(decode(unpacker.readValue(), intList.getClass()));
+        floatList.addAll(decode(unpacker.readValue(), floatList.getClass()));
+        longList.addAll(decode(unpacker.readValue(), longList.getClass()));
+        doubleList.addAll(decode(unpacker.readValue(), doubleList.getClass()));
+        stringList.addAll(decode(unpacker.readValue(), stringList.getClass()));
+        ecefList.addAll(decode(unpacker.readValue(), ecefList.getClass()));
 
-        boolean2DList.addAll((List)decode(unpacker.readValue(), Boolean.class));
-        byte2DList.addAll((List)decode(unpacker.readValue(), Byte.class));
-        short2DList.addAll((List)decode(unpacker.readValue(), Short.class));
-        int2DList.addAll((List)decode(unpacker.readValue(), Integer.class));
-        float2DList.addAll((List)decode(unpacker.readValue(), Float.class));
-        long2DList.addAll((List)decode(unpacker.readValue(), Long.class));
-        double2DList.addAll((List)decode(unpacker.readValue(), Double.class));
-        string2DList.addAll((List)decode(unpacker.readValue(), String.class));
-        ecef2DList.addAll((List)decode(unpacker.readValue(), ECEF.class));
+        boolean2DList.addAll(decode(unpacker.readValue(), boolean2DList.getClass()));
+        byte2DList.addAll(decode(unpacker.readValue(), byte2DList.getClass()));
+        short2DList.addAll(decode(unpacker.readValue(), short2DList.getClass()));
+        int2DList.addAll(decode(unpacker.readValue(), int2DList.getClass()));
+        float2DList.addAll(decode(unpacker.readValue(), float2DList.getClass()));
+        long2DList.addAll(decode(unpacker.readValue(), long2DList.getClass()));
+        double2DList.addAll(decode(unpacker.readValue(), double2DList.getClass()));
+        string2DList.addAll(decode(unpacker.readValue(), string2DList.getClass()));
+        ecef2DList.addAll(decode(unpacker.readValue(), ecef2DList.getClass()));
 
-        booleanMap.putAll((Map)decode(unpacker.readValue(), Boolean.class));
-        byteMap.putAll((Map)decode(unpacker.readValue(), Byte.class));
-        shortMap.putAll((Map)decode(unpacker.readValue(), Short.class));
-        intMap.putAll((Map)decode(unpacker.readValue(), Integer.class));
-        floatMap.putAll((Map)decode(unpacker.readValue(), Float.class));
-        longMap.putAll((Map)decode(unpacker.readValue(), Long.class));
-        doubleMap.putAll((Map)decode(unpacker.readValue(), Double.class));
-        stringMap.putAll((Map)decode(unpacker.readValue(), String.class));
-        ecefMap.putAll((Map)decode(unpacker.readValue(), ECEF.class));
+        booleanMap.putAll(decode(unpacker.readValue(), booleanMap.getClass()));
+        byteMap.putAll(decode(unpacker.readValue(), byteMap.getClass()));
+        shortMap.putAll(decode(unpacker.readValue(), shortMap.getClass()));
+        intMap.putAll(decode(unpacker.readValue(), intMap.getClass()));
+        floatMap.putAll(decode(unpacker.readValue(), floatMap.getClass()));
+        longMap.putAll(decode(unpacker.readValue(), longMap.getClass()));
+        doubleMap.putAll(decode(unpacker.readValue(), doubleMap.getClass()));
+        stringMap.putAll(decode(unpacker.readValue(), stringMap.getClass()));
+        ecefMap.putAll(decode(unpacker.readValue(), ecefMap.getClass()));
 
-        booleanListMap.putAll((Map)decode(unpacker.readValue(), Boolean.class));
-        byteListMap.putAll((Map)decode(unpacker.readValue(), Byte.class));
-        shortListMap.putAll((Map)decode(unpacker.readValue(), Short.class));
-        intListMap.putAll((Map)decode(unpacker.readValue(), Integer.class));
-        floatListMap.putAll((Map)decode(unpacker.readValue(), Float.class));
-        longListMap.putAll((Map)decode(unpacker.readValue(), Long.class));
-        doubleListMap.putAll((Map)decode(unpacker.readValue(), Double.class));
-        stringListMap.putAll((Map)decode(unpacker.readValue(), String.class));
-        ecefListMap.putAll((Map)decode(unpacker.readValue(), ECEF.class));
+        booleanListMap.putAll(decode(unpacker.readValue(), booleanListMap.getClass()));
+        byteListMap.putAll(decode(unpacker.readValue(), byteListMap.getClass()));
+        shortListMap.putAll(decode(unpacker.readValue(), shortListMap.getClass()));
+        intListMap.putAll(decode(unpacker.readValue(), intListMap.getClass()));
+        floatListMap.putAll(decode(unpacker.readValue(), floatListMap.getClass()));
+        longListMap.putAll(decode(unpacker.readValue(), longListMap.getClass()));
+        doubleListMap.putAll(decode(unpacker.readValue(), doubleListMap.getClass()));
+        stringListMap.putAll(decode(unpacker.readValue(), stringListMap.getClass()));
+        ecefListMap.putAll(decode(unpacker.readValue(), ecefListMap.getClass()));
     }
 
     public byte[] encode() throws IOException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {

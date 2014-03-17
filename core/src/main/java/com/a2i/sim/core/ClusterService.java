@@ -10,11 +10,16 @@ import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.member.MemberKey;
 import com.a2i.sim.core.member.MemberHolder;
 import com.a2i.sim.core.member.MeMember;
+import com.a2i.sim.core.member.MeMemberTCP;
+import com.a2i.sim.core.member.MeMemberUDP;
 import com.a2i.sim.core.member.MemberStatus;
 import com.a2i.sim.util.NetworkUtil;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.GenericEncoder;
 import com.a2i.sim.Parameters;
+import com.a2i.sim.core.member.RemoteMember;
+import com.a2i.sim.core.member.RemoteMemberTCP;
+import com.a2i.sim.core.member.RemoteMemberUDP;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,6 +37,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ClusterService {
 
+    private static final String PROTOCOL_PROPERTY = "com.a2i.protocol";
+    private static final String DEFAULT_PROTOCOL = "tcp";
     private static final String GOSSIP_PORT_PROPERTY = "com.a2i.port.gossip";
     private static final String DATA_PORT_PROPERTY = "com.a2i.port.data";
 
@@ -110,6 +117,7 @@ public class ClusterService {
 
     public void initialize() {
 
+        String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
         String gossipPort = Parameters.INSTANCE.getProperty(GOSSIP_PORT_PROPERTY);
         String dataPort = Parameters.INSTANCE.getProperty(DATA_PORT_PROPERTY);
 
@@ -144,7 +152,13 @@ public class ClusterService {
                     .toString());
         }
 
-        me = new MeMember(myAddress, gossipPortInt, dataPortInt);
+        if(protocol.equalsIgnoreCase("udp")) {
+            LOG.info("Running over UDP");
+            me = new MeMemberUDP(myAddress, gossipPortInt, dataPortInt);
+        } else {
+            LOG.info("Running over TCP");
+            me = new MeMemberTCP(myAddress, gossipPortInt, dataPortInt);
+        }
         me.setStatus(MemberStatus.Alive);
         me.initialize();
         MemberHolder.INSTANCE.updateMemberStatus(me);
@@ -203,7 +217,16 @@ public class ClusterService {
 
             Member m = MemberHolder.INSTANCE.getMember(key);
             if(m == null) {
-                m = MemberKey.decode(key);
+                String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
+                if(protocol.equalsIgnoreCase("udp")) {
+                    m = new RemoteMemberUDP();
+                } else {
+                    m = new RemoteMemberTCP();
+                }
+                String[] values = key.split(":");
+                m.setIp(values[0]);
+                m.setGossipPort(Integer.parseInt(values[1]));
+                m.setDataPort(Integer.parseInt(values[2]));
                 ((AbstractMember)m).initialize();
             }
 

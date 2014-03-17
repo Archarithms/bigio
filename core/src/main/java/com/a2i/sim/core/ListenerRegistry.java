@@ -153,9 +153,8 @@ public enum ListenerRegistry {
             }
         }
 
-        final Envelope env = envelope;
-
         if(envelope.getExecuteTime() > 0) {
+            final Envelope env = envelope;
             futureExecutor.schedule(new Runnable() {
                @Override
                public void run() {

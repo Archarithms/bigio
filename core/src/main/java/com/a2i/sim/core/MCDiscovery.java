@@ -8,7 +8,8 @@ import com.a2i.sim.core.member.AbstractMember;
 import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.member.MemberKey;
 import com.a2i.sim.core.member.MemberHolder;
-import com.a2i.sim.core.member.RemoteMember;
+import com.a2i.sim.core.member.RemoteMemberTCP;
+import com.a2i.sim.core.member.RemoteMemberUDP;
 import com.a2i.sim.util.NetworkUtil;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.GossipEncoder;
@@ -47,6 +48,9 @@ import org.springframework.stereotype.Component;
 public class MCDiscovery extends Thread {
     
     private static final Logger LOG = LoggerFactory.getLogger(MCDiscovery.class);
+
+    private static final String PROTOCOL_PROPERTY = "com.a2i.protocol";
+    private static final String DEFAULT_PROTOCOL = "tcp";
     private static final String MULTICAST_ENABLED_PROPERTY = "com.a2i.multicast.enabled";
     private static final String MULTICAST_GROUP_PROPERTY = "com.a2i.multicast.group";
     private static final String MULTICAST_PORT_PROPERTY = "com.a2i.multicast.port";
@@ -64,6 +68,7 @@ public class MCDiscovery extends Thread {
     private DatagramChannel channel;
     private InetSocketAddress group;
     private Member me;
+    private String protocol;
 
     public MCDiscovery() {
         enabled = Boolean.parseBoolean(Parameters.INSTANCE.getProperty(MULTICAST_ENABLED_PROPERTY, "true"));
@@ -73,6 +78,8 @@ public class MCDiscovery extends Thread {
 
     public void initialize(Member me) {
         this.me = me;
+
+        protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
 
         if(isEnabled()) {
             start();
@@ -196,7 +203,11 @@ public class MCDiscovery extends Thread {
             Member member = MemberHolder.INSTANCE.getMember(key);
 
             if(member == null) {
-                member = new RemoteMember(message.getIp(), message.getGossipPort(), message.getDataPort());
+                if(protocol.equalsIgnoreCase("udp")) {
+                    member = new RemoteMemberUDP(message.getIp(), message.getGossipPort(), message.getDataPort());
+                } else {
+                    member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort());
+                }
                 ((AbstractMember)member).initialize();
             }
 
