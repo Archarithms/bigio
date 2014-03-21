@@ -44,6 +44,15 @@ public class Speaker {
     }
 
     /**
+     * Set the cluster service. This method exists to support non-Spring execution.
+     * 
+     * @param cluster the cluster service.
+     */
+    public void setCluster(ClusterService cluster) {
+        this.cluster = cluster;
+    }
+
+    /**
      * Send a message across a topic.
      * 
      * @param <T> the type of message

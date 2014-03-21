@@ -137,6 +137,10 @@ public enum Parameters {
                 System.getProperties().setProperty(entry.getKey().toString(), entry.getValue().toString());
             }
 
+            for(Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                properties.setProperty(entry.getKey().toString(), entry.getValue().toString());
+            }
+
         } catch(IOException ex) {
             LOG.error("Error while loading configuration.", ex);
         }

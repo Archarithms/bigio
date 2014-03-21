@@ -95,7 +95,9 @@ public class MessageAdapter extends ClassVisitor {
         msgPackDefined = false;
 
         if (superName.equals("java/lang/Enum")) {
-            if (!name.startsWith("sun") && !name.startsWith("java") && !name.startsWith("org/spring") && !name.startsWith("org/junit")) {
+            if (!name.startsWith("com/sun") && !name.startsWith("sun") 
+                    && !name.startsWith("java") && !name.startsWith("org/spring") 
+                    && !name.startsWith("org/junit")) {
                 isEnum = true;
             }
         }

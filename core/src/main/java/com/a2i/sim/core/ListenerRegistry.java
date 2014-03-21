@@ -129,7 +129,7 @@ public enum ListenerRegistry {
         return ret;
     }
 
-    protected void registerMemberForTopic(String topic, Member member) {
+    protected synchronized void registerMemberForTopic(String topic, Member member) {
         List<Registration> regs = map.query(member, topic);
 
         if(regs.isEmpty()) {

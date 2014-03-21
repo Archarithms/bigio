@@ -17,7 +17,6 @@ import com.a2i.sim.util.NetworkUtil;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.GenericEncoder;
 import com.a2i.sim.Parameters;
-import com.a2i.sim.core.member.RemoteMember;
 import com.a2i.sim.core.member.RemoteMemberTCP;
 import com.a2i.sim.core.member.RemoteMemberUDP;
 import java.io.IOException;
@@ -53,6 +52,10 @@ public class ClusterService {
 
     public ClusterService() {
         
+    }
+
+    public void setMulticastDiscovery(MCDiscovery multicast) {
+        this.multicast = multicast;
     }
 
     public void addInterceptor(String topic, Interceptor interceptor) {

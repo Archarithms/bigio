@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan(basePackages={"com"})
+@ComponentScan
 public class Starter implements CommandLineRunner {
 
     private static final boolean MONITOR_THREAD_CONTENTION = true;
@@ -59,6 +59,7 @@ public class Starter implements CommandLineRunner {
     }
 
     public static void main(String[] args) throws Exception {
+        Parameters.INSTANCE.currentOS(); // Just to load the properties
         ConfigurableApplicationContext context = SpringApplication.run(Starter.class, args);
     }
 }
