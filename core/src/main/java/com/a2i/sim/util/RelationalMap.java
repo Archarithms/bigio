@@ -7,8 +7,9 @@ package com.a2i.sim.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class is a Relational Map that stores relations between objects.
@@ -22,11 +23,11 @@ public class RelationalMap<R extends Relation> {
     private List<Class<?>> classes = Collections.emptyList();
 
     /** The mapping storage container. */
-    private final HashMap<Integer, HashMap<Object, List<R>>> mapping
-            = new HashMap<>();
+    private final Map<Integer, Map<Object, List<R>>> mapping
+            = new ConcurrentHashMap<>();
 
     /** The set of contained relations. */
-    private final List<R> relationList = new ArrayList<>();
+    private final List<R> relationList = Collections.synchronizedList(new ArrayList<R>());
 
     /** The set of query indices in case the relation has indistinct classes. */
     private int[] indices = null;
@@ -51,7 +52,7 @@ public class RelationalMap<R extends Relation> {
                 }
                 
                 classes.add(i, relations[0].getClass(i));
-                mapping.put(i, new HashMap<Object, List<R>>());
+                mapping.put(i, new ConcurrentHashMap<Object, List<R>>());
             }
         }
         
@@ -222,7 +223,7 @@ public class RelationalMap<R extends Relation> {
             
         if(key instanceof Range) {
             Range range = (Range)key;
-            ArrayList ret = new ArrayList();
+            List ret = Collections.synchronizedList(new ArrayList());
             for(Object number : mapping.get(index).keySet()) {
                 if(number instanceof Number) {
                     if(range.contains((Number)number)) {
@@ -232,7 +233,7 @@ public class RelationalMap<R extends Relation> {
             }
             return ret;
         } else {
-            return new ArrayList(mapping.get(index).get(key));
+            return Collections.synchronizedList(new ArrayList(mapping.get(index).get(key)));
         }
     }
 }
