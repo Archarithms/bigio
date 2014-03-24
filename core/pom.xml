@@ -162,10 +162,10 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
-                                    <artifactId>a2isim-agent</artifactId>
+                                    <artifactId>dms-agent</artifactId>
                                     <version>${project.version}</version>
                                     <outputDirectory>${project.build.directory}/agents</outputDirectory>
-                                    <destFileName>a2isim-agent-${project.version}.jar</destFileName>
+                                    <destFileName>dms-agent-${project.version}.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -176,7 +176,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.16</version>
                 <configuration>
-                    <argLine>-javaagent:${project.build.directory}/agents/a2isim-agent-${project.version}.jar</argLine>
+                    <argLine>-javaagent:${project.build.directory}/agents/dms-agent-${project.version}.jar</argLine>
                 </configuration>
             </plugin>
         </plugins>
