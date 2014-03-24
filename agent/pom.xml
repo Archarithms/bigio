@@ -7,14 +7,14 @@
     
     <parent>
         <groupId>com.a2i.dms</groupId>
-        <artifactId>a2isim</artifactId>
+        <artifactId>dms</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
-    <artifactId>a2isim-agent</artifactId>
+    <artifactId>dms-agent</artifactId>
     <packaging>jar</packaging>
-    <name>A2I Sim Agent</name>
+    <name>DMS Agent</name>
 
     <dependencies>
         <dependency>

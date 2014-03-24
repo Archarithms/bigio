@@ -4,11 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.a2i.dms</groupId>
-    <artifactId>a2isim</artifactId>
+    <artifactId>dms</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>A2I Simulation</name>
-    <description>Simulation Parent Module</description>
+    <name>Distributed Message System</name>
+    <description>DMS Parent Module</description>
 
     <properties>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
@@ -179,15 +179,11 @@
         </repository>
     </distributionManagement>
 
-    <!--scm>
-      <connection>scm:git:git@github.com:gabrielf/maven-samples.git</connection>
-      <developerConnection>scm:git:git@github.com:gabrielf/maven-samples.git</developerConnection>
-      <tag>HEAD</tag>
-      <url>http://github.com/gabrielf/maven-samples</url>
-    </scm-->
-
-    <!--prerequisites>
-      <maven>3.0.3</maven>
-    </prerequisites-->
+    <scm>
+        <connection>scm:git:git@75.76.181.3:andrew.trimble/a2i-sim.git</connection>
+        <developerConnection>scm:git:git@75.76.181.3:andrew.trimble/a2i-sim.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>http://75.76.181.3/andrew.trimble/a2i-sim</url>
+    </scm>
 
 </project>

@@ -7,19 +7,19 @@
     
     <parent>
         <groupId>com.a2i.dms</groupId>
-        <artifactId>a2isim</artifactId>
+        <artifactId>dms</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
-    <artifactId>a2isim-benchmark</artifactId>
+    <artifactId>dms-benchmark</artifactId>
     <packaging>jar</packaging>
-    <name>A2I Sim Benchmark</name>
+    <name>DMS Benchmark</name>
 
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>a2isim-core</artifactId>
+            <artifactId>dms-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
