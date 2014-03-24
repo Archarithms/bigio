@@ -23,8 +23,8 @@
         <module>agent</module>
         <module>test</module>
         <module>benchmark</module>
-	    <module>runtime</module>
-	    <module>examples</module>
+        <module>runtime</module>
+        <module>examples</module>
     </modules>
 
     <build>
@@ -52,6 +52,12 @@
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.1</version>
             </plugin>
         </plugins>
     </build>
@@ -136,7 +142,42 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>a2i.snapshots</id>
+            <name>Archarithms Snapshot Repository</name>
+            <url>http://75.76.181.3:8081/nexus/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>a2i.releases</id>
+            <name>Archarithms Releases Repository</name>
+            <url>http://75.76.181.3:8081/nexus/content/repositories/releases/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
     </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>a2i.snapshots</id>
+            <name>Archarithms Snapshot Repository</name>
+            <url>http://75.76.181.3:8081/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>a2i.releases</id>
+            <name>Archarithms Releases Repository</name>
+            <url>http://75.76.181.3:8081/nexus/content/repositories/releases/</url>
+        </repository>
+    </distributionManagement>
 
     <!--scm>
       <connection>scm:git:git@github.com:gabrielf/maven-samples.git</connection>
