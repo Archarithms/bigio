@@ -145,4 +145,14 @@ public class Speaker {
     public Map<String, String> getTags() {
         return cluster.getMe().getTags();
     }
+
+    /**
+     * Set the delivery type for a topic.
+     * 
+     * @param topic a topic.
+     * @param type the type of delivery to perform.
+     */
+    public void setDeliveryType(String topic, DeliveryType type) {
+        cluster.setDeliveryType(topic, type);
+    }
 }

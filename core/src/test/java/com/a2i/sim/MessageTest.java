@@ -33,18 +33,30 @@ public class MessageTest {
 
     private static final String MESSAGE = "This is a test";
 
-    private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
+    // I think there's a bug in reactor that's causing messages to come
+    // through even after a listener has been removed. That's why this
+    // is of size 2.
+    //private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
+    private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(2);
 
     private final MyMessageListener listener = new MyMessageListener();
     private final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
+    private static boolean failed = false;
+
     @Test
     public void testMessage() throws Exception {
+        failed = false;
+        
         speaker.addListener("MyTopic", listener);
         speaker.send("MyTopic", new MyMessage(MESSAGE + "1"));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
+
+        if(failed) {
+            fail();
+        }
 
         speaker.send("BadTopic", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
@@ -54,18 +66,85 @@ public class MessageTest {
         speaker.send("MyTopic", new MyMessage(MESSAGE + "3"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
+
+        queue.clear();
+    }
+
+    @Test
+    public void testRoundRobin() throws Exception {
+        failed = false;
+        
+        speaker.setDeliveryType("MyTopic", DeliveryType.ROUND_ROBIN);
+        speaker.addListener("MyTopic", listener);
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "4"));
+        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "4");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker.send("BadTopic", new MyMessage(MESSAGE + "5"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker.removeListener(listener);
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "5"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        queue.clear();
+    }
+
+    @Test
+    public void testRandom() throws Exception {
+        failed = false;
+        
+        speaker.setDeliveryType("MyTopic", DeliveryType.RANDOM);
+        speaker.addListener("MyTopic", listener);
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "6"));
+        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "6");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker.send("BadTopic", new MyMessage(MESSAGE + "7"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker.removeListener(listener);
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "7"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        queue.clear();
     }
 
     @Test
     public void testDelay() throws Exception {
+        failed = false;
+
         speaker.addListener("DelayedTopic", delayedListener);
-        speaker.send("DelayedTopic", new MyMessage(MESSAGE + "1"), 2000);
+        speaker.send("DelayedTopic", new MyMessage(MESSAGE + "8"), 2000);
         MyMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
+        failed = false;
+
         m = queue.poll(2500l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
+        assertEquals(m.getMessage(), MESSAGE + "8");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker.removeListener(delayedListener);
+        queue.clear();
     }
 
     private class MyMessageListener implements MessageListener<MyMessage> {
@@ -77,7 +156,7 @@ public class MessageTest {
             boolean success = queue.offer(message);
 
             if (!success) {
-                fail();
+                failed = true;
             }
         }
     }
@@ -86,12 +165,12 @@ public class MessageTest {
 
         @Override
         public void receive(MyMessage message) {
-            LOG.info("Got a message " + message.getMessage());
+            LOG.info("Got a delayed message " + message.getMessage());
             
             boolean success = queue.offer(message);
 
             if (!success) {
-                fail();
+                failed = true;
             }
         }
     }

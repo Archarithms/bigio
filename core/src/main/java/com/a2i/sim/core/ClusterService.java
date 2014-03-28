@@ -4,6 +4,7 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.DeliveryType;
 import com.a2i.sim.Interceptor;
 import com.a2i.sim.core.member.AbstractMember;
 import com.a2i.sim.core.member.Member;
@@ -24,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,12 +53,22 @@ public class ClusterService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClusterService.class);
 
+    private final Map<String, DeliveryType> deliveries = new ConcurrentHashMap<>();
+    private final Map<String, Integer> roundRobinIndex = new ConcurrentHashMap<>();
+
     public ClusterService() {
         
     }
 
     public void setMulticastDiscovery(MCDiscovery multicast) {
         this.multicast = multicast;
+    }
+
+    public void setDeliveryType(String topic, DeliveryType type) {
+        deliveries.put(topic, type);
+        if(type == DeliveryType.ROUND_ROBIN) {
+            roundRobinIndex.put(topic, 0);
+        }
     }
 
     public void addInterceptor(String topic, Interceptor interceptor) {
@@ -84,17 +97,69 @@ public class ClusterService {
         envelope.setTopic(topic);
         envelope.setClassName(message.getClass().getName());
 
-        for(Member member : ListenerRegistry.INSTANCE.getRegisteredMembers(topic)) {
-            
-            if(me.equals(member)) {
-                envelope.setMessage(message);
-                envelope.setDecoded(true);
-            } else {
-                envelope.setPayload(GenericEncoder.encode(message));
-                envelope.setDecoded(false);
-            }
+        DeliveryType delivery = deliveries.get(topic);
+        if(delivery == null) {
+            delivery = DeliveryType.BROADCAST;
+            deliveries.put(topic, delivery);
+        }
 
-            member.send(envelope);
+        switch(delivery) {
+            case ROUND_ROBIN:
+
+                if(ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size() > 0) {
+
+                    int index = (roundRobinIndex.get(topic) + 1) % 
+                            ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size();
+                    roundRobinIndex.put(topic, index);
+                
+                    Member member = ListenerRegistry.INSTANCE.getRegisteredMembers(topic).get(index);
+
+                    if(me.equals(member)) {
+                        envelope.setMessage(message);
+                        envelope.setDecoded(true);
+                    } else {
+                        envelope.setPayload(GenericEncoder.encode(message));
+                        envelope.setDecoded(false);
+                    }
+
+                    member.send(envelope);
+                }
+
+                break;
+            case RANDOM:
+
+                if(ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size() > 0) {
+                    int index = (int)(Math.random() *
+                            ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size());
+
+                    Member member = ListenerRegistry.INSTANCE.getRegisteredMembers(topic).get(index);
+
+                    if(me.equals(member)) {
+                        envelope.setMessage(message);
+                        envelope.setDecoded(true);
+                    } else {
+                        envelope.setPayload(GenericEncoder.encode(message));
+                        envelope.setDecoded(false);
+                    }
+
+                    member.send(envelope);
+                }
+                
+                break;
+            case BROADCAST:
+            default:
+                for(Member member : ListenerRegistry.INSTANCE.getRegisteredMembers(topic)) {
+
+                    if(me.equals(member)) {
+                        envelope.setMessage(message);
+                        envelope.setDecoded(true);
+                    } else {
+                        envelope.setPayload(GenericEncoder.encode(message));
+                        envelope.setDecoded(false);
+                    }
+
+                    member.send(envelope);
+                }
         }
     }
 
