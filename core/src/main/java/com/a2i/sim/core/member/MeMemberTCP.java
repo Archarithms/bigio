@@ -5,7 +5,6 @@ package com.a2i.sim.core.member;
 
 import com.a2i.sim.core.GossipMessage;
 import com.a2i.sim.core.codec.GossipDecoder;
-import com.a2i.sim.util.RunningStatistics;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -31,8 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Environment;
-import reactor.core.Reactor;
 import reactor.event.Event;
 
 /**
@@ -57,11 +54,6 @@ public class MeMemberTCP extends MeMember {
 
     private final ExecutorService serverExecutor = Executors.newFixedThreadPool(SERVER_THREAD_POOL_SIZE);
 
-    private final Environment env = new Environment();
-
-//    private final RunningStatistics gossipSizeStat = new RunningStatistics();
-//    private final RunningStatistics dataSizeStat = new RunningStatistics();
-
     public MeMemberTCP() {
         super();
     }
@@ -78,10 +70,6 @@ public class MeMemberTCP extends MeMember {
         dataBossGroup.shutdownGracefully();
         dataWorkerGroup.shutdownGracefully();
 
-//        if(LOG.isDebugEnabled()) {
-//            LOG.debug("Mean received gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
-//            LOG.debug("Mean received data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
-//        }
     }
 
     @Override
@@ -201,12 +189,8 @@ public class MeMemberTCP extends MeMember {
             if(msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
-//                    if(LOG.isDebugEnabled()) {
-//                        gossipSizeStat.push(bytes.length);
-//                    }
-
                     GossipMessage message = GossipDecoder.decode(bytes);
-                    reactor.notify(Event.wrap(message));
+                    reactor.notify(GOSSIP_TOPIC, Event.wrap(message));
                 } catch (IOException ex) {
                     LOG.error("Error decoding message.", ex);
                 } finally {
@@ -230,7 +214,7 @@ public class MeMemberTCP extends MeMember {
         
         @Override
         public void channelRead0(ChannelHandlerContext ctx, byte[] bytes) {
-            decoderReactor.notify(Event.wrap(bytes));
+            decoderReactor.notify(DECODE_TOPIC, Event.wrap(bytes));
         }
 
         @Override

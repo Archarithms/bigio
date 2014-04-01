@@ -5,9 +5,9 @@
 package com.a2i.sim.core;
 
 import com.a2i.sim.Interceptor;
+import com.a2i.sim.core.codec.GenericDecoder;
 import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.member.MemberKey;
-import com.a2i.sim.core.codec.GenericDecoder;
 import com.a2i.sim.util.RelationalMap;
 import java.io.IOException;
 import java.util.ArrayList;

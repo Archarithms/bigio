@@ -5,7 +5,6 @@ package com.a2i.sim.core.member;
 
 import com.a2i.sim.core.GossipMessage;
 import com.a2i.sim.core.codec.GossipDecoder;
-import com.a2i.sim.util.RunningStatistics;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -19,7 +18,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.DatagramPacket;
@@ -62,9 +60,6 @@ public class MeMemberUDP extends MeMember {
 
     private final ExecutorService serverExecutor = Executors.newFixedThreadPool(SERVER_THREAD_POOL_SIZE);
 
-//    private final RunningStatistics gossipSizeStat = new RunningStatistics();
-//    private final RunningStatistics dataSizeStat = new RunningStatistics();
-
     public MeMemberUDP() {
         super();
     }
@@ -80,10 +75,6 @@ public class MeMemberUDP extends MeMember {
         dataBossGroup.shutdownGracefully();
         dataWorkerGroup.shutdownGracefully();
 
-//        if(LOG.isDebugEnabled()) {
-//            LOG.debug("Mean received gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
-//            LOG.debug("Mean received data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
-//        }
     }
 
     @Override
@@ -162,8 +153,6 @@ public class MeMemberUDP extends MeMember {
                     @Override
                     public void initChannel(DatagramChannel ch) throws Exception {
                         ch.config().setAllocator(new PooledByteBufAllocator());
-//                        ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(32768, 0, 2, 0, 2));
-//                        ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                         ch.pipeline().addLast(new DataMessageHandler());
                     }
 
@@ -207,10 +196,6 @@ public class MeMemberUDP extends MeMember {
             if(msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
-//                    if(LOG.isDebugEnabled()) {
-//                        gossipSizeStat.push(bytes.length);
-//                    }
-
                     GossipMessage message = GossipDecoder.decode(bytes);
                     reactor.notify(Event.wrap(message));
                 } catch (IOException ex) {
