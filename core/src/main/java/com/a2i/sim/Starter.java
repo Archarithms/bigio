@@ -6,6 +6,7 @@ package com.a2i.sim;
 
 import com.a2i.sim.core.ClusterService;
 import com.a2i.sim.cli.CommandLineInterface;
+import com.a2i.sim.core.MCDiscovery;
 import java.lang.management.ManagementFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,21 @@ public class Starter implements CommandLineRunner {
     private Speaker speaker;
     
     private static final Logger LOG = LoggerFactory.getLogger(Starter.class);
+
+    /**
+     * Bootstrap the system and return a Speaker object.
+     * 
+     * @return an initialized speaker object.
+     */
+    public static Speaker bootstrap() {
+        Speaker speaker = new Speaker();
+        ClusterService cluster = new ClusterService();
+        MCDiscovery mc = new MCDiscovery();
+        cluster.setMulticastDiscovery(mc);
+        speaker.setCluster(cluster);
+        speaker.init();
+        return speaker;
+    }
 
     public Starter() {
         if(MONITOR_THREAD_CONTENTION) {

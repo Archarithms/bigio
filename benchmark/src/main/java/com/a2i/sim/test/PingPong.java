@@ -8,6 +8,7 @@ package com.a2i.sim.test;
 
 import com.a2i.sim.Parameters;
 import com.a2i.sim.Speaker;
+import com.a2i.sim.Starter;
 import com.a2i.sim.core.Envelope;
 import com.a2i.sim.core.MessageListener;
 import com.a2i.sim.util.TimeUtil;
@@ -93,6 +94,8 @@ public class PingPong {
     };
 
     public PingPong() {
+        this.speaker = Starter.bootstrap();
+        
         SimpleMessage m = new SimpleMessage("m", 0, 0);
         try {
             byte[] payload = GenericEncoder.encode(m);
@@ -234,5 +237,9 @@ public class PingPong {
 
             localThread.start();
         }
+    }
+
+    public static void main(String[] args) {
+        new PingPong().go();
     }
 }
