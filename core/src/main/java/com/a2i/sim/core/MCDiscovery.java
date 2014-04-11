@@ -106,6 +106,17 @@ public class MCDiscovery extends Thread {
         }
 
         //InetSocketAddress addr = new InetSocketAddress(NetworkUtil.INSTANCE.getIp(), NetworkUtil.INSTANCE.getFreePort());
+
+        try {
+            if(!NetworkUtil.getNetworkInterface().isUp()) {
+                LOG.error("Cannot form cluster. Network interface is down.");
+                return;
+            }
+        } catch(SocketException ex) {
+            LOG.error("Cannot form cluster.", ex);
+            return;
+        }
+        
         InetSocketAddress addr = new InetSocketAddress(NetworkUtil.getIp(), multicastPort);
         group = new InetSocketAddress(multicastGroup, addr.getPort());
 

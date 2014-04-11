@@ -151,6 +151,11 @@ public class NetworkUtil {
             
             nic = NetworkInterface.getByName(networkInterfaceName);
 
+            if(!nic.isUp()) {
+                LOG.error("Selected network interface '" + networkInterfaceName + 
+                        "' is down. Please select an alternate network interface using the property 'com.a2i.network' in your configuration.");
+            }
+
             if(nic != null) {
                 Enumeration e = nic.getInetAddresses();
                 while(e.hasMoreElements()) {

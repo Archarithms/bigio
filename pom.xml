@@ -15,7 +15,7 @@
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         
         <netty.version>4.0.18.Final</netty.version>
-        <asm.version>5.0.1</asm.version>
+        <asm.version>4.2</asm.version>
     </properties>
 
     <modules>
@@ -94,6 +94,17 @@
                 <groupId>jline</groupId>
                 <artifactId>jline</artifactId>
                 <version>2.11</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-util</artifactId>
+                <version>${asm.version}</version>
             </dependency>
 
             <dependency>
