@@ -153,7 +153,10 @@ public class NetworkUtil {
 
             if(!nic.isUp()) {
                 LOG.error("Selected network interface '" + networkInterfaceName + 
-                        "' is down. Please select an alternate network interface using the property 'com.a2i.network' in your configuration.");
+                        "' is down. Please select an alternate network " + 
+                        "interface using the property 'com.a2i.network' in your " +
+                        "configuration file (ex. com.a2i.network=wlan0). For " +
+                        "a list of available interfaces, type 'net' into the shell.");
             }
 
             if(nic != null) {
