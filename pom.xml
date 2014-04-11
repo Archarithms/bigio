@@ -14,8 +14,8 @@
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         
-        <netty.version>4.0.17.Final</netty.version>
-        <asm.version>4.2</asm.version>
+        <netty.version>4.0.18.Final</netty.version>
+        <asm.version>5.0.1</asm.version>
     </properties>
 
     <modules>
@@ -116,7 +116,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter</artifactId>
-                <version>1.0.0.RELEASE</version>
+                <version>1.0.1.RELEASE</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>

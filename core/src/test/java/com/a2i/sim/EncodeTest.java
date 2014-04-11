@@ -6,12 +6,7 @@
 
 package com.a2i.sim;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;

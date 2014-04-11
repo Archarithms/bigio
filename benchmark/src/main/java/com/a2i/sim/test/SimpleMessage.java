@@ -14,11 +14,11 @@ import com.a2i.sim.Message;
  */
 @Message
 public class SimpleMessage {
-    private String string;
+    private String string = "";
 
-    private long sequence;
+    private long sequence = 0;
 
-    private long sendTime;
+    private long sendTime = 0;
 
 //    private String hugeString = 
 //            "lkdsjfljsdflkdsjflksdjflskajflfjsdlkfjsldfjksldfkjsadlfkjlsadjfsldfjslafjsdlfkjslfjsdfljsdflskdjfslkjfslakdjfsdlfkjsldfjksdlfjsj" +

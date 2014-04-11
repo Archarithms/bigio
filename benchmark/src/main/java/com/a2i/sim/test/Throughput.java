@@ -12,10 +12,9 @@ import com.a2i.sim.Starter;
 import com.a2i.sim.core.MessageListener;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.PostConstruct;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
@@ -23,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class Throughput {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PingPong.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Throughput.class);
     
     private Speaker speaker;
 
@@ -53,8 +52,8 @@ public class Throughput {
         public void run() {
             while(!seeded && running) {
                 try {
-                    Thread.sleep(1000l);
-                    LOG.info("Seeding");
+                    Thread.sleep(100l);
+                    //LOG.info("Seeding");
                     currentMessage.sendTime = System.nanoTime();
                     speaker.send("HelloWorldConsumer", currentMessage);
                 } catch(Exception ex) {
@@ -92,6 +91,7 @@ public class Throughput {
                 running = false;
                 
                 endTime = System.currentTimeMillis();
+                printStats();
                 
                 try {
                     seedThread.join();
@@ -132,10 +132,10 @@ public class Throughput {
             speaker.addListener("HelloWorldProducer", new MessageListener<LatencyMessage>() {
                 @Override
                 public void receive(LatencyMessage message) {
-                    if(!seeded) {
-                        seeded = true;
-                        LOG.info("Beginning test");
-                    }
+//                    if(!seeded) {
+//                        seeded = true;
+//                        LOG.info("Beginning test");
+//                    }
 
                     if(messageCount >= throwAway && !warmedUp) {
                         warmedUp = true;
