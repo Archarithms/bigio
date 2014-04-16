@@ -47,8 +47,6 @@ public class Container {
 
     private static final String COMPONENT_PROPERTY = "com.a2i.dms.components";
 
-    private static final JarFilter JAR_FILTER = new JarFilter();
-
     private String componentDir;
     private String binDir;
 
@@ -59,6 +57,7 @@ public class Container {
     private final List<Method> initializations = new ArrayList<>();
     private final Map<Class<?>, Object> instances = new HashMap<>();
     private final Map<Class<?>, List<Field>> dependencies = new HashMap<>();
+    private final Map<Class<?>, List<Field>> multipleDependencies = new HashMap<>();
     private final List<Class<?>> toInstantiate = new ArrayList<>();
     
     private static final Logger LOG = LoggerFactory.getLogger(Container.class);
@@ -131,11 +130,17 @@ public class Container {
         initializations.addAll(reflections.getMethodsAnnotatedWith(Initialize.class));
         
         for(Field inject : injections) {
-            if(dependencies.get(inject.getDeclaringClass()) == null) {
-                dependencies.put(inject.getDeclaringClass(), new ArrayList<Field>());
+            if(inject.getType().isAssignableFrom(List.class)) {
+                if(multipleDependencies.get(inject.getDeclaringClass()) == null) {
+                    multipleDependencies.put(inject.getDeclaringClass(), new ArrayList<Field>());
+                }
+                multipleDependencies.get(inject.getDeclaringClass()).add(inject);
+            } else {
+                if(dependencies.get(inject.getDeclaringClass()) == null) {
+                    dependencies.put(inject.getDeclaringClass(), new ArrayList<Field>());
+                }
+                dependencies.get(inject.getDeclaringClass()).add(inject);
             }
-            LOG.info("Found dependency " + inject.getDeclaringClass() + " -> " + inject.getType().getName());
-            dependencies.get(inject.getDeclaringClass()).add(inject);
         }
     }
 
@@ -160,9 +165,7 @@ public class Container {
     private void instantiateTree(Class<?> clazz) {
         if(instances.get(clazz) == null) {
             try {
-                LOG.info("Instantiating " + clazz.getName());
                 instances.put(clazz, clazz.newInstance());
-                LOG.info("Done");
             } catch (InstantiationException ex) {
                 LOG.error("Error instantiating class " + clazz.getName(), ex);
             } catch (IllegalAccessException ex) {
@@ -171,28 +174,27 @@ public class Container {
         } else {
             return;
         }
-        LOG.info("ERE");
-
-        LOG.info(dependencies.containsKey(clazz) + "" );
 
         if(dependencies.containsKey(clazz)) {
             for(Field field : dependencies.get(clazz)) {
-                if(field.getType().isAssignableFrom(List.class)) {
-                    ParameterizedType listType = (ParameterizedType) field.getGenericType();
-                    Class<?> listClass = (Class<?>) listType.getActualTypeArguments()[0];
-
-                    for(Class<?> cl : components) {
-                        if(listClass.isAssignableFrom(cl)) {
-                            instantiateTree(cl);
-                        }
+                for(Class<?> cl : components) {
+                    LOG.info(cl.getName() + " " + field.getType().getName() + " " + field.getType().isAssignableFrom(cl));
+                    if(field.getType().isAssignableFrom(cl)) {
+                        LOG.info("Found a dependency subgraph " + cl.getName());
+                        instantiateTree(cl);
                     }
-                } else {
-                    for(Class<?> cl : components) {
-                        LOG.info(cl.getName() + " " + field.getType().getName() + " " + field.getType().isAssignableFrom(cl));
-                        if(field.getType().isAssignableFrom(cl)) {
-                            LOG.info("Found a dependency subgraph " + cl.getName());
-                            instantiateTree(cl);
-                        }
+                }
+            }
+        }
+
+        if(multipleDependencies.containsKey(clazz)) {
+            for(Field field : multipleDependencies.get(clazz)) {
+                ParameterizedType listType = (ParameterizedType) field.getGenericType();
+                Class<?> listClass = (Class<?>) listType.getActualTypeArguments()[0];
+
+                for(Class<?> cl : components) {
+                    if(listClass.isAssignableFrom(cl)) {
+                        instantiateTree(cl);
                     }
                 }
             }
@@ -215,31 +217,34 @@ public class Container {
                             LOG.error("Illegal access", ex);
                         }
                     }
+                }
+            }
+        }
 
-                    if(field.getType().isAssignableFrom(List.class)) {
-                        
-                        ParameterizedType listType = (ParameterizedType) field.getGenericType();
-                        Class<?> listClass = (Class<?>) listType.getActualTypeArguments()[0];
+        for(Class<?> parent : multipleDependencies.keySet()) {
+            for(Field field : multipleDependencies.get(parent)) {
+                for(Object obj : instances.values()) {
+                    ParameterizedType listType = (ParameterizedType) field.getGenericType();
+                    Class<?> listClass = (Class<?>) listType.getActualTypeArguments()[0];
 
-                        if(listClass.isAssignableFrom(obj.getClass())) {
-                            try {
-                                if(instances.get(parent) != null) {
-                                    field.setAccessible(true);
-                                    if(field.get(instances.get(parent)) == null) {
-                                        field.set(instances.get(parent), new ArrayList());
-                                    }
-                                    Method addMethod = ArrayList.class.getMethod("add", Object.class);
-                                    addMethod.invoke(field.get(instances.get(parent)), obj);
+                    if(listClass.isAssignableFrom(obj.getClass())) {
+                        try {
+                            if(instances.get(parent) != null) {
+                                field.setAccessible(true);
+                                if(field.get(instances.get(parent)) == null) {
+                                    field.set(instances.get(parent), new ArrayList());
                                 }
-                            } catch(NoSuchMethodException ex) {
-                                LOG.error("No such method", ex);
-                            } catch(IllegalAccessException ex) {
-                                LOG.error("Illegal access", ex);
-                            } catch (IllegalArgumentException ex) {
-                                LOG.error("Illegal argument", ex);
-                            } catch (InvocationTargetException ex) {
-                                LOG.error("Invocation target exception", ex);
+                                Method addMethod = ArrayList.class.getMethod("add", Object.class);
+                                addMethod.invoke(field.get(instances.get(parent)), obj);
                             }
+                        } catch(NoSuchMethodException ex) {
+                            LOG.error("No such method", ex);
+                        } catch(IllegalAccessException ex) {
+                            LOG.error("Illegal access", ex);
+                        } catch (IllegalArgumentException ex) {
+                            LOG.error("Illegal argument", ex);
+                        } catch (InvocationTargetException ex) {
+                            LOG.error("Invocation target exception", ex);
                         }
                     }
                 }
@@ -263,11 +268,4 @@ public class Container {
             }
         }
     }
-
-    private static final class JarFilter implements DirectoryStream.Filter<Path> {
-        @Override
-        public boolean accept(Path entry) throws IOException {
-            return entry.endsWith("jar");
-        }
-    } 
 }
