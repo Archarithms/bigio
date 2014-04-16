@@ -67,7 +67,7 @@ public class PingPong {
             time = System.currentTimeMillis();
             while(running) {
                 try {
-                    speaker.send("HelloWorldConsumer", m);
+                    speaker.send("HelloWorldLocal", m);
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -221,6 +221,7 @@ public class PingPong {
                         LOG.info("Reached the warm-up threshold: resetting stats");
                         warmedUp = true;
                         messageCount = 0;
+                        memThread.start();
                         time = System.currentTimeMillis();
                     }
 
@@ -232,6 +233,12 @@ public class PingPong {
                     }
                 }
             });
+
+            System.gc();
+
+            try {
+                Thread.sleep(1000l);
+            } catch(InterruptedException ex) {}
 
             localThread.start();
         }

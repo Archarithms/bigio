@@ -54,11 +54,12 @@ public class Container {
 
     private final List<Class<?>> components = new ArrayList<>();
     private final List<Field> injections = new ArrayList<>();
-    private final List<Method> initializations = new ArrayList<>();
+    private final Map<Class<?>, Method> initializations = new HashMap<>();
     private final Map<Class<?>, Object> instances = new HashMap<>();
     private final Map<Class<?>, List<Field>> dependencies = new HashMap<>();
     private final Map<Class<?>, List<Field>> multipleDependencies = new HashMap<>();
     private final List<Class<?>> toInstantiate = new ArrayList<>();
+    private final List<Class<?>> satisfied = new ArrayList<>();
     
     private static final Logger LOG = LoggerFactory.getLogger(Container.class);
     
@@ -68,7 +69,6 @@ public class Container {
         buildDependencyGraph();
         instantiateComponents();
         inject();
-        initialize();
     }
 
     public Object getInstance(Class<?> clazz) {
@@ -110,7 +110,6 @@ public class Container {
 
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(componentPath)) {
             for (Path path : directoryStream) {
-                LOG.info("Loading " + path);
                 urls.add(path.toUri().toURL());
             }
         } catch (IOException ex) {
@@ -126,8 +125,13 @@ public class Container {
     private void buildDependencyGraph() {
         components.addAll(reflections.getTypesAnnotatedWith(Component.class));
         injections.addAll(reflections.getFieldsAnnotatedWith(Inject.class));
-        initializations.addAll(reflections.getMethodsAnnotatedWith(PostConstruct.class));
-        initializations.addAll(reflections.getMethodsAnnotatedWith(Initialize.class));
+
+        for(Method init : reflections.getMethodsAnnotatedWith(PostConstruct.class)) {
+            initializations.put(init.getDeclaringClass(), init);
+        }
+        for(Method init : reflections.getMethodsAnnotatedWith(Initialize.class)) {
+            initializations.put(init.getDeclaringClass(), init);
+        }
         
         for(Field inject : injections) {
             if(inject.getType().isAssignableFrom(List.class)) {
@@ -178,9 +182,7 @@ public class Container {
         if(dependencies.containsKey(clazz)) {
             for(Field field : dependencies.get(clazz)) {
                 for(Class<?> cl : components) {
-                    LOG.info(cl.getName() + " " + field.getType().getName() + " " + field.getType().isAssignableFrom(cl));
                     if(field.getType().isAssignableFrom(cl)) {
-                        LOG.info("Found a dependency subgraph " + cl.getName());
                         instantiateTree(cl);
                     }
                 }
@@ -201,24 +203,52 @@ public class Container {
         }
     }
 
-    private void inject() {
-        for(Class<?> parent : dependencies.keySet()) {
-            for(Field field : dependencies.get(parent)) {
-                for(Object obj : instances.values()) {
-                    if(field.getType().isAssignableFrom(obj.getClass())) {
-                        try {
-                            if(instances.get(parent) != null) {
-                                field.setAccessible(true);
-                                field.set(instances.get(parent), obj);
-                            }
-                        } catch (IllegalArgumentException ex) {
-                            LOG.error("Illegal argument in injection", ex);
-                        } catch (IllegalAccessException ex) {
-                            LOG.error("Illegal access", ex);
+    private void inject(Class<?> parent) {
+        if(satisfied.contains(parent)) {
+            return;
+        }
+
+        if(!dependencies.containsKey(parent)) {
+            satisfied.add(parent);
+            return;
+        }
+
+        for(Field field : dependencies.get(parent)) {
+            inject(field.getType());
+
+            for(Object obj : instances.values()) {
+                if(field.getType().isAssignableFrom(obj.getClass())) {
+                    try {
+                        if(instances.get(parent) != null) {
+                            field.setAccessible(true);
+                            field.set(instances.get(parent), obj);
                         }
+                    } catch (IllegalArgumentException ex) {
+                        LOG.error("Illegal argument in injection", ex);
+                    } catch (IllegalAccessException ex) {
+                        LOG.error("Illegal access", ex);
                     }
                 }
             }
+        }
+
+        satisfied.add(parent);
+        if(initializations.containsKey(parent) && instances.containsKey(parent)) {
+            try {
+                initializations.get(parent).invoke(instances.get(parent));
+            } catch (IllegalAccessException ex) {
+                LOG.error("Illegal access", ex);
+            } catch (IllegalArgumentException ex) {
+                LOG.error("Illegal argument", ex);
+            } catch (InvocationTargetException ex) {
+                LOG.error("Invocation Target Exception", ex);
+            }
+        }
+    }
+
+    private void inject() {
+        for(Class<?> parent : dependencies.keySet()) {
+            inject(parent);
         }
 
         for(Class<?> parent : multipleDependencies.keySet()) {
@@ -248,23 +278,6 @@ public class Container {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    private void initialize() {
-        for(final Method m : initializations) {
-            try {
-                if(instances.containsKey(m.getDeclaringClass())) {
-                    LOG.info("Initializing " + m.getDeclaringClass().getName());
-                    m.invoke(instances.get(m.getDeclaringClass()));
-                }
-            } catch (IllegalAccessException ex) {
-                LOG.error("Illegal access", ex);
-            } catch (IllegalArgumentException ex) {
-                LOG.error("Illegal argument", ex);
-            } catch (InvocationTargetException ex) {
-                LOG.error("Invocation Target Exception", ex);
             }
         }
     }
