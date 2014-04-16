@@ -22,18 +22,8 @@
             <artifactId>msgpack</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.6</version>
-        </dependency>
-        <dependency>
             <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
 
         <dependency>
@@ -48,11 +38,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -98,16 +83,6 @@
                     </outputDirectory>
                 </configuration>
             </plugin>
-            <!--plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
-                <configuration>
-                    <forkMode>once</forkMode>
-                    <argLine>-Xmx128m -javaagent:${basedir}/src/test/jmockit-${jmockit.version}.jar</argLine>
-                    <useSystemClassLoader>true</useSystemClassLoader>
-                    <testFailureIgnore>true</testFailureIgnore>
-                </configuration>
-            </plugin-->
         </plugins>
     </build>
 </project>

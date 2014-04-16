@@ -6,13 +6,13 @@
 
 package com.a2i.sim.examples.helloworld;
 
+import com.a2i.sim.Component;
+import com.a2i.sim.Initialize;
+import com.a2i.sim.Inject;
 import com.a2i.sim.Speaker;
 import com.a2i.sim.core.MessageListener;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -23,10 +23,10 @@ public class Consumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
     
-    @Autowired
+    @Inject
     private Speaker speaker;
 
-    @PostConstruct
+    @Initialize
     public void init() {
         speaker.addListener("HelloWorld", new MessageListener<HelloWorldMessage>() {
             @Override

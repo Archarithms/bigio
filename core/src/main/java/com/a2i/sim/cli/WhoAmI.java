@@ -5,10 +5,10 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
+import com.a2i.sim.Inject;
 import com.a2i.sim.core.ClusterService;
 import com.a2i.sim.core.member.MemberKey;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class WhoAmI implements CommandLine {
 
-    @Autowired
+    @Inject
     private ClusterService cluster;
 
     @Override
@@ -28,5 +28,10 @@ public class WhoAmI implements CommandLine {
     @Override
     public void execute(String... args) {
         System.out.println(MemberKey.getKey(cluster.getMe()));
+    }
+
+    @Override
+    public String help() {
+        return "Prints information on this cluster node.";
     }
 }

@@ -7,11 +7,11 @@
 package com.a2i.sim.test;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
+import com.a2i.sim.Inject;
 import com.a2i.sim.Speaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -22,7 +22,7 @@ public class RemoveListenerCommand implements CommandLine {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoveListenerCommand.class);
 
-    @Autowired
+    @Inject
     private Speaker speaker;
 
     @Override
@@ -42,4 +42,8 @@ public class RemoveListenerCommand implements CommandLine {
         }
     }
     
+    @Override
+    public String help() {
+        return "Removes a listener";
+    }
 }

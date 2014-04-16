@@ -6,31 +6,31 @@
 
 package com.a2i.sim.test;
 
+import com.a2i.sim.Component;
+import com.a2i.sim.Inject;
 import com.a2i.sim.Parameters;
 import com.a2i.sim.Speaker;
 import com.a2i.sim.Starter;
 import com.a2i.sim.core.Envelope;
 import com.a2i.sim.core.MessageListener;
-import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.core.codec.EnvelopeEncoder;
 import com.a2i.sim.core.codec.GenericEncoder;
+import com.a2i.sim.util.TimeUtil;
 import java.io.IOException;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
  * @author atrimble
  */
-//@Component
+@Component
 public class PingPong {
 
     private static final Logger LOG = LoggerFactory.getLogger(PingPong.class);
     
-    @Autowired
+    @Inject
     private Speaker speaker;
 
     private boolean running = true;
@@ -94,8 +94,6 @@ public class PingPong {
     };
 
     public PingPong() {
-        this.speaker = Starter.bootstrap();
-        
         SimpleMessage m = new SimpleMessage("m", 0, 0);
         try {
             byte[] payload = GenericEncoder.encode(m);

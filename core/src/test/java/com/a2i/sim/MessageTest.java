@@ -9,27 +9,25 @@ import com.a2i.sim.core.MessageListener;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import static org.junit.Assert.*;
+import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  *
  * @author atrimble
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = TestConfiguration.class)
 public class MessageTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTest.class);
 
-    @Autowired
-    private Speaker speaker;
+    private static Speaker speaker;
 
     private static final String MESSAGE = "This is a test";
 
@@ -43,6 +41,16 @@ public class MessageTest {
     private final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
     private static boolean failed = false;
+
+    @BeforeClass
+    public static void init() {
+        speaker = Starter.bootstrap();
+    }
+
+    @AfterClass
+    public static void shutdown() {
+        speaker.shutdown();
+    }
 
     @Test
     public void testMessage() throws Exception {

@@ -5,9 +5,9 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -42,5 +42,10 @@ public class ThreadsCommand implements CommandLine {
         }
 
         System.out.println(stats.toString());
+    }
+
+    @Override
+    public String help() {
+        return "Prints information on threads in this JVM.";
     }
 }

@@ -5,6 +5,7 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
 import com.a2i.sim.util.NetworkUtil;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -12,7 +13,6 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -55,5 +55,10 @@ public class NetworkCommand implements CommandLine {
         } catch (SocketException ex) {
             LOG.error("Socket error.", ex);
         }
+    }
+
+    @Override
+    public String help() {
+        return "Prints the available network interfaces on this system (currently used interface marked with a *).";
     }
 }

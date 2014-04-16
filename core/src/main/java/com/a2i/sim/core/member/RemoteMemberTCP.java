@@ -3,11 +3,11 @@
  */
 package com.a2i.sim.core.member;
 
-import com.a2i.sim.core.codec.EnvelopeEncoder;
-import com.a2i.sim.core.codec.GossipEncoder;
 import com.a2i.sim.Parameters;
 import com.a2i.sim.core.Envelope;
 import com.a2i.sim.core.GossipMessage;
+import com.a2i.sim.core.codec.EnvelopeEncoder;
+import com.a2i.sim.core.codec.GossipEncoder;
 import com.a2i.sim.util.RunningStatistics;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -145,7 +145,7 @@ public class RemoteMemberTCP extends RemoteMember {
     }
 
     private void updateMember() {
-        MemberHolder.INSTANCE.updateMemberStatus(this);
+        memberHolder.updateMemberStatus(this);
     }
 
     private void initializeGossipClient() {

@@ -7,7 +7,7 @@
 package com.a2i.sim.examples.cli;
 
 import com.a2i.sim.CommandLine;
-import org.springframework.stereotype.Component;
+import com.a2i.sim.Component;
 
 /**
  *
@@ -24,5 +24,10 @@ public class ExampleCommand implements CommandLine {
     @Override
     public void execute(String... args) {
         System.out.println(" world");
+    }
+
+    @Override
+    public String help() {
+        return "Hello World!";
     }
 }

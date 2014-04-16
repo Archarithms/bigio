@@ -23,4 +23,11 @@ public interface CommandLine {
      * @param args the set of arguments provided from the command line.
      */
     public void execute(String... args);
+
+    /**
+     * Get the help message.
+     * 
+     * @return the help message.
+     */
+    public String help();
 }

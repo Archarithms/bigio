@@ -66,6 +66,10 @@ public enum ListenerRegistry {
         this.me = me;
     }
 
+    public Member getMe() {
+        return me;
+    }
+
     public <T> void addLocalListener(String topic, final MessageListener<T> listener) {
         Consumer<Event<Envelope>> consumer = new Consumer<Event<Envelope>>() {
             @Override

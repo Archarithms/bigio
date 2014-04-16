@@ -4,6 +4,7 @@
 
 package com.a2i.sim.core.member;
 
+import com.a2i.sim.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,14 +16,20 @@ import org.slf4j.LoggerFactory;
  *
  * @author atrimble
  */
-public enum MemberHolder {
-    INSTANCE;
+@Component
+public class MemberHolder {
 
     private static final Logger LOG = LoggerFactory.getLogger(MemberHolder.class);
     
     private final Map<String, Member> members = new TreeMap<>();
     private final Map<String, Member> activeMembers = new TreeMap<>();
     private final Map<String, Member> deadMembers = new TreeMap<>();
+
+    public void clear() {
+        members.clear();
+        activeMembers.clear();
+        deadMembers.clear();
+    }
 
     public Member getMember(String key) {
         Member m;

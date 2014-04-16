@@ -5,12 +5,12 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
+import com.a2i.sim.Inject;
 import com.a2i.sim.core.ClusterService;
 import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.member.MemberHolder;
 import com.a2i.sim.core.member.MemberKey;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -19,10 +19,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class TagCommand implements CommandLine {
 
-    private static final String USAGE = "Usage: tag <add|remove|list>";
+    private static final String USAGE = "Usage: tag [add <key> <value> | remove <key> | list]";
 
-    @Autowired
+    @Inject
     private ClusterService cluster;
+
+    @Inject
+    private MemberHolder memberHolder;
 
     @Override
     public String getCommand() {
@@ -53,7 +56,7 @@ public class TagCommand implements CommandLine {
                 break;
             case "list":
                 StringBuilder buff = new StringBuilder();
-                for(Member m : MemberHolder.INSTANCE.getActiveMembers()) {
+                for(Member m : memberHolder.getActiveMembers()) {
                     String key = MemberKey.getKey(m);
                     buff.append(key).append("\n");
 
@@ -66,5 +69,10 @@ public class TagCommand implements CommandLine {
             default:
                 System.out.println(USAGE);
         }
+    }
+
+    @Override
+    public String help() {
+        return "Sets or displays tag information. " + USAGE;
     }
 }

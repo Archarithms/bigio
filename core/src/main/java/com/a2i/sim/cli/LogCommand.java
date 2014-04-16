@@ -9,9 +9,9 @@ import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -22,6 +22,8 @@ public class LogCommand implements CommandLine {
 
     private static final Logger LOG = LoggerFactory.getLogger(LogCommand.class);
 
+    private static final String USAGE = "Usage: log [all|trace|debug|info|warn|error|off]";
+
     @Override
     public String getCommand() {
         return "log";
@@ -30,7 +32,7 @@ public class LogCommand implements CommandLine {
     @Override
     public void execute(String... args) {
         if (args.length < 2) {
-            System.out.println("Usage: log <all|trace|debug|info|warn|error|off>");
+            System.out.println(USAGE);
         } else {
             setLoggingLevel(args[1]);
         }
@@ -71,5 +73,10 @@ public class LogCommand implements CommandLine {
         } else if(level.equalsIgnoreCase("off")) {
             threshold.setLevel(Level.OFF.levelStr);
         }
+    }
+
+    @Override
+    public String help() {
+        return "Sets the console log level. " + USAGE;
     }
 }

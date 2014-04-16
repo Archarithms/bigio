@@ -11,30 +11,35 @@ import com.a2i.sim.core.MessageListener;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  *
  * @author atrimble
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = TestConfiguration.class)
 public class InterceptorTest {
     
-    @Autowired
-    private Speaker speaker;
+    private static Speaker speaker;
 
     private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
     private final MyMessageListener listener = new MyMessageListener();
     private final TestInterceptor interceptor = new TestInterceptor();
+
+    @BeforeClass
+    public static void init() {
+        speaker = Starter.bootstrap();
+    }
+
+    @AfterClass
+    public static void shutdown() {
+        speaker.shutdown();
+    }
 
     @Test
     public void testIntercept() throws Exception {

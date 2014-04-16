@@ -16,6 +16,7 @@
         
         <netty.version>4.0.18.Final</netty.version>
         <asm.version>4.2</asm.version>
+        <logback.version>1.1.1</logback.version>
     </properties>
 
     <modules>
@@ -108,15 +109,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jcl-over-slf4j</artifactId>
-                <version>1.7.6</version>
-                <scope>runtime</scope>
-            </dependency>
-            <dependency>
                 <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>1.1.1</version>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.fusesource.jansi</groupId>
@@ -124,17 +119,6 @@
                 <version>1.11</version>
             </dependency>
             
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
-                <version>1.0.1.RELEASE</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-test</artifactId>
-                <version>4.0.3.RELEASE</version>
-                <scope>test</scope>
-            </dependency>
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>

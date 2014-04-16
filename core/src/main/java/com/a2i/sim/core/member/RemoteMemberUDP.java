@@ -3,12 +3,11 @@
  */
 package com.a2i.sim.core.member;
 
-import com.a2i.sim.core.codec.EnvelopeEncoder;
-import com.a2i.sim.core.codec.GossipEncoder;
 import com.a2i.sim.Parameters;
 import com.a2i.sim.core.Envelope;
 import com.a2i.sim.core.GossipMessage;
-import com.a2i.sim.util.RunningStatistics;
+import com.a2i.sim.core.codec.EnvelopeEncoder;
+import com.a2i.sim.core.codec.GossipEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -69,9 +68,6 @@ public class RemoteMemberUDP extends RemoteMember {
     private DatagramChannel dataChannel = null;
     private EventLoopGroup gossipWorkerGroup = null;
     private EventLoopGroup dataWorkerGroup = null;
-
-//    private final RunningStatistics gossipSizeStat = new RunningStatistics();
-//    private final RunningStatistics dataSizeStat = new RunningStatistics();
 
     private InetSocketAddress address;
 
@@ -147,15 +143,10 @@ public class RemoteMemberUDP extends RemoteMember {
         if(dataWorkerGroup != null) {
             dataWorkerGroup.shutdownGracefully();
         }
-
-//        if(LOG.isDebugEnabled()) {
-//            LOG.debug("Mean sent gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
-//            LOG.debug("Mean sent data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
-//        }
     }
 
     private void updateMember() {
-        MemberHolder.INSTANCE.updateMemberStatus(this);
+        memberHolder.updateMemberStatus(this);
     }
 
     private void initializeGossipClient() {

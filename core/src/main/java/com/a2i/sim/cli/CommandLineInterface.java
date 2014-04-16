@@ -4,9 +4,12 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
+import com.a2i.sim.Initialize;
+import com.a2i.sim.Inject;
 import com.a2i.sim.Parameters;
-import com.a2i.sim.core.ClusterService;
 import com.a2i.sim.Starter;
+import com.a2i.sim.core.ClusterService;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -16,26 +19,31 @@ import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
  * @author Andy Trimble
  */
 @Component
-public class CommandLineInterface {
+public class CommandLineInterface extends Thread {
 
-    @Autowired
+    private ConsoleReader reader = null;
+
+    @Inject
     private ClusterService cluster;
 
-    @Autowired
+    @Inject
     private final List<CommandLine> commands = new ArrayList<>();
 
     private final static Logger LOG = LoggerFactory.getLogger(CommandLineInterface.class);
 
-    public void init() throws IOException {
+    @Initialize
+    public void init() {
+        start();
+    }
 
+    @Override
+    public void run() {
         switch (Parameters.INSTANCE.currentOS()) {
             case WIN_64:
             case WIN_32:
@@ -53,33 +61,31 @@ public class CommandLineInterface {
                 LOG.error("Cannot determine operating system. Cluster cannot form.");
         }
 
-        ConsoleReader reader = new ConsoleReader();
-
-        reader.setHandleUserInterrupt(true);
-        reader.setPrompt("sim> ");
-
-        String line;
-        PrintWriter out = new PrintWriter(reader.getOutput());
-
         try {
+        
+            reader = new ConsoleReader();
+
+            reader.setHandleUserInterrupt(true);
+            reader.setPrompt("sim> ");
+
+            String line;
+
             while ((line = reader.readLine()) != null) {
                 boolean found = false;
 
                 String[] args = line.split("\\s+");
                 
-                if (line.contains("join")) {
-                    found = true;
-                    if (args.length < 2) {
-                        System.out.println("Usage: join <some ip:port>");
-                    } else {
-                        cluster.join(args[1]);
-                    }
-                } else if (line.equals("leave")) {
-                    found = true;
-                    cluster.leave();
-                } else if (line.equals("gc")) {
+                if (line.equals("gc")) {
                     found = true;
                     System.gc();
+                } else if (line.equals("help")) {
+                    found = true;
+                    for(CommandLine command : commands) {
+                        System.out.println("\n" + command.getCommand() + "\n\t" + command.help());
+                    }
+                    System.out.println("\ngc\n\tPerforms garbage collection.");
+                    System.out.println("\nquit\n\tExits ths system.");
+                    System.out.println("\nexit\n\tExits ths system.");
                 }
 
                 for(CommandLine command : commands) {
@@ -100,6 +106,8 @@ public class CommandLineInterface {
             }
         } catch (UserInterruptException ex) {
             Starter.exit();
+        } catch (IOException ex) {
+            LOG.error("IO Exception", ex);
         }
     }
 }

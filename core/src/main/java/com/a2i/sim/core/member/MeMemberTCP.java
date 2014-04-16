@@ -81,8 +81,10 @@ public class MeMemberTCP extends MeMember {
     }
 
     private class GossipServerThread implements Runnable {
-        @Override
-        public void run() {
+
+        private ChannelFuture f;
+
+        public GossipServerThread() {
             gossipBossGroup = new NioEventLoopGroup(GOSSIP_BOSS_THREADS);
             gossipWorkerGroup = new NioEventLoopGroup(GOSSIP_WORKER_THREADS);
             try {
@@ -109,11 +111,16 @@ public class MeMemberTCP extends MeMember {
                         .childOption(ChannelOption.SO_KEEPALIVE, true);
 
                 // Bind and start to accept incoming connections.
-                ChannelFuture f = b.bind(getIp(), getGossipPort()).sync();
-
+                f = b.bind(getIp(), getGossipPort()).sync();
+            } catch (InterruptedException ex) {
+                LOG.error("Gossip server interrupted.", ex);
+            }
+        }
+        
+        @Override
+        public void run() {
+            try {
                 // Wait until the server socket is closed.
-                // In this example, this does not happen, but you can do that to gracefully
-                // shut down your server.
                 f.channel().closeFuture().sync();
 
                 LOG.debug("Shutting down gossip server");
@@ -127,8 +134,10 @@ public class MeMemberTCP extends MeMember {
     }
 
     private class DataServerThread implements Runnable {
-        @Override
-        public void run() {
+
+        private ChannelFuture f;
+
+        public DataServerThread() {
             dataBossGroup = new NioEventLoopGroup(DATA_BOSS_THREADS);
             dataWorkerGroup = new NioEventLoopGroup(DATA_WORKER_THREADS);
             try {
@@ -156,11 +165,16 @@ public class MeMemberTCP extends MeMember {
                         .childOption(ChannelOption.SO_KEEPALIVE, true);
 
                 // Bind and start to accept incoming connections.
-                ChannelFuture f = b.bind(getIp(), getDataPort()).sync();
-
+                f = b.bind(getIp(), getDataPort()).sync();
+            } catch (InterruptedException ex) {
+                LOG.error("Message data interrupted.", ex);
+            }
+        }
+        
+        @Override
+        public void run() {
+            try {
                 // Wait until the server socket is closed.
-                // In this example, this does not happen, but you can do that to gracefully
-                // shut down your server.
                 f.channel().closeFuture().sync();
 
                 LOG.debug("Shutting down data server");

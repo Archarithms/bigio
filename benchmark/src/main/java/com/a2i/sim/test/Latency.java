@@ -6,6 +6,8 @@
 
 package com.a2i.sim.test;
 
+import com.a2i.sim.Component;
+import com.a2i.sim.Inject;
 import com.a2i.sim.Parameters;
 import com.a2i.sim.Speaker;
 import com.a2i.sim.Starter;
@@ -18,17 +20,17 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
  * @author atrimble
  */
+@Component
 public class Latency {
 
     private static final Logger LOG = LoggerFactory.getLogger(Latency.class);
     
-    @Autowired
+    @Inject
     private Speaker speaker;
 
     private boolean running = true;
@@ -69,7 +71,6 @@ public class Latency {
     };
 
     public Latency() {
-        this.speaker = Starter.bootstrap();
 
         int currentBytes = initialBytes;
         while(currentBytes < maxBytes) {
@@ -203,6 +204,7 @@ public class Latency {
 
     @PostConstruct
     public void go() {
+        LOG.info("Going");
         String role = Parameters.INSTANCE.getProperty("com.a2i.benchmark.role", "local");
 
         if(role.equals("producer")) {

@@ -5,13 +5,13 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.List;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -83,5 +83,10 @@ public class MemCommand implements CommandLine {
         }
 
         System.out.println(stats.toString());
+    }
+
+    @Override
+    public String help() {
+        return "Prints information about the current state of JVM memory.";
     }
 }

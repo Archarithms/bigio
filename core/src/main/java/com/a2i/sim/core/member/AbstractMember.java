@@ -21,6 +21,7 @@ public abstract class AbstractMember implements Member {
     private String ip;
     private int dataPort;
     private int gossipPort;
+    protected static MemberHolder memberHolder;
     
     public abstract void initialize();
     public abstract void shutdown();
@@ -33,6 +34,10 @@ public abstract class AbstractMember implements Member {
         this.ip = ip;
         this.gossipPort = gossipPort;
         this.dataPort = dataPort;
+    }
+
+    public static final void setMemberHolder(MemberHolder holder) {
+        memberHolder = holder;
     }
 
     @Override

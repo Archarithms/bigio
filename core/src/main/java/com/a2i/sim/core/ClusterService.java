@@ -4,22 +4,24 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.Component;
 import com.a2i.sim.DeliveryType;
+import com.a2i.sim.Inject;
 import com.a2i.sim.Interceptor;
+import com.a2i.sim.Parameters;
+import com.a2i.sim.core.codec.GenericEncoder;
 import com.a2i.sim.core.member.AbstractMember;
-import com.a2i.sim.core.member.Member;
-import com.a2i.sim.core.member.MemberKey;
-import com.a2i.sim.core.member.MemberHolder;
 import com.a2i.sim.core.member.MeMember;
 import com.a2i.sim.core.member.MeMemberTCP;
 import com.a2i.sim.core.member.MeMemberUDP;
+import com.a2i.sim.core.member.Member;
+import com.a2i.sim.core.member.MemberHolder;
+import com.a2i.sim.core.member.MemberKey;
 import com.a2i.sim.core.member.MemberStatus;
-import com.a2i.sim.util.NetworkUtil;
-import com.a2i.sim.util.TimeUtil;
-import com.a2i.sim.core.codec.GenericEncoder;
-import com.a2i.sim.Parameters;
 import com.a2i.sim.core.member.RemoteMemberTCP;
 import com.a2i.sim.core.member.RemoteMemberUDP;
+import com.a2i.sim.util.NetworkUtil;
+import com.a2i.sim.util.TimeUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,8 +31,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -44,8 +44,11 @@ public class ClusterService {
     private static final String GOSSIP_PORT_PROPERTY = "com.a2i.port.gossip";
     private static final String DATA_PORT_PROPERTY = "com.a2i.port.data";
 
-    @Autowired
+    @Inject
     private MCDiscovery multicast;
+
+    @Inject
+    private MemberHolder memberHolder;
 
     private MeMember me;
 
@@ -62,6 +65,10 @@ public class ClusterService {
 
     public void setMulticastDiscovery(MCDiscovery multicast) {
         this.multicast = multicast;
+    }
+
+    public void setMemberHolder(MemberHolder memberHolder) {
+        this.memberHolder = memberHolder;
     }
 
     public void setDeliveryType(String topic, DeliveryType type) {
@@ -168,15 +175,15 @@ public class ClusterService {
     }
 
     public Collection<Member> getAllMembers() {
-        return MemberHolder.INSTANCE.getAllMembers();
+        return memberHolder.getAllMembers();
     }
     
     public Collection<Member> getActiveMembers() {
-        return MemberHolder.INSTANCE.getActiveMembers();
+        return memberHolder.getActiveMembers();
     }
     
     public Collection<Member> getDeadMembers() {
-        return MemberHolder.INSTANCE.getDeadMembers();
+        return memberHolder.getDeadMembers();
     }
 
     public Member getMe() {
@@ -184,6 +191,8 @@ public class ClusterService {
     }
 
     public void initialize() {
+
+        AbstractMember.setMemberHolder(memberHolder);
 
         String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
         String gossipPort = Parameters.INSTANCE.getProperty(GOSSIP_PORT_PROPERTY);
@@ -229,7 +238,7 @@ public class ClusterService {
         }
         me.setStatus(MemberStatus.Alive);
         me.initialize();
-        MemberHolder.INSTANCE.updateMemberStatus(me);
+        memberHolder.updateMemberStatus(me);
 
         me.addGossipConsumer(new GossipListener() {
             @Override
@@ -240,16 +249,9 @@ public class ClusterService {
 
         multicast.initialize(me);
 
-        gossiper = new Gossiper(me);
+        gossiper = new Gossiper(me, memberHolder);
 
         ListenerRegistry.INSTANCE.setMe(me);
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                shutdown();
-            }
-        });
     }
 
     public void join(String ip) {
@@ -261,15 +263,19 @@ public class ClusterService {
     }
 
     public void shutdown() {
+        gossiper.shutdown();
+
         try {
             multicast.shutdown();
         } catch (InterruptedException ex) {
             LOG.warn("Interrupted while shutting down multicast agent.", ex);
         }
 
-        for(Member member : MemberHolder.INSTANCE.getAllMembers()) {
+        for(Member member : memberHolder.getAllMembers()) {
             ((AbstractMember)member).shutdown();
         }
+
+        memberHolder.clear();
     }
 
     private void handleGossipMessage(GossipMessage message) {
@@ -283,7 +289,7 @@ public class ClusterService {
 
             String key = message.getMembers().get(i);
 
-            Member m = MemberHolder.INSTANCE.getMember(key);
+            Member m = memberHolder.getMember(key);
             if(m == null) {
                 String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
                 if(protocol.equalsIgnoreCase("udp")) {
@@ -298,7 +304,7 @@ public class ClusterService {
                 ((AbstractMember)m).initialize();
             }
 
-            MemberHolder.INSTANCE.updateMemberStatus(m);
+            memberHolder.updateMemberStatus(m);
 
             int memberClock = message.getClock().get(i);
             int knownMemberClock = m.getSequence().get();
@@ -332,7 +338,7 @@ public class ClusterService {
         }
 
         if(updateTags) {
-            Member m = MemberHolder.INSTANCE.getMember(senderKey);
+            Member m = memberHolder.getMember(senderKey);
             m.getTags().clear();
             m.getTags().putAll(message.getTags());
         }

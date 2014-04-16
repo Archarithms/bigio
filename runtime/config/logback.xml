@@ -43,9 +43,9 @@
         </triggeringPolicy>
     </appender>
 
-    <appender name="DEBUG_LEVEL_REMAPPER" class="org.springframework.boot.logging.logback.LevelRemappingAppender">
+    <!--appender name="DEBUG_LEVEL_REMAPPER" class="org.springframework.boot.logging.logback.LevelRemappingAppender">
        <destinationLogger>org.springframework.boot</destinationLogger>
-    </appender>
+    </appender-->
 
     <root level="WARN">
         <appender-ref ref="CONSOLE" />

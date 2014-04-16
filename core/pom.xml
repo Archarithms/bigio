@@ -18,6 +18,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.9-RC1</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>dms-agent</artifactId>
             <version>${project.version}</version>
@@ -63,13 +68,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
@@ -86,16 +86,6 @@
         </dependency>
             
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>commons-logging</artifactId>
-                    <groupId>commons-logging</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -104,11 +94,6 @@
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
             <version>3.2.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -174,7 +159,15 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.16</version>
                 <configuration>
-                    <argLine>-javaagent:${project.build.directory}/agents/dms-agent-${project.version}.jar</argLine>
+                    <argLine>
+                        -javaagent:${project.build.directory}/agents/dms-agent-${project.version}.jar 
+                        -Dcom.a2i.dms.binDir=target
+                        -Dcom.a2i.dms.components=com.a2i.sim.Speaker
+                    </argLine>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>testdir/advanced-comms-1.0-SNAPSHOT.jar</additionalClasspathElement>
+                        <additionalClasspathElement>testdir/advanced-core-1.0-SNAPSHOT.jar</additionalClasspathElement>
+                    </additionalClasspathElements>
                 </configuration>
             </plugin>
         </plugins>

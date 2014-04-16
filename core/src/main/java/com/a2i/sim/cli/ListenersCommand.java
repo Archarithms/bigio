@@ -5,15 +5,15 @@
 package com.a2i.sim.cli;
 
 import com.a2i.sim.CommandLine;
+import com.a2i.sim.Component;
 import com.a2i.sim.core.ListenerRegistry;
+import com.a2i.sim.core.Registration;
 import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.member.MemberKey;
-import com.a2i.sim.core.Registration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -47,5 +47,10 @@ public class ListenersCommand implements CommandLine {
         }
 
         System.out.println(buff.toString());
+    }
+
+    @Override
+    public String help() {
+        return "Displays the current set of registered listeners";
     }
 }

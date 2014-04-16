@@ -12,7 +12,6 @@ import com.a2i.sim.Starter;
 import com.a2i.sim.core.MessageListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

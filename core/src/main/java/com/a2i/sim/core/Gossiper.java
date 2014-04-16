@@ -9,6 +9,7 @@ import com.a2i.sim.core.member.MemberHolder;
 import com.a2i.sim.core.member.RemoteMember;
 import com.a2i.sim.util.TimeUtil;
 import com.a2i.sim.Parameters;
+import com.a2i.sim.core.member.AbstractMember;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -39,12 +40,15 @@ public class Gossiper {
 
     private final Member me;
 
+    private final MemberHolder memberHolder;
+
     private final MembershipGossiper thread = new MembershipGossiper();
 
     @SuppressWarnings("CallToThreadStartDuringObjectConstruction")
-    public Gossiper(Member me) {
+    public Gossiper(Member me, MemberHolder memberHolder) {
 
         this.me = me;
+        this.memberHolder = memberHolder;
 
         gossipInterval = Integer.parseInt(Parameters.INSTANCE.getProperty(
                 GOSSIP_INTERVAL_PROPERTY, DEFAULT_GOSSIP_INTERVAL));
@@ -70,8 +74,8 @@ public class Gossiper {
             memberList.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
             memberList.getTags().putAll(me.getTags());
 
-            for(int i = 0; i < MemberHolder.INSTANCE.getActiveMembers().size(); ++i) {
-                Member m = MemberHolder.INSTANCE.getActiveMembers().get(i);
+            for(int i = 0; i < memberHolder.getActiveMembers().size(); ++i) {
+                Member m = memberHolder.getActiveMembers().get(i);
                 memberList.getMembers().add(MemberKey.getKey(m));
 
                 if(m == me) {
@@ -90,7 +94,6 @@ public class Gossiper {
             }
 
             try {
-//                LOG.info("Sending: " + memberList.toString());
                 ((RemoteMember)member).gossip(memberList);
             } catch(IOException ex) {
                 LOG.error("Exception sending member list.", ex);
@@ -101,11 +104,11 @@ public class Gossiper {
     private Member getRandomMember() {
         Member chosenMember = null;
 
-        if (MemberHolder.INSTANCE.getActiveMembers().size() > 1) {
+        if (memberHolder.getActiveMembers().size() > 1) {
             int tries = 10;
             do {
-                int randomNeighborIndex = random.nextInt(MemberHolder.INSTANCE.getActiveMembers().size());
-                Iterator<Member> iter = MemberHolder.INSTANCE.getActiveMembers().iterator();
+                int randomNeighborIndex = random.nextInt(memberHolder.getActiveMembers().size());
+                Iterator<Member> iter = memberHolder.getActiveMembers().iterator();
 
                 int i = -1;
                 do {
@@ -120,12 +123,16 @@ public class Gossiper {
             } while (me.equals(chosenMember));
         }
 
-        return chosenMember;
+        if(me.equals(chosenMember)) {
+            return null;
+        } else {
+            return chosenMember;
+        }
     }
 
     private class MembershipGossiper extends Thread {
 
-        private AtomicBoolean keepRunning;
+        private final AtomicBoolean keepRunning;
 
         public MembershipGossiper() {
             this.keepRunning = new AtomicBoolean(true);
@@ -146,8 +153,6 @@ public class Gossiper {
                     keepRunning.set(false);
                 }
             }
-
-            this.keepRunning = null;
         }
     }
 }

@@ -4,16 +4,14 @@
 
 package com.a2i.sim;
 
+import com.a2i.sim.cli.CommandLineInterface;
 import com.a2i.sim.core.ClusterService;
-import com.a2i.sim.core.member.Member;
 import com.a2i.sim.core.MessageListener;
+import com.a2i.sim.core.member.Member;
 import java.util.Collection;
 import java.util.Map;
-import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * This is the main entry point into A2I Sim.
@@ -25,15 +23,25 @@ public class Speaker {
 
     private static final Logger LOG = LoggerFactory.getLogger(Speaker.class);
 
-    @Autowired
+    @Inject
     private ClusterService cluster;
+
+    @Inject
+    private CommandLineInterface cli = null;
 
     /**
      * Initialize the framework.
      */
-    @PostConstruct
+    @Initialize
     public void init() {
         cluster.initialize();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                shutdown();
+            }
+        });
     }
 
     /**
@@ -41,6 +49,13 @@ public class Speaker {
      */
     public Speaker() {
         LOG.info("The speaker has arrived");
+    }
+
+    /**
+     * Shut down the system.
+     */
+    public void shutdown() {
+        cluster.shutdown();
     }
 
     /**

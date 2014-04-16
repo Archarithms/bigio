@@ -4,17 +4,19 @@
 
 package com.a2i.sim.core;
 
+import com.a2i.sim.Component;
+import com.a2i.sim.Inject;
+import com.a2i.sim.Parameters;
+import com.a2i.sim.core.codec.GossipDecoder;
+import com.a2i.sim.core.codec.GossipEncoder;
 import com.a2i.sim.core.member.AbstractMember;
 import com.a2i.sim.core.member.Member;
-import com.a2i.sim.core.member.MemberKey;
 import com.a2i.sim.core.member.MemberHolder;
+import com.a2i.sim.core.member.MemberKey;
 import com.a2i.sim.core.member.RemoteMemberTCP;
 import com.a2i.sim.core.member.RemoteMemberUDP;
 import com.a2i.sim.util.NetworkUtil;
 import com.a2i.sim.util.TimeUtil;
-import com.a2i.sim.core.codec.GossipEncoder;
-import com.a2i.sim.core.codec.GossipDecoder;
-import com.a2i.sim.Parameters;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.buffer.ByteBuf;
@@ -38,7 +40,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 /**
  *
@@ -48,6 +49,9 @@ import org.springframework.stereotype.Component;
 public class MCDiscovery extends Thread {
     
     private static final Logger LOG = LoggerFactory.getLogger(MCDiscovery.class);
+
+    @Inject
+    private MemberHolder memberHolder;
 
     private static final String PROTOCOL_PROPERTY = "com.a2i.protocol";
     private static final String DEFAULT_PROTOCOL = "tcp";
@@ -76,10 +80,16 @@ public class MCDiscovery extends Thread {
         multicastPort = Integer.parseInt(Parameters.INSTANCE.getProperty(MULTICAST_PORT_PROPERTY, DEFAULT_MULTICAST_PORT));
     }
 
+    public void setMemberHolder(MemberHolder memberHolder) {
+        this.memberHolder = memberHolder;
+    }
+
     public void initialize(Member me) {
         this.me = me;
 
         protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
+
+        setupNetworking();
 
         if(isEnabled()) {
             start();
@@ -87,14 +97,13 @@ public class MCDiscovery extends Thread {
     }
 
     public void shutdown() throws InterruptedException {
-        if(isEnabled()) {
+        if(isEnabled() && workerGroup != null) {
             workerGroup.shutdownGracefully();
             join();
         }
     }
 
-    @Override
-    public void run() {
+    public void setupNetworking() {
         try {
             if(!NetworkUtil.getNetworkInterface().supportsMulticast()) {
                 LOG.error("Network Interface doesn't support multicast.");
@@ -168,6 +177,14 @@ public class MCDiscovery extends Thread {
                 LOG.error("Cannot serialize message.", ex);
             }
 
+        } catch(InterruptedException ex) {
+
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
             // Wait until the connection is closed.
             channel.closeFuture().sync();
         } catch(InterruptedException ex) {
@@ -211,7 +228,7 @@ public class MCDiscovery extends Thread {
 
             String key = MemberKey.getKey(message);
 
-            Member member = MemberHolder.INSTANCE.getMember(key);
+            Member member = memberHolder.getMember(key);
 
             if(member == null) {
                 if(protocol.equalsIgnoreCase("udp")) {
@@ -226,7 +243,7 @@ public class MCDiscovery extends Thread {
                 member.getTags().put(k, message.getTags().get(k));
             }
 
-            MemberHolder.INSTANCE.updateMemberStatus(member);
+            memberHolder.updateMemberStatus(member);
         }
 
         @Override
