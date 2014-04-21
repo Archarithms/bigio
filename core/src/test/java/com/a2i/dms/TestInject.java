@@ -4,10 +4,8 @@
 
 package com.a2i.dms;
 
-import com.a2i.dms.Parameters;
-import com.a2i.dms.Speaker;
-import com.a2i.dms.core.ListenerRegistry;
 import com.a2i.dms.core.Container;
+import com.a2i.dms.core.ListenerRegistry;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
@@ -19,7 +17,7 @@ public class TestInject {
     @Test
     public void testInject() throws Exception {
         Parameters.INSTANCE.currentOS();
-        Container scanner = new Container();
+        Container scanner = Container.INSTANCE;
         scanner.scan();
 
         Thread.sleep(1000l);

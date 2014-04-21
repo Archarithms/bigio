@@ -4,6 +4,7 @@
 
 package com.a2i.dms.core;
 
+import com.a2i.dms.CommandLine;
 import com.a2i.dms.Component;
 import com.a2i.dms.Initialize;
 import com.a2i.dms.Inject;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import org.reflections.Configuration;
 import org.reflections.Reflections;
@@ -37,7 +39,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author atrimble
  */
-public class Container {
+public enum Container {
+    INSTANCE;
 
     private static final String DEFAULT_COMPONENT_DIRECTORY = "components";
     private static final String COMPONENT_DIRECTORY_PROPERTY = "com.a2i.dms.componentDir";
@@ -75,6 +78,10 @@ public class Container {
         return instances.get(clazz);
     }
 
+    public Set<Class<?>> getComponents() {
+        return instances.keySet();
+    }
+
     private void loadProperties() {
         componentDir = Parameters.INSTANCE.getProperty(COMPONENT_DIRECTORY_PROPERTY, DEFAULT_COMPONENT_DIRECTORY);
         binDir = Parameters.INSTANCE.getProperty(BIN_DIRECTORY_PROPERTY, DEFAULT_BIN_DIRECTORY);
@@ -89,6 +96,11 @@ public class Container {
                     LOG.warn("Could not find class '" + cl + "'");
                 }
             }
+
+            // Hack: Make sure all CLI commands are loaded
+            Reflections cliReflect = new Reflections("com.a2i.dms.cli");
+            Set<Class<? extends CommandLine>> clis = cliReflect.getSubTypesOf(CommandLine.class);
+            toInstantiate.addAll(clis);
         }
     }
 
@@ -195,7 +207,7 @@ public class Container {
                 Class<?> listClass = (Class<?>) listType.getActualTypeArguments()[0];
 
                 for(Class<?> cl : components) {
-                    if(listClass.isAssignableFrom(cl)) {
+                    if(listClass.isAssignableFrom(cl) && toInstantiate.contains(cl)) {
                         instantiateTree(cl);
                     }
                 }

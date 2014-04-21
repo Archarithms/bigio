@@ -5,8 +5,8 @@
 package com.a2i.dms;
 
 import com.a2i.dms.core.ClusterService;
-import com.a2i.dms.core.MCDiscovery;
 import com.a2i.dms.core.Container;
+import com.a2i.dms.core.MCDiscovery;
 import com.a2i.dms.core.member.MemberHolder;
 import java.lang.management.ManagementFactory;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class Starter {
 
     public static void main(String[] args) throws Exception {
         Parameters.INSTANCE.currentOS(); // Just to load the properties
-        new Container().scan();
+        Container.INSTANCE.scan();
         Starter starter = new Starter();
     }
 }
