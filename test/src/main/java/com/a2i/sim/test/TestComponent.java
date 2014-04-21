@@ -6,14 +6,14 @@
 
 package com.a2i.sim.test;
 
-import com.a2i.sim.Component;
-import com.a2i.sim.Inject;
-import com.a2i.sim.Speaker;
-import com.a2i.sim.core.Envelope;
-import com.a2i.sim.core.MessageListener;
-import com.a2i.sim.core.codec.EnvelopeEncoder;
-import com.a2i.sim.core.codec.GenericEncoder;
-import com.a2i.sim.util.TimeUtil;
+import com.a2i.dms.Component;
+import com.a2i.dms.Inject;
+import com.a2i.dms.Speaker;
+import com.a2i.dms.core.Envelope;
+import com.a2i.dms.core.MessageListener;
+import com.a2i.dms.core.codec.EnvelopeEncoder;
+import com.a2i.dms.core.codec.GenericEncoder;
+import com.a2i.dms.util.TimeUtil;
 import java.io.IOException;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;

@@ -6,7 +6,7 @@
 
 package com.a2i.sim.test;
 
-import com.a2i.sim.Message;
+import com.a2i.dms.Message;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
@@ -20,8 +20,6 @@ import org.msgpack.MessagePack;
 import org.msgpack.packer.Packer;
 import org.msgpack.type.Value;
 import org.msgpack.unpacker.Unpacker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *

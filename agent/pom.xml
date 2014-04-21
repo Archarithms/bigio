@@ -69,7 +69,7 @@
                     <archive>
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifestEntries>
-                            <Premain-Class>com.a2i.sim.core.MessageTransformer</Premain-Class>
+                            <Premain-Class>com.a2i.dms.agent.MessageTransformer</Premain-Class>
                         </manifestEntries>
                     </archive>
                 </configuration>

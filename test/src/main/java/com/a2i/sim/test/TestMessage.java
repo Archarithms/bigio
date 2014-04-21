@@ -6,12 +6,11 @@
 
 package com.a2i.sim.test;
 
-import com.a2i.sim.Message;
+import com.a2i.dms.Message;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

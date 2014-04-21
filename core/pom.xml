@@ -125,7 +125,7 @@
                     <archive>
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifestEntries>
-                            <Premain-Class>com.a2i.sim.core.MessageTransformer</Premain-Class>
+                            <Premain-Class>com.a2i.dms.agent.MessageTransformer</Premain-Class>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -162,7 +162,7 @@
                     <argLine>
                         -javaagent:${project.build.directory}/agents/dms-agent-${project.version}.jar 
                         -Dcom.a2i.dms.binDir=target
-                        -Dcom.a2i.dms.components=com.a2i.sim.Speaker
+                        -Dcom.a2i.dms.components=com.a2i.dms.Speaker
                     </argLine>
                     <additionalClasspathElements>
                         <additionalClasspathElement>testdir/advanced-comms-1.0-SNAPSHOT.jar</additionalClasspathElement>

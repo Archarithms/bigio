@@ -6,7 +6,7 @@
 
 package com.a2i.sim.test;
 
-import com.a2i.sim.Message;
+import com.a2i.dms.Message;
 
 /**
  *

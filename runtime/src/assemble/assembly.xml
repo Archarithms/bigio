@@ -26,25 +26,7 @@
                 <exclude>com.a2i.dms:dms-runtime</exclude>
             </excludes>
         </dependencySet>
-        <!--dependencySet>
-            <outputDirectory>components</outputDirectory>
-            <includes>
-                <include>com.a2i.dms:dms-test</include>
-            </includes>
-        </dependencySet-->
     </dependencySets>
-    <!--fileSets>
-        <fileSet>
-            <directory>${basedir}</directory>
-            <includes>
-                <include>*.txt</include>
-            </includes>
-            <excludes>
-                <exclude>README.txt</exclude>
-                <exclude>NOTICE.txt</exclude>
-            </excludes>
-        </fileSet>
-    </fileSets-->
     <fileSets>
         <fileSet>
             <directory>./</directory>

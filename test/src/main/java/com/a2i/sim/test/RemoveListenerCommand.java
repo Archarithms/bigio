@@ -6,10 +6,10 @@
 
 package com.a2i.sim.test;
 
-import com.a2i.sim.CommandLine;
-import com.a2i.sim.Component;
-import com.a2i.sim.Inject;
-import com.a2i.sim.Speaker;
+import com.a2i.dms.CommandLine;
+import com.a2i.dms.Component;
+import com.a2i.dms.Inject;
+import com.a2i.dms.Speaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
