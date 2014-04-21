@@ -5,6 +5,7 @@ package com.a2i.dms.core.member;
 
 import com.a2i.dms.core.GossipMessage;
 import com.a2i.dms.core.codec.GossipDecoder;
+import com.a2i.dms.util.NetworkUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -31,6 +32,7 @@ import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -80,6 +82,16 @@ public class MeMemberUDP extends MeMember {
     @Override
     protected void initializeServers() {
         LOG.debug("Initializing gossip server on " + getIp() + ":" + getGossipPort());
+
+        try {
+            if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
+                LOG.error("Cannot start networking. Interface is down.");
+                return;
+            }
+        } catch(SocketException ex) {
+            LOG.error("Cannot start networking.", ex);
+            return;
+        }
 
         serverExecutor.submit(new GossipServerThread());
         serverExecutor.submit(new DataServerThread());

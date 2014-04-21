@@ -22,7 +22,7 @@ public class LogCommand implements CommandLine {
 
     private static final Logger LOG = LoggerFactory.getLogger(LogCommand.class);
 
-    private static final String USAGE = "Usage: log [all|trace|debug|info|warn|error|off]";
+    private static final String USAGE = "Usage: log [all|trace|debug|info|warn|error|off|none]";
 
     @Override
     public String getCommand() {
@@ -71,6 +71,8 @@ public class LogCommand implements CommandLine {
         } else if(level.equalsIgnoreCase("error")) {
             threshold.setLevel(Level.ERROR.levelStr);
         } else if(level.equalsIgnoreCase("off")) {
+            threshold.setLevel(Level.OFF.levelStr);
+        } else if(level.equalsIgnoreCase("none")) {
             threshold.setLevel(Level.OFF.levelStr);
         }
     }

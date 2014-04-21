@@ -35,7 +35,8 @@ public class NetworkCommand implements CommandLine {
             while(enu.hasMoreElements()) {
                 NetworkInterface ifc = enu.nextElement();
                 System.out.println();
-                if(NetworkUtil.getNetworkInterface().getName().equals(ifc.getName())) {
+                if(NetworkUtil.getNetworkInterface() != null && 
+                        NetworkUtil.getNetworkInterface().getName().equals(ifc.getName())) {
                     System.out.println(ifc.getName() + " *");
                 } else {
                     System.out.println(ifc.getName());

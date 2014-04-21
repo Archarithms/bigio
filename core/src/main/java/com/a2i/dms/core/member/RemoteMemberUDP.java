@@ -8,6 +8,7 @@ import com.a2i.dms.core.Envelope;
 import com.a2i.dms.core.GossipMessage;
 import com.a2i.dms.core.codec.EnvelopeEncoder;
 import com.a2i.dms.core.codec.GossipEncoder;
+import com.a2i.dms.util.NetworkUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -30,6 +31,7 @@ import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -87,6 +89,16 @@ public class RemoteMemberUDP extends RemoteMember {
                 RETRY_INTERVAL_PROPERTY, DEFAULT_RETRY_INTERVAL));
         timeout = Integer.parseInt(Parameters.INSTANCE.getProperty(
                 CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT));
+
+        try {
+            if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
+                LOG.error("Cannot start networking. Interface is down.");
+                return;
+            }
+        } catch(SocketException ex) {
+            LOG.error("Cannot start networking.", ex);
+            return;
+        }
 
         address = new InetSocketAddress(getIp(), getDataPort());
 

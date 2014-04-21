@@ -104,6 +104,11 @@ public class MCDiscovery extends Thread {
     }
 
     public void setupNetworking() {
+        if(NetworkUtil.getNetworkInterface() == null) {
+            LOG.error("Cannot form cluster. No Network interface can be found.");
+            return;
+        }
+        
         try {
             if(!NetworkUtil.getNetworkInterface().supportsMulticast()) {
                 LOG.error("Network Interface doesn't support multicast.");
@@ -117,7 +122,7 @@ public class MCDiscovery extends Thread {
         //InetSocketAddress addr = new InetSocketAddress(NetworkUtil.INSTANCE.getIp(), NetworkUtil.INSTANCE.getFreePort());
 
         try {
-            if(!NetworkUtil.getNetworkInterface().isUp()) {
+            if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
                 LOG.error("Cannot form cluster. Network interface is down.");
                 return;
             }

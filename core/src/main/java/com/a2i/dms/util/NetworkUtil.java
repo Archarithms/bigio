@@ -151,11 +151,11 @@ public class NetworkUtil {
             
             nic = NetworkInterface.getByName(networkInterfaceName);
 
-            if(!nic.isUp()) {
+            if(nic != null && !nic.isUp()) {
                 LOG.error("Selected network interface '" + networkInterfaceName + 
                         "' is down. Please select an alternate network " + 
                         "interface using the property 'com.a2i.network' in your " +
-                        "configuration file (ex. com.a2i.network=wlan0). For " +
+                        "configuration file (ex. com.a2i.network=eth0). For " +
                         "a list of available interfaces, type 'net' into the shell.");
             }
 
@@ -172,7 +172,11 @@ public class NetworkUtil {
                     }
                 }
             } else {
-                LOG.error("Cannot find network interface '" + networkInterfaceName + "'");
+                LOG.error("Selected network interface '" + networkInterfaceName + 
+                        "' cannot be found. Please select an alternate network " + 
+                        "interface using the property 'com.a2i.network' in your " +
+                        "configuration file (ex. com.a2i.network=eth0). For " +
+                        "a list of available interfaces, type 'net' into the shell.");
             }
         } catch(SocketException ex) {
             LOG.error("Unable to determine IP address", ex);

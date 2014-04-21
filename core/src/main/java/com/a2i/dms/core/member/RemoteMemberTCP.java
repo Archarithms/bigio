@@ -8,6 +8,7 @@ import com.a2i.dms.core.Envelope;
 import com.a2i.dms.core.GossipMessage;
 import com.a2i.dms.core.codec.EnvelopeEncoder;
 import com.a2i.dms.core.codec.GossipEncoder;
+import com.a2i.dms.util.NetworkUtil;
 import com.a2i.dms.util.RunningStatistics;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
@@ -25,6 +26,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -83,6 +85,16 @@ public class RemoteMemberTCP extends RemoteMember {
                 RETRY_INTERVAL_PROPERTY, DEFAULT_RETRY_INTERVAL));
         timeout = Integer.parseInt(Parameters.INSTANCE.getProperty(
                 CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT));
+
+        try {
+            if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
+                LOG.error("Cannot start networking. Interface is down.");
+                return;
+            }
+        } catch(SocketException ex) {
+            LOG.error("Cannot start networking.", ex);
+            return;
+        }
 
         serverExecutor.submit(new Runnable() {
             @Override
