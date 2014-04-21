@@ -9,6 +9,7 @@ import com.a2i.dms.core.GossipMessage;
 import com.a2i.dms.core.ListenerRegistry;
 import com.a2i.dms.core.codec.EnvelopeDecoder;
 import java.io.IOException;
+import org.msgpack.MessageTypeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -81,7 +82,7 @@ public abstract class MeMember extends AbstractMember {
                     Envelope message = EnvelopeDecoder.decode(m.getData());
                     message.setDecoded(false);
                     send(message);
-                } catch (IOException ex) {
+                } catch (IOException | MessageTypeException ex) {
                     LOG.error("Error decoding message.", ex);
                 }
             }
