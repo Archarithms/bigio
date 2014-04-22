@@ -3,13 +3,12 @@
  */
 package com.a2i.dms.core;
 
+import com.a2i.dms.Parameters;
 import com.a2i.dms.core.member.Member;
-import com.a2i.dms.core.member.MemberKey;
 import com.a2i.dms.core.member.MemberHolder;
+import com.a2i.dms.core.member.MemberKey;
 import com.a2i.dms.core.member.RemoteMember;
 import com.a2i.dms.util.TimeUtil;
-import com.a2i.dms.Parameters;
-import com.a2i.dms.core.member.AbstractMember;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -42,13 +42,15 @@ public class Speaker {
                 shutdown();
             }
         });
+
+        LOG.info("The speaker has arrived");
     }
 
     /**
      * Construct a speaker.
      */
     public Speaker() {
-        LOG.info("The speaker has arrived");
+        
     }
 
     /**

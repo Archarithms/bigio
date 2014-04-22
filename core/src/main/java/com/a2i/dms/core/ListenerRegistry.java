@@ -74,7 +74,11 @@ public enum ListenerRegistry {
         Consumer<Event<Envelope>> consumer = new Consumer<Event<Envelope>>() {
             @Override
             public void accept(Event<Envelope> m) {
-                listener.receive((T)m.getData().getMessage());
+                try {
+                    listener.receive((T)m.getData().getMessage());
+                } catch(Throwable ex) {
+                    LOG.error("Exception in Reactor.", ex);
+                }
             }
         };
         reactor.on(Selectors.object(topic), consumer);
