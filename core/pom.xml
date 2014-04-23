@@ -164,10 +164,9 @@
                         -Dcom.a2i.dms.binDir=target
                         -Dcom.a2i.dms.components=com.a2i.dms.Speaker
                     </argLine>
-                    <additionalClasspathElements>
-                        <additionalClasspathElement>testdir/advanced-comms-1.0-SNAPSHOT.jar</additionalClasspathElement>
-                        <additionalClasspathElement>testdir/advanced-core-1.0-SNAPSHOT.jar</additionalClasspathElement>
-                    </additionalClasspathElements>
+                    <!--additionalClasspathElements>
+                        <additionalClasspathElement>src/test/resources</additionalClasspathElement>
+                    </additionalClasspathElements-->
                 </configuration>
             </plugin>
         </plugins>

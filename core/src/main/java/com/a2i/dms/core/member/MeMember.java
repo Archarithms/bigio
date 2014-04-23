@@ -34,12 +34,12 @@ public abstract class MeMember extends AbstractMember {
     protected Reactor reactor;
     protected Reactor decoderReactor;
 
-    public MeMember() {
-        super();
+    public MeMember(MemberHolder memberHolder) {
+        super(memberHolder);
     }
 
-    public MeMember(String ip, int gossipPort, int dataPort) {
-        super(ip, gossipPort, dataPort);
+    public MeMember(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+        super(ip, gossipPort, dataPort, memberHolder);
     }
 
     protected abstract void initializeServers();

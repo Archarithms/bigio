@@ -25,6 +25,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
@@ -69,12 +71,12 @@ public class RemoteMemberTCP extends RemoteMember {
     private final RunningStatistics gossipSizeStat = new RunningStatistics();
     private final RunningStatistics dataSizeStat = new RunningStatistics();
 
-    public RemoteMemberTCP() {
-        super();
+    public RemoteMemberTCP(MemberHolder memberHolder) {
+        super(memberHolder);
     }
 
-    public RemoteMemberTCP(String ip, int gossipPort, int dataPort) {
-        super(ip, gossipPort, dataPort);
+    public RemoteMemberTCP(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+        super(ip, gossipPort, dataPort, memberHolder);
     }
 
     @Override
@@ -114,7 +116,7 @@ public class RemoteMemberTCP extends RemoteMember {
     public void send(final Envelope message) throws IOException {
         byte[] bytes = EnvelopeEncoder.encode(message);
 
-        if(LOG.isDebugEnabled()) {
+        if(LOG.isTraceEnabled()) {
             dataSizeStat.push(bytes.length);
         }
         
@@ -127,7 +129,7 @@ public class RemoteMemberTCP extends RemoteMember {
     public void gossip(final GossipMessage message) throws IOException {
         byte[] bytes = GossipEncoder.encode(message);
 
-        if(LOG.isDebugEnabled()) {
+        if(LOG.isTraceEnabled()) {
             gossipSizeStat.push(bytes.length);
         }
 
@@ -138,8 +140,8 @@ public class RemoteMemberTCP extends RemoteMember {
 
     @Override
     public void shutdown() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Closing connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Closing connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
         }
 
         if(gossipWorkerGroup != null) {
@@ -150,9 +152,9 @@ public class RemoteMemberTCP extends RemoteMember {
             dataWorkerGroup.shutdownGracefully();
         }
 
-        if(LOG.isDebugEnabled()) {
-            LOG.debug("Mean sent gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
-            LOG.debug("Mean sent data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
+        if(LOG.isTraceEnabled()) {
+            LOG.trace("Mean sent gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
+            LOG.trace("Mean sent data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
         }
     }
 
@@ -161,7 +163,7 @@ public class RemoteMemberTCP extends RemoteMember {
     }
 
     private void initializeGossipClient() {
-        LOG.debug("Initializing gossip client");
+        LOG.trace("Initializing gossip client");
 
         gossipWorkerGroup = new NioEventLoopGroup(GOSSIP_WORKER_THREADS);
             
@@ -177,6 +179,9 @@ public class RemoteMemberTCP extends RemoteMember {
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new GossipExceptionHandler());
+                if(LOG.isTraceEnabled()) {
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                }
             }
 
             @Override
@@ -190,7 +195,6 @@ public class RemoteMemberTCP extends RemoteMember {
         ChannelFuture future = b.connect(getIp(), getGossipPort()).awaitUninterruptibly();
 
         if(future.isCancelled()) {
-            LOG.warn("Connection cancelled by user");
             gossipChannel = null;
         } else if(!future.isSuccess()) {
             gossipChannel = null;
@@ -203,7 +207,7 @@ public class RemoteMemberTCP extends RemoteMember {
     }
 
     private void initializeDataClient() {
-        LOG.debug("Initializing data client");
+        LOG.trace("Initializing data client");
 
         dataWorkerGroup = new NioEventLoopGroup(DATA_WORKER_THREADS);
             
@@ -222,6 +226,9 @@ public class RemoteMemberTCP extends RemoteMember {
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new DataExceptionHandler());
+                if(LOG.isTraceEnabled()) {
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                }
             }
 
             @Override
@@ -235,7 +242,6 @@ public class RemoteMemberTCP extends RemoteMember {
         ChannelFuture future = b.connect(getIp(), getDataPort()).awaitUninterruptibly();
 
         if(future.isCancelled()) {
-            LOG.warn("Connection cancelled by user");
             dataChannel = null;
         } else if(!future.isSuccess()) {
             dataChannel = null;
@@ -281,14 +287,13 @@ public class RemoteMemberTCP extends RemoteMember {
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            LOG.debug("Member left");
+            LOG.trace("Member left");
             setStatus(MemberStatus.Left);
             updateMember();
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.warn("Gossip connection failed");
             retryGossipConnection();
         }
     }
@@ -302,7 +307,6 @@ public class RemoteMemberTCP extends RemoteMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.warn("Data connection failed");
             retryGossipConnection();
         }
     }

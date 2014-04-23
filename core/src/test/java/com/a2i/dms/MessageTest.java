@@ -5,9 +5,6 @@
  */
 package com.a2i.dms;
 
-import com.a2i.dms.Starter;
-import com.a2i.dms.DeliveryType;
-import com.a2i.dms.Speaker;
 import com.a2i.dms.core.MessageListener;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;

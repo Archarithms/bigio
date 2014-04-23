@@ -29,6 +29,8 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -73,12 +75,12 @@ public class RemoteMemberUDP extends RemoteMember {
 
     private InetSocketAddress address;
 
-    public RemoteMemberUDP() {
-        super();
+    public RemoteMemberUDP(MemberHolder memberHolder) {
+        super(memberHolder);
     }
 
-    public RemoteMemberUDP(String ip, int gossipPort, int dataPort) {
-        super(ip, gossipPort, dataPort);
+    public RemoteMemberUDP(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+        super(ip, gossipPort, dataPort, memberHolder);
     }
 
     @Override
@@ -178,6 +180,9 @@ public class RemoteMemberUDP extends RemoteMember {
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new GossipExceptionHandler());
+                if(LOG.isTraceEnabled()) {
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                }
             }
 
             @Override
@@ -191,7 +196,6 @@ public class RemoteMemberUDP extends RemoteMember {
         ChannelFuture future = b.connect(getIp(), getGossipPort()).awaitUninterruptibly();
 
         if(future.isCancelled()) {
-            LOG.warn("Connection cancelled by user");
             gossipChannel = null;
         } else if(!future.isSuccess()) {
             gossipChannel = null;
@@ -226,6 +230,9 @@ public class RemoteMemberUDP extends RemoteMember {
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new DataExceptionHandler());
+                if(LOG.isTraceEnabled()) {
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                }
             }
 
             @Override
@@ -239,7 +246,6 @@ public class RemoteMemberUDP extends RemoteMember {
         ChannelFuture future = b.connect(getIp(), getDataPort()).awaitUninterruptibly();
 
         if(future.isCancelled()) {
-            LOG.warn("Connection cancelled by user");
             dataChannel = null;
         } else if(!future.isSuccess()) {
             dataChannel = null;
@@ -292,7 +298,6 @@ public class RemoteMemberUDP extends RemoteMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.warn("Gossip connection failed");
             retryGossipConnection();
         }
     }
@@ -306,7 +311,6 @@ public class RemoteMemberUDP extends RemoteMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.warn("Data connection failed");
             retryGossipConnection();
         }
     }

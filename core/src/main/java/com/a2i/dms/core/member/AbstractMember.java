@@ -21,22 +21,23 @@ public abstract class AbstractMember implements Member {
     private String ip;
     private int dataPort;
     private int gossipPort;
-    protected static MemberHolder memberHolder;
+    protected MemberHolder memberHolder;
     
     public abstract void initialize();
     public abstract void shutdown();
 
-    public AbstractMember() {
-
+    public AbstractMember(MemberHolder memberHolder) {
+        this.memberHolder = memberHolder;
     }
 
-    public AbstractMember(String ip, int gossipPort, int dataPort) {
+    public AbstractMember(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
         this.ip = ip;
         this.gossipPort = gossipPort;
         this.dataPort = dataPort;
+        this.memberHolder = memberHolder;
     }
 
-    public static final void setMemberHolder(MemberHolder holder) {
+    public final void setMemberHolder(MemberHolder holder) {
         memberHolder = holder;
     }
 

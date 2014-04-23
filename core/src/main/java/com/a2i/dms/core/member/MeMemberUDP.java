@@ -30,6 +30,8 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.ReplayingDecoder;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
 import java.net.SocketException;
@@ -62,12 +64,12 @@ public class MeMemberUDP extends MeMember {
 
     private final ExecutorService serverExecutor = Executors.newFixedThreadPool(SERVER_THREAD_POOL_SIZE);
 
-    public MeMemberUDP() {
-        super();
+    public MeMemberUDP(MemberHolder memberHolder) {
+        super(memberHolder);
     }
 
-    public MeMemberUDP(String ip, int gossipPort, int dataPort) {
-        super(ip, gossipPort, dataPort);
+    public MeMemberUDP(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+        super(ip, gossipPort, dataPort, memberHolder);
     }
 
     @Override
@@ -117,6 +119,9 @@ public class MeMemberUDP extends MeMember {
                                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                                 ch.pipeline().addLast(new GossipMessageHandler());
+                                if(LOG.isTraceEnabled()) {
+                                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                                }
                             }
 
                             @Override
@@ -175,6 +180,9 @@ public class MeMemberUDP extends MeMember {
                     public void initChannel(DatagramChannel ch) throws Exception {
                         ch.config().setAllocator(new PooledByteBufAllocator());
                         ch.pipeline().addLast(new DataMessageHandler());
+                        if(LOG.isTraceEnabled()) {
+                            ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                        }
                     }
 
                     @Override
@@ -239,7 +247,7 @@ public class MeMemberUDP extends MeMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.error("Error in TCP Client", cause);
+            LOG.error("Error in UDP Client", cause);
             ctx.close();
         }
     }
@@ -260,7 +268,7 @@ public class MeMemberUDP extends MeMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.error("Error in TCP Client", cause);
+            LOG.error("Error in UDP Client", cause);
             ctx.close();
         }
     }

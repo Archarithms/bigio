@@ -24,6 +24,8 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.ReplayingDecoder;
 import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
 import java.net.SocketException;
@@ -56,12 +58,12 @@ public class MeMemberTCP extends MeMember {
 
     private final ExecutorService serverExecutor = Executors.newFixedThreadPool(SERVER_THREAD_POOL_SIZE);
 
-    public MeMemberTCP() {
-        super();
+    public MeMemberTCP(MemberHolder memberHolder) {
+        super(memberHolder);
     }
 
-    public MeMemberTCP(String ip, int gossipPort, int dataPort) {
-        super(ip, gossipPort, dataPort);
+    public MeMemberTCP(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+        super(ip, gossipPort, dataPort, memberHolder);
     }
 
     @Override
@@ -111,6 +113,9 @@ public class MeMemberTCP extends MeMember {
                                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                                 ch.pipeline().addLast(new GossipMessageHandler());
+                                if(LOG.isTraceEnabled()) {
+                                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                                }
                             }
 
                             @Override
@@ -162,6 +167,9 @@ public class MeMemberTCP extends MeMember {
                                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(32768, 0, 2, 0, 2));
                                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                                 ch.pipeline().addLast(new DataMessageHandler());
+                                if(LOG.isTraceEnabled()) {
+                                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                                }
                             }
 
                             @Override

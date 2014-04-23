@@ -192,8 +192,6 @@ public class ClusterService {
 
     public void initialize() {
 
-        AbstractMember.setMemberHolder(memberHolder);
-
         String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
         String gossipPort = Parameters.INSTANCE.getProperty(GOSSIP_PORT_PROPERTY);
         String dataPort = Parameters.INSTANCE.getProperty(DATA_PORT_PROPERTY);
@@ -202,14 +200,14 @@ public class ClusterService {
         int dataPortInt;
 
         if(gossipPort == null) {
-            LOG.debug("Finding a random port for gossiping.");
+            LOG.trace("Finding a random port for gossiping.");
             gossipPortInt = NetworkUtil.getFreePort();
         } else {
             gossipPortInt = Integer.parseInt(gossipPort);
         }
 
         if(dataPort == null) {
-            LOG.debug("Finding a random port for data.");
+            LOG.trace("Finding a random port for data.");
             dataPortInt = NetworkUtil.getFreePort();
         } else {
             dataPortInt = Integer.parseInt(dataPort);
@@ -219,7 +217,7 @@ public class ClusterService {
 
         if(LOG.isDebugEnabled()) {
             StringBuilder greeting = new StringBuilder();
-            LOG.debug(greeting
+            LOG.trace(greeting
                     .append("Greetings. I am ")
                     .append(myAddress)
                     .append(":")
@@ -231,10 +229,10 @@ public class ClusterService {
 
         if(protocol.equalsIgnoreCase("udp")) {
             LOG.info("Running over UDP");
-            me = new MeMemberUDP(myAddress, gossipPortInt, dataPortInt);
+            me = new MeMemberUDP(myAddress, gossipPortInt, dataPortInt, memberHolder);
         } else {
             LOG.info("Running over TCP");
-            me = new MeMemberTCP(myAddress, gossipPortInt, dataPortInt);
+            me = new MeMemberTCP(myAddress, gossipPortInt, dataPortInt, memberHolder);
         }
         me.setStatus(MemberStatus.Alive);
         me.initialize();
@@ -280,7 +278,7 @@ public class ClusterService {
 
     private void handleGossipMessage(GossipMessage message) {
 
-//        LOG.info("Received: " + message.toString());
+        LOG.info("Received: " + message.toString());
 
         String senderKey = MemberKey.getKey(message);
         boolean updateTags = false;
@@ -293,9 +291,27 @@ public class ClusterService {
             if(m == null) {
                 String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
                 if(protocol.equalsIgnoreCase("udp")) {
-                    m = new RemoteMemberUDP();
+                    if(LOG.isTraceEnabled()) {
+                        LOG.trace(new StringBuilder()
+                                .append(MemberKey.getKey(me))
+                                .append(" Discovered new UDP member through gossip: ")
+                                .append(message.getIp())
+                                .append(":")
+                                .append(message.getGossipPort())
+                                .append(":").append(message.getDataPort()).toString());
+                    }
+                    m = new RemoteMemberUDP(memberHolder);
                 } else {
-                    m = new RemoteMemberTCP();
+                    if(LOG.isTraceEnabled()) {
+                        LOG.trace(new StringBuilder()
+                                .append(MemberKey.getKey(me))
+                                .append(" Discovered new TCP member through gossip: ")
+                                .append(message.getIp())
+                                .append(":")
+                                .append(message.getGossipPort())
+                                .append(":").append(message.getDataPort()).toString());
+                    }
+                    m = new RemoteMemberTCP(memberHolder);
                 }
                 String[] values = key.split(":");
                 m.setIp(values[0]);

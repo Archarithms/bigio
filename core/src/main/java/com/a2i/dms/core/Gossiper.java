@@ -11,7 +11,6 @@ import com.a2i.dms.core.member.RemoteMember;
 import com.a2i.dms.util.TimeUtil;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,7 +30,7 @@ public class Gossiper {
     
     private static final Logger LOG = LoggerFactory.getLogger(Gossiper.class);
 
-    private int gossipInterval = 1000;
+    private int gossipInterval = 250;
     
     private int cleanupInterval = 10000; 
 
@@ -107,13 +106,7 @@ public class Gossiper {
             int tries = 10;
             do {
                 int randomNeighborIndex = random.nextInt(memberHolder.getActiveMembers().size());
-                Iterator<Member> iter = memberHolder.getActiveMembers().iterator();
-
-                int i = -1;
-                do {
-                    chosenMember = iter.next();
-                    ++i;
-                } while(i != randomNeighborIndex && iter.hasNext());
+                chosenMember = memberHolder.getActiveMembers().get(randomNeighborIndex);
 
                 if (--tries <= 0) {
                     chosenMember = null;

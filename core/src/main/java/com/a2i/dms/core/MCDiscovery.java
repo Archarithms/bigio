@@ -237,11 +237,36 @@ public class MCDiscovery extends Thread {
 
             if(member == null) {
                 if(protocol.equalsIgnoreCase("udp")) {
-                    member = new RemoteMemberUDP(message.getIp(), message.getGossipPort(), message.getDataPort());
+                    if(LOG.isTraceEnabled()) {
+                        LOG.trace(new StringBuilder()
+                                .append("Discovered new UDP member: ")
+                                .append(message.getIp())
+                                .append(":")
+                                .append(message.getGossipPort())
+                                .append(":").append(message.getDataPort()).toString());
+                    }
+                    member = new RemoteMemberUDP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
                 } else {
-                    member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort());
+                    if(LOG.isTraceEnabled()) {
+                        LOG.trace(new StringBuilder()
+                                .append("Discovered new TCP member: ")
+                                .append(message.getIp())
+                                .append(":")
+                                .append(message.getGossipPort())
+                                .append(":").append(message.getDataPort()).toString());
+                    }
+                    member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
                 }
                 ((AbstractMember)member).initialize();
+            } else {
+                if(LOG.isTraceEnabled()) {
+                        LOG.trace(new StringBuilder()
+                                .append("Received known member: ")
+                                .append(message.getIp())
+                                .append(":")
+                                .append(message.getGossipPort())
+                                .append(":").append(message.getDataPort()).toString());
+                    }
             }
 
             for(String k : message.getTags().keySet()) {

@@ -16,12 +16,12 @@ public abstract class RemoteMember extends AbstractMember {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteMember.class);
 
-    public RemoteMember() {
-        super();
+    public RemoteMember(MemberHolder memberHolder) {
+        super(memberHolder);
     }
 
-    public RemoteMember(String ip, int gossipPort, int dataPort) {
-        super(ip, gossipPort, dataPort);
+    public RemoteMember(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+        super(ip, gossipPort, dataPort, memberHolder);
     }
 
     public abstract void gossip(final GossipMessage message) throws IOException;

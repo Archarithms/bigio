@@ -35,22 +35,16 @@ public class TestDiscovery {
         speaker2.shutdown();
     }
 
-//    @Test
+    @Test
     public void testDiscovery() throws InterruptedException {
+
+        Thread.sleep(500l);
+
         Collection<Member> members1 = speaker1.listMembers();
         Collection<Member> members2 = speaker2.listMembers();
 
         assertTrue(members1.size() == members2.size());
 
-        System.out.println("**** 1");
-        for(Member m : members1) {
-            System.out.println(m.toString());
-        }
-        System.out.println("**** 2");
-        for(Member m : members2) {
-            System.out.println(m.toString());
-        }
-        
         assertTrue(members1.containsAll(members2));
         assertTrue(members2.containsAll(members1));
         assertTrue(members2.contains(speaker1.getMe()));

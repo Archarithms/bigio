@@ -61,7 +61,7 @@ public class Speaker {
     }
 
     /**
-     * Set the cluster service. This method exists to support non-Spring execution.
+     * Set the cluster service. This method exists to support bootstrapping.
      * 
      * @param cluster the cluster service.
      */
