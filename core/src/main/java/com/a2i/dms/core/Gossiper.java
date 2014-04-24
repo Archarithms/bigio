@@ -39,14 +39,16 @@ public class Gossiper {
     private final Member me;
 
     private final MemberHolder memberHolder;
+    private final ListenerRegistry registry;
 
     private final MembershipGossiper thread = new MembershipGossiper();
 
     @SuppressWarnings("CallToThreadStartDuringObjectConstruction")
-    public Gossiper(Member me, MemberHolder memberHolder) {
+    public Gossiper(Member me, MemberHolder memberHolder, ListenerRegistry registry) {
 
         this.me = me;
         this.memberHolder = memberHolder;
+        this.registry = registry;
 
         gossipInterval = Integer.parseInt(Parameters.INSTANCE.getProperty(
                 GOSSIP_INTERVAL_PROPERTY, DEFAULT_GOSSIP_INTERVAL));
@@ -83,7 +85,7 @@ public class Gossiper {
                 }
             }
 
-            for(Registration registration: ListenerRegistry.INSTANCE.getAllRegistrations()) {
+            for(Registration registration: registry.getAllRegistrations()) {
                 String key = MemberKey.getKey(registration.getMember());
                 if(memberList.getListeners().get(key) == null) {
                     memberList.getListeners().put(key, new ArrayList<String>());

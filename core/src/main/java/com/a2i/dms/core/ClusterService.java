@@ -6,6 +6,7 @@ package com.a2i.dms.core;
 
 import com.a2i.dms.Component;
 import com.a2i.dms.DeliveryType;
+import com.a2i.dms.Initialize;
 import com.a2i.dms.Inject;
 import com.a2i.dms.Interceptor;
 import com.a2i.dms.Parameters;
@@ -50,6 +51,9 @@ public class ClusterService {
     @Inject
     private MemberHolder memberHolder;
 
+    @Inject
+    private ListenerRegistry registry;
+
     private MeMember me;
 
     private Gossiper gossiper;
@@ -71,6 +75,10 @@ public class ClusterService {
         this.memberHolder = memberHolder;
     }
 
+    public void setRegistry(ListenerRegistry registry) {
+        this.registry = registry;
+    }
+
     public void setDeliveryType(String topic, DeliveryType type) {
         deliveries.put(topic, type);
         if(type == DeliveryType.ROUND_ROBIN) {
@@ -79,20 +87,20 @@ public class ClusterService {
     }
 
     public void addInterceptor(String topic, Interceptor interceptor) {
-        ListenerRegistry.INSTANCE.addInterceptor(topic, interceptor);
+        registry.addInterceptor(topic, interceptor);
     }
 
     public <T> void addListener(String topic, String partition, MessageListener<T> consumer) {
-        ListenerRegistry.INSTANCE.registerMemberForTopic(topic, me);
-        ListenerRegistry.INSTANCE.addLocalListener(topic, consumer);
+        registry.registerMemberForTopic(topic, me);
+        registry.addLocalListener(topic, consumer);
     }
 
     public <T> void removeListener(MessageListener<T> consumer) {
-        ListenerRegistry.INSTANCE.removeLocalListener(consumer);
+        registry.removeLocalListener(consumer);
     }
 
     public void removeAllListeners(String topic) {
-        ListenerRegistry.INSTANCE.removeAllLocalListeners(topic);
+        registry.removeAllLocalListeners(topic);
     }
 
     public <T> void sendMessage(String topic, String partition, T message, int offsetMilliseconds) throws IOException {
@@ -113,13 +121,13 @@ public class ClusterService {
         switch(delivery) {
             case ROUND_ROBIN:
 
-                if(ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size() > 0) {
+                if(registry.getRegisteredMembers(topic).size() > 0) {
 
                     int index = (roundRobinIndex.get(topic) + 1) % 
-                            ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size();
+                            registry.getRegisteredMembers(topic).size();
                     roundRobinIndex.put(topic, index);
                 
-                    Member member = ListenerRegistry.INSTANCE.getRegisteredMembers(topic).get(index);
+                    Member member = registry.getRegisteredMembers(topic).get(index);
 
                     if(me.equals(member)) {
                         envelope.setMessage(message);
@@ -135,11 +143,11 @@ public class ClusterService {
                 break;
             case RANDOM:
 
-                if(ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size() > 0) {
+                if(registry.getRegisteredMembers(topic).size() > 0) {
                     int index = (int)(Math.random() *
-                            ListenerRegistry.INSTANCE.getRegisteredMembers(topic).size());
+                            registry.getRegisteredMembers(topic).size());
 
-                    Member member = ListenerRegistry.INSTANCE.getRegisteredMembers(topic).get(index);
+                    Member member = registry.getRegisteredMembers(topic).get(index);
 
                     if(me.equals(member)) {
                         envelope.setMessage(message);
@@ -155,7 +163,7 @@ public class ClusterService {
                 break;
             case BROADCAST:
             default:
-                for(Member member : ListenerRegistry.INSTANCE.getRegisteredMembers(topic)) {
+                for(Member member : registry.getRegisteredMembers(topic)) {
 
                     if(me.equals(member)) {
                         envelope.setMessage(message);
@@ -229,10 +237,10 @@ public class ClusterService {
 
         if(protocol.equalsIgnoreCase("udp")) {
             LOG.info("Running over UDP");
-            me = new MeMemberUDP(myAddress, gossipPortInt, dataPortInt, memberHolder);
+            me = new MeMemberUDP(myAddress, gossipPortInt, dataPortInt, memberHolder, registry);
         } else {
             LOG.info("Running over TCP");
-            me = new MeMemberTCP(myAddress, gossipPortInt, dataPortInt, memberHolder);
+            me = new MeMemberTCP(myAddress, gossipPortInt, dataPortInt, memberHolder, registry);
         }
         me.setStatus(MemberStatus.Alive);
         me.initialize();
@@ -247,9 +255,9 @@ public class ClusterService {
 
         multicast.initialize(me);
 
-        gossiper = new Gossiper(me, memberHolder);
+        gossiper = new Gossiper(me, memberHolder, registry);
 
-        ListenerRegistry.INSTANCE.setMe(me);
+        registry.setMe(me);
     }
 
     public void join(String ip) {
@@ -335,17 +343,17 @@ public class ClusterService {
                 }
 
                 List<Registration> toRemove = new ArrayList<>();
-                for(Registration reg : ListenerRegistry.INSTANCE.getAllRegistrations()) {
+                for(Registration reg : registry.getAllRegistrations()) {
                     if(reg.getMember().equals(m)) {
                         if(!topics.contains(reg.getTopic())) {
                             toRemove.add(reg);
                         }
                     }
                 }
-                ListenerRegistry.INSTANCE.removeRegistrations(toRemove);
+                registry.removeRegistrations(toRemove);
                 for(String topic : topics) {
-                    if(!ListenerRegistry.INSTANCE.getRegisteredMembers(topic).contains(m)) {
-                        ListenerRegistry.INSTANCE.registerMemberForTopic(topic, m);
+                    if(!registry.getRegisteredMembers(topic).contains(m)) {
+                        registry.registerMemberForTopic(topic, m);
                     }
                 }
             }

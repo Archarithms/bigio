@@ -4,6 +4,7 @@
 
 package com.a2i.dms.core;
 
+import com.a2i.dms.Component;
 import com.a2i.dms.Interceptor;
 import com.a2i.dms.core.codec.GenericDecoder;
 import com.a2i.dms.core.member.Member;
@@ -30,8 +31,8 @@ import reactor.function.Consumer;
  *
  * @author atrimble
  */
-public enum ListenerRegistry {
-    INSTANCE;
+@Component
+public class ListenerRegistry {
 
     private static final int THREAD_POOL_SIZE = 8;
 
@@ -48,7 +49,7 @@ public enum ListenerRegistry {
 
     private final Map<String, List<Interceptor>> interceptors = new HashMap<>();
 
-    ListenerRegistry() {
+    public ListenerRegistry() {
         reactor = Reactors.reactor()
                 .env(environment)
                 .dispatcher(Environment.RING_BUFFER)

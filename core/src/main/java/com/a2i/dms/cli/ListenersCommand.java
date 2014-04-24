@@ -6,6 +6,7 @@ package com.a2i.dms.cli;
 
 import com.a2i.dms.CommandLine;
 import com.a2i.dms.Component;
+import com.a2i.dms.Inject;
 import com.a2i.dms.core.ListenerRegistry;
 import com.a2i.dms.core.Registration;
 import com.a2i.dms.core.member.Member;
@@ -22,6 +23,9 @@ import java.util.Map;
 @Component
 public class ListenersCommand implements CommandLine {
 
+    @Inject
+    private ListenerRegistry registry;
+
     @Override
     public String getCommand() {
         return "listeners";
@@ -32,7 +36,7 @@ public class ListenersCommand implements CommandLine {
         StringBuilder buff = new StringBuilder();
 
         Map<String, List<Member>> topics = new HashMap<>();
-        for(Registration reg : ListenerRegistry.INSTANCE.getAllRegistrations()) {
+        for(Registration reg : registry.getAllRegistrations()) {
             if(topics.get(reg.getTopic()) == null) {
                 topics.put(reg.getTopic(), new ArrayList<Member>());
             }

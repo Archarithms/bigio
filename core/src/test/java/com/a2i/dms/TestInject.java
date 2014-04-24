@@ -25,7 +25,7 @@ public class TestInject {
         Speaker speaker = (Speaker)scanner.getInstance(Speaker.class);
 
         // A bunch of stuff needs to be wired together for this to be non null
-        assertTrue(ListenerRegistry.INSTANCE.getMe() != null);
+        assertTrue(speaker.getMe() != null);
         
         speaker.shutdown();
     }

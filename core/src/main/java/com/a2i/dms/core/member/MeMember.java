@@ -34,12 +34,16 @@ public abstract class MeMember extends AbstractMember {
     protected Reactor reactor;
     protected Reactor decoderReactor;
 
-    public MeMember(MemberHolder memberHolder) {
+    protected ListenerRegistry registry;
+
+    public MeMember(MemberHolder memberHolder, ListenerRegistry registry) {
         super(memberHolder);
+        this.registry = registry;
     }
 
-    public MeMember(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+    public MeMember(String ip, int gossipPort, int dataPort, MemberHolder memberHolder, ListenerRegistry registry) {
         super(ip, gossipPort, dataPort, memberHolder);
+        this.registry = registry;
     }
 
     protected abstract void initializeServers();
@@ -61,7 +65,7 @@ public abstract class MeMember extends AbstractMember {
 
     @Override
     public void send(Envelope message) throws IOException {
-        ListenerRegistry.INSTANCE.send(message);
+        registry.send(message);
     }
 
     private void initializeReactor() {

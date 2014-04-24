@@ -4,6 +4,7 @@
 package com.a2i.dms.core.member;
 
 import com.a2i.dms.core.GossipMessage;
+import com.a2i.dms.core.ListenerRegistry;
 import com.a2i.dms.core.codec.GossipDecoder;
 import com.a2i.dms.util.NetworkUtil;
 import io.netty.bootstrap.ServerBootstrap;
@@ -58,12 +59,12 @@ public class MeMemberTCP extends MeMember {
 
     private final ExecutorService serverExecutor = Executors.newFixedThreadPool(SERVER_THREAD_POOL_SIZE);
 
-    public MeMemberTCP(MemberHolder memberHolder) {
-        super(memberHolder);
+    public MeMemberTCP(MemberHolder memberHolder, ListenerRegistry registry) {
+        super(memberHolder, registry);
     }
 
-    public MeMemberTCP(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
-        super(ip, gossipPort, dataPort, memberHolder);
+    public MeMemberTCP(String ip, int gossipPort, int dataPort, MemberHolder memberHolder, ListenerRegistry registry) {
+        super(ip, gossipPort, dataPort, memberHolder, registry);
     }
 
     @Override

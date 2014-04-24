@@ -214,4 +214,13 @@ public class Speaker {
     public void setDeliveryType(String topic, DeliveryType type) {
         cluster.setDeliveryType(topic, type);
     }
+
+    /**
+     * Get the cluster service for unit testing purposes.
+     * 
+     * @return the cluster service
+     */
+    protected ClusterService getClusterService() {
+        return cluster;
+    }
 }

@@ -6,6 +6,7 @@ package com.a2i.dms;
 
 import com.a2i.dms.core.ClusterService;
 import com.a2i.dms.core.Container;
+import com.a2i.dms.core.ListenerRegistry;
 import com.a2i.dms.core.MCDiscovery;
 import com.a2i.dms.core.member.MemberHolder;
 import java.lang.management.ManagementFactory;
@@ -40,10 +41,12 @@ public class Starter {
         Speaker speaker = new Speaker();
         ClusterService cluster = new ClusterService();
         MemberHolder memberHolder = new MemberHolder();
+        ListenerRegistry registry = new ListenerRegistry();
         MCDiscovery mc = new MCDiscovery();
         mc.setMemberHolder(memberHolder);
         cluster.setMulticastDiscovery(mc);
         cluster.setMemberHolder(memberHolder);
+        cluster.setRegistry(registry);
         speaker.setCluster(cluster);
         speaker.init();
         return speaker;
