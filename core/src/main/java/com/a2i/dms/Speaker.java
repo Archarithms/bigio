@@ -8,6 +8,7 @@ import com.a2i.dms.cli.CommandLineInterface;
 import com.a2i.dms.core.ClusterService;
 import com.a2i.dms.core.MessageListener;
 import com.a2i.dms.core.member.Member;
+import com.a2i.dms.util.TopicUtils;
 import java.util.Collection;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -78,7 +79,7 @@ public class Speaker {
      * @throws Exception in case of an error in the message pipeline
      */
     public <T> void send(String topic, T message) throws Exception {
-        cluster.sendMessage(topic, message);
+        send(topic, TopicUtils.ALL_PARTITIONS, message);
     }
 
     /**
@@ -91,18 +92,59 @@ public class Speaker {
      * @throws Exception in case of an error in the message pipeline
      */
     public <T> void send(String topic, T message, int offsetMilliseconds) throws Exception {
-        cluster.sendMessage(topic, message, offsetMilliseconds);
+        send(topic, TopicUtils.ALL_PARTITIONS, message, offsetMilliseconds);
     }
 
     /**
-     * Add a listener on a topic.
+     * Send a message across a topic and partition. The partition matches on
+     * a regular expression.
+     * 
+     * @param <T> the type of message
+     * @param topic the name of the topic
+     * @param partition a partition
+     * @param message the message to send
+     * @throws Exception in case of an error in the message pipeline
+     */
+    public <T> void send(String topic, String partition, T message) throws Exception {
+        cluster.sendMessage(topic, partition, message);
+    }
+
+    /**
+     * Send a message across a topic and partition with the supplied execution 
+     * offset. The partition matches on a regular expression.
+     * 
+     * @param <T> the type of message
+     * @param topic the name of the topic
+     * @param partition a partition
+     * @param message the message to send
+     * @param offsetMilliseconds the offset in milliseconds of this message
+     * @throws Exception in case of an error in the message pipeline
+     */
+    public <T> void send(String topic, String partition, T message, int offsetMilliseconds) throws Exception {
+        cluster.sendMessage(topic, partition, message, offsetMilliseconds);
+    }
+
+    /**
+     * Add a listener on a topic across all partitions.
      * 
      * @param <T> the type of message expected
      * @param topic the name of the topic
      * @param listener the listener to add
      */
     public <T> void addListener(String topic, MessageListener<T> listener) {
-        cluster.addListener(topic, listener);
+        addListener(topic, TopicUtils.ALL_PARTITIONS, listener);
+    }
+
+    /**
+     * Add a listener on a topic and partition.
+     * 
+     * @param <T> the type of message expected
+     * @param topic the name of the topic
+     * @param partition a partition
+     * @param listener the listener to add
+     */
+    public <T> void addListener(String topic, String partition, MessageListener<T> listener) {
+        cluster.addListener(topic, partition, listener);
     }
 
     /**

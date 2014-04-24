@@ -144,7 +144,16 @@ public enum ListenerRegistry {
             Registration reg = new Registration(member, topic);
             map.add(reg);
 
-            LOG.info("Registering member '" + MemberKey.getKey(member) + "' for topic '" + topic + "'");
+            if(LOG.isTraceEnabled()) {
+                LOG.trace(new StringBuilder()
+                        .append("Registering member '")
+                        .append(MemberKey.getKey(member))
+                        .append("' for topic '")
+                        .append(topic)
+//                        .append("' on partition '")
+//                        .append(partition)
+                        .append("'").toString());
+            }
         }
     }
 

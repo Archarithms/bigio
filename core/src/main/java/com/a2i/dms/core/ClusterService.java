@@ -82,7 +82,7 @@ public class ClusterService {
         ListenerRegistry.INSTANCE.addInterceptor(topic, interceptor);
     }
 
-    public <T> void addListener(String topic, MessageListener<T> consumer) {
+    public <T> void addListener(String topic, String partition, MessageListener<T> consumer) {
         ListenerRegistry.INSTANCE.registerMemberForTopic(topic, me);
         ListenerRegistry.INSTANCE.addLocalListener(topic, consumer);
     }
@@ -95,7 +95,7 @@ public class ClusterService {
         ListenerRegistry.INSTANCE.removeAllLocalListeners(topic);
     }
 
-    public <T> void sendMessage(String topic, T message, int offsetMilliseconds) throws IOException {
+    public <T> void sendMessage(String topic, String partition, T message, int offsetMilliseconds) throws IOException {
         Envelope envelope = new Envelope();
         envelope.setDecoded(false);
         envelope.setExecuteTime(offsetMilliseconds);
@@ -170,8 +170,8 @@ public class ClusterService {
         }
     }
 
-    public <T> void sendMessage(String topic, T message) throws IOException {
-        sendMessage(topic, message, 0);
+    public <T> void sendMessage(String topic, String partition, T message) throws IOException {
+        sendMessage(topic, partition, message, 0);
     }
 
     public Collection<Member> getAllMembers() {
