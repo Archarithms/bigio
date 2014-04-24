@@ -191,7 +191,9 @@ public class MCDiscovery extends Thread {
     public void run() {
         try {
             // Wait until the connection is closed.
-            channel.closeFuture().sync();
+            if(channel != null) {
+                channel.closeFuture().sync();
+            }
         } catch(InterruptedException ex) {
             LOG.error("Error in RPC call.", ex);
         }

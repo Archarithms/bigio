@@ -74,7 +74,8 @@ public abstract class AbstractMember implements Member {
     public boolean equals(Object obj) {
         if (obj instanceof Member) {
             Member them = (Member) obj;
-            return them.getIp().equals(getIp())
+            return them.getIp() != null && getIp() != null 
+                    && them.getIp().equals(getIp())
                     && them.getGossipPort() == getGossipPort()
                     && them.getDataPort() == getDataPort();
         }

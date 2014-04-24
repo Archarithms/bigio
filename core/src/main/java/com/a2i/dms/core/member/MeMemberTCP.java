@@ -70,10 +70,21 @@ public class MeMemberTCP extends MeMember {
     @Override
     public void shutdown() {
         
-        gossipBossGroup.shutdownGracefully();
-        gossipWorkerGroup.shutdownGracefully();
-        dataBossGroup.shutdownGracefully();
-        dataWorkerGroup.shutdownGracefully();
+        if(gossipBossGroup != null) {
+            gossipBossGroup.shutdownGracefully();
+        }
+
+        if(gossipWorkerGroup != null) {
+            gossipWorkerGroup.shutdownGracefully();
+        }
+
+        if(dataBossGroup != null) {
+            dataBossGroup.shutdownGracefully();
+        }
+
+        if(dataWorkerGroup != null) {
+            dataWorkerGroup.shutdownGracefully();
+        }
 
     }
 
