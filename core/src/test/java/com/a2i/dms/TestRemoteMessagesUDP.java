@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author atrimble
  */
-public class TestRemoteMessages {
+public class TestRemoteMessagesUDP {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestRemoteMessages.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TestRemoteMessagesUDP.class);
 
     private static final MyMessageListener listener = new MyMessageListener();
     private static final DelayedMessageListener delayedListener = new DelayedMessageListener();
@@ -44,6 +44,8 @@ public class TestRemoteMessages {
 
     @BeforeClass
     public static void init() throws InterruptedException {
+        System.setProperty("com.a2i.protocol", "udp");
+
         speaker1 = Starter.bootstrap();
         speaker2 = Starter.bootstrap();
 
@@ -57,6 +59,8 @@ public class TestRemoteMessages {
     public static void shutdown() throws InterruptedException {
         speaker1.shutdown();
         speaker2.shutdown();
+        
+        System.setProperty("com.a2i.protocol", "tcp");
     }
 
     @Test

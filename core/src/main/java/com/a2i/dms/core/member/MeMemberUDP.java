@@ -11,7 +11,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -75,10 +75,22 @@ public class MeMemberUDP extends MeMember {
 
     @Override
     public void shutdown() {
-        gossipBossGroup.shutdownGracefully();
-        gossipWorkerGroup.shutdownGracefully();
-        dataBossGroup.shutdownGracefully();
-        dataWorkerGroup.shutdownGracefully();
+        
+        if(gossipBossGroup != null) {
+            gossipBossGroup.shutdownGracefully();
+        }
+
+        if(gossipWorkerGroup != null) {
+            gossipWorkerGroup.shutdownGracefully();
+        }
+
+        if(dataBossGroup != null) {
+            dataBossGroup.shutdownGracefully();
+        }
+
+        if(dataWorkerGroup != null) {
+            dataWorkerGroup.shutdownGracefully();
+        }
 
     }
 
@@ -114,8 +126,7 @@ public class MeMemberUDP extends MeMember {
                         .childHandler(new ChannelInitializer<SocketChannel>() {
                             @Override
                             public void initChannel(SocketChannel ch) throws Exception {
-//                                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
-                                ch.config().setAllocator(new PooledByteBufAllocator());
+                                ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
                                 ch.pipeline().addLast(new GossipMessageDecoder());
                                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
@@ -179,7 +190,7 @@ public class MeMemberUDP extends MeMember {
                 }).handler(new ChannelInitializer<DatagramChannel>() {
                     @Override
                     public void initChannel(DatagramChannel ch) throws Exception {
-                        ch.config().setAllocator(new PooledByteBufAllocator());
+                        ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
                         ch.pipeline().addLast(new DataMessageHandler());
                         if(LOG.isTraceEnabled()) {
                             ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
@@ -194,8 +205,6 @@ public class MeMemberUDP extends MeMember {
 
                 // Bind and start to accept incoming connections.
                 f = b.bind(getIp(), getDataPort()).sync();
-
-                LOG.debug("Shutting down data server");
             } catch (InterruptedException ex) {
                 LOG.error("Message data interrupted.", ex);
             }
@@ -234,7 +243,7 @@ public class MeMemberUDP extends MeMember {
                 byte[] bytes = (byte[]) msg;
                 try {
                     GossipMessage message = GossipDecoder.decode(bytes);
-                    reactor.notify(Event.wrap(message));
+                    reactor.notify(GOSSIP_TOPIC, Event.wrap(message));
                 } catch (IOException ex) {
                     LOG.error("Error decoding message.", ex);
                 } finally {
@@ -264,7 +273,7 @@ public class MeMemberUDP extends MeMember {
             int size = (bytes[0] & 0xFF) << 8 | (bytes[1] & 0xFF);
             bytes = new byte[size];
             buff.readBytes(bytes, 0, size);
-            decoderReactor.notify(Event.wrap(bytes));
+            decoderReactor.notify(DECODE_TOPIC, Event.wrap(bytes));
         }
 
         @Override

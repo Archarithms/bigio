@@ -9,10 +9,11 @@ import com.a2i.dms.core.GossipMessage;
 import com.a2i.dms.core.codec.EnvelopeEncoder;
 import com.a2i.dms.core.codec.GossipEncoder;
 import com.a2i.dms.util.NetworkUtil;
+import com.a2i.dms.util.RunningStatistics;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -73,6 +74,9 @@ public class RemoteMemberUDP extends RemoteMember {
     private EventLoopGroup gossipWorkerGroup = null;
     private EventLoopGroup dataWorkerGroup = null;
 
+    private final RunningStatistics gossipSizeStat = new RunningStatistics();
+    private final RunningStatistics dataSizeStat = new RunningStatistics();
+    
     private InetSocketAddress address;
 
     public RemoteMemberUDP(MemberHolder memberHolder) {
@@ -122,9 +126,9 @@ public class RemoteMemberUDP extends RemoteMember {
     public void send(final Envelope message) throws IOException {
         byte[] bytes = EnvelopeEncoder.encode(message);
 
-//        if(LOG.isDebugEnabled()) {
-//            dataSizeStat.push(bytes.length);
-//        }
+        if(LOG.isTraceEnabled()) {
+            dataSizeStat.push(bytes.length);
+        }
         
         if(dataChannel != null) {
             dataChannel.writeAndFlush(new DatagramPacket(Unpooled.wrappedBuffer(bytes), address));
@@ -135,9 +139,9 @@ public class RemoteMemberUDP extends RemoteMember {
     public void gossip(final GossipMessage message) throws IOException {
         byte[] bytes = GossipEncoder.encode(message);
 
-//        if(LOG.isDebugEnabled()) {
-//            gossipSizeStat.push(bytes.length);
-//        }
+        if(LOG.isTraceEnabled()) {
+            gossipSizeStat.push(bytes.length);
+        }
 
         if(gossipChannel != null) {
             gossipChannel.writeAndFlush(bytes);
@@ -146,8 +150,8 @@ public class RemoteMemberUDP extends RemoteMember {
 
     @Override
     public void shutdown() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Closing connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Closing connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
         }
 
         if(gossipWorkerGroup != null) {
@@ -157,6 +161,11 @@ public class RemoteMemberUDP extends RemoteMember {
         if(dataWorkerGroup != null) {
             dataWorkerGroup.shutdownGracefully();
         }
+
+        if(LOG.isTraceEnabled()) {
+            LOG.trace("Mean sent gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
+            LOG.trace("Mean sent data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
+        }
     }
 
     private void updateMember() {
@@ -164,7 +173,7 @@ public class RemoteMemberUDP extends RemoteMember {
     }
 
     private void initializeGossipClient() {
-        LOG.debug("Initializing gossip client");
+        LOG.trace("Initializing gossip client");
 
         gossipWorkerGroup = new NioEventLoopGroup(GOSSIP_WORKER_THREADS);
             
@@ -176,7 +185,7 @@ public class RemoteMemberUDP extends RemoteMember {
         b.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
-                ch.config().setAllocator(new PooledByteBufAllocator());
+                ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new GossipExceptionHandler());
@@ -208,7 +217,7 @@ public class RemoteMemberUDP extends RemoteMember {
     }
 
     private void initializeDataClient() {
-        LOG.debug("Initializing data client");
+        LOG.trace("Initializing data client");
 
         dataWorkerGroup = new NioEventLoopGroup(DATA_WORKER_THREADS);
             
@@ -227,6 +236,7 @@ public class RemoteMemberUDP extends RemoteMember {
         }).handler(new ChannelInitializer<DatagramChannel>() {
             @Override
             public void initChannel(DatagramChannel ch) throws Exception {
+                ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new DataExceptionHandler());
@@ -291,7 +301,7 @@ public class RemoteMemberUDP extends RemoteMember {
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            LOG.debug("Member left");
+            LOG.trace("Member left");
             setStatus(MemberStatus.Left);
             updateMember();
         }

@@ -1,11 +1,11 @@
 <configuration>
 
     <!-- Set these to the default level -->
-    <property name="CONSOLE_LEVEL" value="DEBUG"/>
+    <property name="CONSOLE_LEVEL" value="TRACE"/>
 
     <!-- Set these to the highest level required -->
-    <logger name="com.a2i" level="DEBUG"/>
-    <logger name="io.netty.handler.logging.LoggingHandler" level="DEBUG"/>
+    <logger name="com.a2i" level="TRACE"/>
+    <logger name="io.netty.handler.logging.LoggingHandler" level="TRACE"/>
 
     <property name="CONSOLE_LOG_PATTERN" value="%green(%d{yyyy-MM-dd HH:mm:ss.SSS}) %highlight(%-5level) %cyan(%-40.40logger{40}) - %msg %n"/>
 
