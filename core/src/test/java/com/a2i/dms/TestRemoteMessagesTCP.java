@@ -140,6 +140,10 @@ public class TestRemoteMessagesTCP {
             fail();
         }
 
+        speaker1.send("SpecificPartitionTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
         speaker1.send("BadTopic", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
@@ -156,6 +160,10 @@ public class TestRemoteMessagesTCP {
         if(failed) {
             fail();
         }
+
+        speaker2.send("SpecificPartitionTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
 
         speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);

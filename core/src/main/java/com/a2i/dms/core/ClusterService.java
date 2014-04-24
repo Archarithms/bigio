@@ -63,6 +63,8 @@ public class ClusterService {
     private final Map<String, DeliveryType> deliveries = new ConcurrentHashMap<>();
     private final Map<String, Integer> roundRobinIndex = new ConcurrentHashMap<>();
 
+    private boolean shuttingDown = false;
+
     public ClusterService() {
         
     }
@@ -270,6 +272,8 @@ public class ClusterService {
     }
 
     public void shutdown() {
+        shuttingDown = true;
+        
         gossiper.shutdown();
 
         try {
@@ -286,6 +290,9 @@ public class ClusterService {
     }
 
     private void handleGossipMessage(GossipMessage message) {
+        if(shuttingDown) {
+            return;
+        }
 
         String senderKey = MemberKey.getKey(message);
         boolean updateTags = false;

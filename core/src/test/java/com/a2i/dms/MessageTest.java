@@ -114,6 +114,10 @@ public class MessageTest {
             fail();
         }
 
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
         speaker.send("BadTopic", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
