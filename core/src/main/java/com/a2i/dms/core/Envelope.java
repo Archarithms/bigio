@@ -15,6 +15,7 @@ public class Envelope<T> {
     private int executeTime;
     private int millisecondsSinceMidnight;
     private String topic;
+    private String partition;
     private String className;
     private byte[] payload;
 
@@ -131,5 +132,19 @@ public class Envelope<T> {
      */
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    /**
+     * @return the partition
+     */
+    public String getPartition() {
+        return partition;
+    }
+
+    /**
+     * @param partition the partition to set
+     */
+    public void setPartition(String partition) {
+        this.partition = partition;
     }
 }

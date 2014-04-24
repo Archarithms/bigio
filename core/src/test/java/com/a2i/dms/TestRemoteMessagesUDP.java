@@ -31,11 +31,7 @@ public class TestRemoteMessagesUDP {
 
     private static final String MESSAGE = "This is a test";
 
-    // I think there's a bug in reactor that's causing messages to come
-    // through even after a listener has been removed. That's why this
-    // is of size 2.
-    //private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
-    private static final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(2);
+    private static final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
 
     private static boolean failed = false;
 
@@ -51,6 +47,8 @@ public class TestRemoteMessagesUDP {
 
         speaker2.addListener("MyTopic", listener);
         speaker2.addListener("DelayedTopic", delayedListener);
+        speaker2.addListener("AllPartitionTopic", ".*", listener);
+        speaker2.addListener("SpecificPartitionTopic", "MyPartition", listener);
         
         Thread.sleep(1000l);
     }
@@ -59,6 +57,8 @@ public class TestRemoteMessagesUDP {
     public static void shutdown() throws InterruptedException {
         speaker1.shutdown();
         speaker2.shutdown();
+
+        Thread.sleep(1000l);
         
         System.setProperty("com.a2i.protocol", "tcp");
     }
@@ -92,6 +92,80 @@ public class TestRemoteMessagesUDP {
         }
 
         speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        queue.clear();
+    }
+
+    @Test
+    public void testAllPartitions() throws Exception {
+        failed = false;
+        
+        speaker1.send("AllPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "1");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker1.send("BadTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker2.send("AllPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "1");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        queue.clear();
+    }
+
+    @Test
+    public void testSpecificPartitions() throws Exception {
+        failed = false;
+        
+        speaker1.send("SpecificPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "1");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker1.send("BadTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker1.send("SpecificPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker2.send("SpecificPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "1");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker2.send("SpecificPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 

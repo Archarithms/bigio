@@ -6,7 +6,6 @@ package com.a2i.dms.core;
 
 import com.a2i.dms.Component;
 import com.a2i.dms.DeliveryType;
-import com.a2i.dms.Initialize;
 import com.a2i.dms.Inject;
 import com.a2i.dms.Interceptor;
 import com.a2i.dms.Parameters;
@@ -23,6 +22,7 @@ import com.a2i.dms.core.member.RemoteMemberTCP;
 import com.a2i.dms.core.member.RemoteMemberUDP;
 import com.a2i.dms.util.NetworkUtil;
 import com.a2i.dms.util.TimeUtil;
+import com.a2i.dms.util.TopicUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,12 +95,8 @@ public class ClusterService {
     }
 
     public <T> void addListener(String topic, String partition, MessageListener<T> consumer) {
-        registry.registerMemberForTopic(topic, me);
-        registry.addLocalListener(topic, consumer);
-    }
-
-    public <T> void removeListener(MessageListener<T> consumer) {
-        registry.removeLocalListener(consumer);
+        registry.registerMemberForTopic(topic, partition, me);
+        registry.addLocalListener(topic, partition, consumer);
     }
 
     public void removeAllListeners(String topic) {
@@ -114,6 +110,7 @@ public class ClusterService {
         envelope.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
         envelope.setSenderKey(MemberKey.getKey(me));
         envelope.setTopic(topic);
+        envelope.setPartition(partition);
         envelope.setClassName(message.getClass().getName());
 
         DeliveryType delivery = deliveries.get(topic);
@@ -349,15 +346,17 @@ public class ClusterService {
                 List<Registration> toRemove = new ArrayList<>();
                 for(Registration reg : registry.getAllRegistrations()) {
                     if(reg.getMember().equals(m)) {
-                        if(!topics.contains(reg.getTopic())) {
+                        if(!topics.contains(TopicUtils.getTopicString(reg.getTopic(), reg.getPartition().pattern()))) {
                             toRemove.add(reg);
                         }
                     }
                 }
                 registry.removeRegistrations(toRemove);
-                for(String topic : topics) {
+                for(String topicString : topics) {
+                    String topic = TopicUtils.getTopic(topicString);
+                    String partition = TopicUtils.getPartition(topicString);
                     if(!registry.getRegisteredMembers(topic).contains(m)) {
-                        registry.registerMemberForTopic(topic, m);
+                        registry.registerMemberForTopic(topic, partition, m);
                     }
                 }
             }

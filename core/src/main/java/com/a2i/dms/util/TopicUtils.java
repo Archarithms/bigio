@@ -13,19 +13,19 @@ public class TopicUtils {
     public static final String ALL_PARTITIONS = ".*";
     
     public static String getTopicString(String topic, String partition) {
-        if(partition == null || ALL_PARTITIONS.equals(partition)) {
-            return topic;
-        }
+        return new StringBuilder().append(topic).append("(").append(partition).append(")").toString();
+    }
 
-        return new StringBuilder().append(topic).append(":").append(partition).toString();
+    public static String getNotifyTopicString(String topic, String partition) {
+        return new StringBuilder().append(topic).append(partition).toString();
     }
 
     public static String getTopic(String topicPartition) {
-        return topicPartition.split("\\:")[0];
+        return topicPartition.split("\\(")[0];
     }
 
     public static String getPartition(String topicPartition) {
-        String[] spl = topicPartition.split("\\:");
+        String[] spl = topicPartition.split("\\(");
         if(spl.length > 1) {
             return spl[1];
         } 

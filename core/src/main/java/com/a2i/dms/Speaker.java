@@ -148,16 +148,6 @@ public class Speaker {
     }
 
     /**
-     * Remove a listener from all registered topics.
-     * 
-     * @param <T> the type of message the listener expects
-     * @param listener a listener to remove
-     */
-    public <T> void removeListener(MessageListener<T> listener) {
-        cluster.removeListener(listener);
-    }
-    
-    /**
      * Remove all registered listeners from the topic.
      * 
      * @param topic the topic

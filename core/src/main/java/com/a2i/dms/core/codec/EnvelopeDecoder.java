@@ -52,6 +52,7 @@ public class EnvelopeDecoder {
         message.setExecuteTime(unpacker.readInt());
         message.setMillisecondsSinceMidnight(unpacker.readInt());
         message.setTopic(unpacker.readString());
+        message.setPartition(unpacker.readString());
         message.setClassName(unpacker.readString());
         message.setPayload(unpacker.readByteArray());
 

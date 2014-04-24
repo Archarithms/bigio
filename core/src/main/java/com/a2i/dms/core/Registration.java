@@ -7,6 +7,7 @@ package com.a2i.dms.core;
 import com.a2i.dms.core.member.AbstractMember;
 import com.a2i.dms.core.member.Member;
 import com.a2i.dms.util.Relation;
+import java.util.regex.Pattern;
 import reactor.event.Event;
 import reactor.function.Consumer;
 
@@ -17,17 +18,19 @@ import reactor.function.Consumer;
 public class Registration implements Relation {
     private Member member = null;
     private String topic = null;
+    private Pattern partition = null;
     private MessageListener listener = null;
     private Consumer<Event<Envelope>> consumer = null;
 
-    public Registration(Member member, String topic) {
+    public Registration(Member member, String topic, Pattern partition) {
         this.member = member;
         this.topic = topic;
+        this.partition = partition;
     }
 
     @Override
     public int getLength() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -37,6 +40,8 @@ public class Registration implements Relation {
                 return AbstractMember.class;
             case 1:
                 return String.class;
+            case 2:
+                return Pattern.class;
             default:
                 return null;
         }
@@ -49,6 +54,8 @@ public class Registration implements Relation {
                 return getMember();
             case 1:
                 return getTopic();
+            case 2:
+                return getPartition();
             default:
                 return null;
         }
@@ -83,6 +90,13 @@ public class Registration implements Relation {
     }
 
     /**
+     * @return the partition 
+     */
+    public Pattern getPartition() {
+        return partition;
+    }
+
+    /**
      * @param member the member to set
      */
     public void setMember(Member member) {
@@ -108,5 +122,12 @@ public class Registration implements Relation {
      */
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    /**
+     * @param partition the partition to set
+     */
+    public void setPartition(Pattern partition) {
+        this.partition = partition;
     }
 }

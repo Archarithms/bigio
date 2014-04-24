@@ -10,6 +10,7 @@ import com.a2i.dms.core.codec.GenericDecoder;
 import com.a2i.dms.core.member.Member;
 import com.a2i.dms.core.member.MemberKey;
 import com.a2i.dms.util.RelationalMap;
+import com.a2i.dms.util.TopicUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -71,7 +73,7 @@ public class ListenerRegistry {
         return me;
     }
 
-    public <T> void addLocalListener(String topic, final MessageListener<T> listener) {
+    public <T> void addLocalListener(String topic, String partition, final MessageListener<T> listener) {
         Consumer<Event<Envelope>> consumer = new Consumer<Event<Envelope>>() {
             @Override
             public void accept(Event<Envelope> m) {
@@ -82,7 +84,8 @@ public class ListenerRegistry {
                 }
             }
         };
-        reactor.on(Selectors.object(topic), consumer);
+
+        reactor.on(Selectors.regex(TopicUtils.getTopicString(topic, partition)), consumer);
 
         List<Registration> regs = map.query(me, topic);
         if(!regs.isEmpty()) {
@@ -93,29 +96,15 @@ public class ListenerRegistry {
         }
     }
 
-    public <T> void removeLocalListener(MessageListener<T> listener) {
-        List<Registration> regs = map.query(me);
-
-        for(Registration reg : regs) {
-            if(reg.getListener().equals(listener)) {
-                reactor.getConsumerRegistry().unregister(reg.getConsumer());
-                map.remove(reg);
-                LOG.info("Removing listener from topic " + reg.getTopic());
-            }
-        }
-    }
-    
     public void removeAllLocalListeners(String topic) {
         List<Registration> regs = map.query(me, topic);
         
         if(!regs.isEmpty()) {
-            LOG.info("Removing " + regs.size() + " registration");
-            for(Registration reg : regs) {
-                reactor.getConsumerRegistry().unregister(reg.getConsumer());
-            }
+            LOG.trace("Removing " + regs.size() + " registration");
+            reactor.getConsumerRegistry().unregister(topic);
             map.remove(regs);
         } else {
-            LOG.info("No listeners registered for topic " + topic);
+            LOG.trace("No listeners registered for topic " + topic);
         }
     }
 
@@ -138,11 +127,13 @@ public class ListenerRegistry {
         return ret;
     }
 
-    protected synchronized void registerMemberForTopic(String topic, Member member) {
-        List<Registration> regs = map.query(member, topic);
+    protected synchronized void registerMemberForTopic(String topic, String partition, Member member) {
+        Pattern pattern = Pattern.compile(partition);
+
+        List<Registration> regs = map.query(member, topic, pattern);
 
         if(regs.isEmpty()) {
-            Registration reg = new Registration(member, topic);
+            Registration reg = new Registration(member, topic, pattern);
             map.add(reg);
 
             if(LOG.isTraceEnabled()) {
@@ -151,8 +142,8 @@ public class ListenerRegistry {
                         .append(MemberKey.getKey(member))
                         .append("' for topic '")
                         .append(topic)
-//                        .append("' on partition '")
-//                        .append(partition)
+                        .append("' on partition '")
+                        .append(partition)
                         .append("'").toString());
             }
         }
@@ -176,11 +167,11 @@ public class ListenerRegistry {
             futureExecutor.schedule(new Runnable() {
                @Override
                public void run() {
-                   reactor.notify(env.getTopic(), Event.wrap(env));
+                   reactor.notify(TopicUtils.getNotifyTopicString(env.getTopic(), env.getPartition()), Event.wrap(env));
                }
             }, envelope.getExecuteTime(), TimeUnit.MILLISECONDS);
         } else {
-            reactor.notify(envelope.getTopic(), Event.wrap(envelope));
+            reactor.notify(TopicUtils.getNotifyTopicString(envelope.getTopic(), envelope.getPartition()), Event.wrap(envelope));
         }
     }
 }

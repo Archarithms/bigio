@@ -31,11 +31,7 @@ public class MessageTest {
 
     private static final String MESSAGE = "This is a test";
 
-    // I think there's a bug in reactor that's causing messages to come
-    // through even after a listener has been removed. That's why this
-    // is of size 2.
-    //private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
-    private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(2);
+    private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
 
     private final MyMessageListener listener = new MyMessageListener();
     private final DelayedMessageListener delayedListener = new DelayedMessageListener();
@@ -70,7 +66,63 @@ public class MessageTest {
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
-        speaker.removeListener(listener);
+        speaker.removeAllListeners("MyTopic");
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "3"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        queue.clear();
+    }
+
+    @Test
+    public void testAllPartitions() throws Exception {
+        failed = false;
+        
+        speaker.addListener("MyTopic", ".*", listener);
+        speaker.send("MyTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "1");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker.send("BadTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker.removeAllListeners("MyTopic");
+        speaker.send("MyTopic", new MyMessage(MESSAGE + "3"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        queue.clear();
+    }
+
+    @Test
+    public void testSpecificPartitions() throws Exception {
+        failed = false;
+        
+        speaker.addListener("MyTopic", "MyPartition", listener);
+        speaker.send("MyTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
+        assertNotNull(m);
+        assertEquals(m.getMessage(), MESSAGE + "1");
+
+        if(failed) {
+            fail();
+        }
+
+        speaker.send("BadTopic", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker.send("MyTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
+        m = queue.poll(500l, TimeUnit.MILLISECONDS);
+        assertNull(m);
+
+        speaker.removeAllListeners("MyTopic");
         speaker.send("MyTopic", new MyMessage(MESSAGE + "3"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
@@ -97,7 +149,7 @@ public class MessageTest {
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
-        speaker.removeListener(listener);
+        speaker.removeAllListeners("MyTopic");
         speaker.send("MyTopic", new MyMessage(MESSAGE + "5"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
@@ -124,7 +176,7 @@ public class MessageTest {
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
-        speaker.removeListener(listener);
+        speaker.removeAllListeners("MyTopic");
         speaker.send("MyTopic", new MyMessage(MESSAGE + "7"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
@@ -151,7 +203,7 @@ public class MessageTest {
             fail();
         }
 
-        speaker.removeListener(delayedListener);
+        speaker.removeAllListeners("DelayedTopic");
         queue.clear();
     }
 
