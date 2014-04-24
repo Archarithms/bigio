@@ -5,7 +5,7 @@
 package com.a2i.dms;
 
 import com.a2i.dms.core.Container;
-import com.a2i.dms.core.ListenerRegistry;
+import com.a2i.dms.core.member.MemberStatus;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
@@ -25,7 +25,9 @@ public class TestInject {
         Speaker speaker = (Speaker)scanner.getInstance(Speaker.class);
 
         // A bunch of stuff needs to be wired together for this to be non null
+        // and active.
         assertTrue(speaker.getMe() != null);
+        assertTrue(speaker.getMe().getStatus() == MemberStatus.Alive);
         
         speaker.shutdown();
     }
