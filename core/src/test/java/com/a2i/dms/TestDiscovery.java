@@ -7,9 +7,9 @@ package com.a2i.dms;
 import com.a2i.dms.core.MessageListener;
 import com.a2i.dms.core.member.Member;
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.List;
 import org.junit.AfterClass;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,16 +27,6 @@ public class TestDiscovery {
     private static final MyMessageListener listener = new MyMessageListener();
     private static final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
-    private static final String MESSAGE = "This is a test";
-
-    // I think there's a bug in reactor that's causing messages to come
-    // through even after a listener has been removed. That's why this
-    // is of size 2.
-    //private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
-    private static final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(2);
-
-    private static boolean failed = false;
-
     private static Speaker speaker1;
     private static Speaker speaker2;
 
@@ -48,7 +38,7 @@ public class TestDiscovery {
         speaker2.addListener("MyTopic", listener);
         speaker2.addListener("DelayedTopic", delayedListener);
         
-        Thread.sleep(500l);
+        Thread.sleep(1000l);
     }
 
     @AfterClass
@@ -70,20 +60,29 @@ public class TestDiscovery {
         assertTrue(members2.contains(speaker1.getMe()));
         assertTrue(members1.contains(speaker2.getMe()));
 
-//        speaker1.getClusterService().getAllMembers()
+        List<Member> regs = speaker1.getClusterService().getRegistry().getRegisteredMembers("MyTopic");
+        assertTrue(regs.contains(speaker2.getMe()));
+        assertFalse(regs.contains(speaker1.getMe()));
+
+        regs = speaker2.getClusterService().getRegistry().getRegisteredMembers("MyTopic");
+        assertTrue(regs.contains(speaker2.getMe()));
+        assertFalse(regs.contains(speaker1.getMe()));
+
+        regs = speaker1.getClusterService().getRegistry().getRegisteredMembers("DelayedTopic");
+        assertTrue(regs.contains(speaker2.getMe()));
+        assertFalse(regs.contains(speaker1.getMe()));
+
+        regs = speaker2.getClusterService().getRegistry().getRegisteredMembers("DelayedTopic");
+        assertTrue(regs.contains(speaker2.getMe()));
+        assertFalse(regs.contains(speaker1.getMe()));
     }
+
 
     private static class MyMessageListener implements MessageListener<MyMessage> {
 
         @Override
         public void receive(MyMessage message) {
             LOG.info("Got a message " + message.getMessage());
-            
-            boolean success = queue.offer(message);
-
-            if (!success) {
-                failed = true;
-            }
         }
     }
 
@@ -92,17 +91,11 @@ public class TestDiscovery {
         @Override
         public void receive(MyMessage message) {
             LOG.info("Got a delayed message " + message.getMessage());
-            
-            boolean success = queue.offer(message);
-
-            if (!success) {
-                failed = true;
-            }
         }
     }
 
     @Message
-    private static final class MyMessage {
+    public static final class MyMessage {
 
         private String message;
 

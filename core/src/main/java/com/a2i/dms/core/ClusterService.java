@@ -79,6 +79,10 @@ public class ClusterService {
         this.registry = registry;
     }
 
+    public ListenerRegistry getRegistry() {
+        return registry;
+    }
+
     public void setDeliveryType(String topic, DeliveryType type) {
         deliveries.put(topic, type);
         if(type == DeliveryType.ROUND_ROBIN) {
