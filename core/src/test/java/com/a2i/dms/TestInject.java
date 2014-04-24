@@ -22,7 +22,7 @@ public class TestInject {
 
         Thread.sleep(1000l);
 
-        Speaker speaker = (Speaker)scanner.getInstance(Speaker.class);
+        Speaker speaker = scanner.getInstance(Speaker.class);
 
         // A bunch of stuff needs to be wired together for this to be non null
         // and active.

@@ -74,8 +74,8 @@ public enum Container {
         inject();
     }
 
-    public Object getInstance(Class<?> clazz) {
-        return instances.get(clazz);
+    public <T> T getInstance(Class<T> clazz) {
+        return (T)instances.get(clazz);
     }
 
     public Set<Class<?>> getComponents() {
