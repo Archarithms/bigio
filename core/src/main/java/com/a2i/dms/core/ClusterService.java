@@ -278,8 +278,6 @@ public class ClusterService {
 
     private void handleGossipMessage(GossipMessage message) {
 
-        LOG.info("Received: " + message.toString());
-
         String senderKey = MemberKey.getKey(message);
         boolean updateTags = false;
 
