@@ -353,7 +353,7 @@ public class ClusterService {
                 List<Registration> toRemove = new ArrayList<>();
                 for(Registration reg : registry.getAllRegistrations()) {
                     if(reg.getMember().equals(m)) {
-                        if(!topics.contains(TopicUtils.getTopicString(reg.getTopic(), reg.getPartition().pattern()))) {
+                        if(!topics.contains(TopicUtils.getTopicString(reg.getTopic(), reg.getPartition()))) {
                             toRemove.add(reg);
                         }
                     }

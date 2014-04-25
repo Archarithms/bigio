@@ -13,6 +13,7 @@ import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,6 +35,7 @@ public class MessageTest {
     private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
 
     private final MyMessageListener listener = new MyMessageListener();
+    private final VolumeListener volumeListener = new VolumeListener();
     private final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
     private static boolean failed = false;
@@ -46,6 +48,20 @@ public class MessageTest {
     @AfterClass
     public static void shutdown() {
         speaker.shutdown();
+    }
+
+    @Test
+    public void testVolume() throws Exception {
+        failed = false;
+        
+        speaker.addListener("VolumeTopic", volumeListener);
+        for(int i = 0; i < 10000; ++i) {
+            speaker.send("VolumeTopic", new MyMessage(MESSAGE + i));
+        }
+
+        Thread.sleep(1000l);
+
+        assertTrue(volumeListener.counter == 10000);
     }
 
     @Test
@@ -222,6 +238,15 @@ public class MessageTest {
             if (!success) {
                 failed = true;
             }
+        }
+    }
+
+    private class VolumeListener implements MessageListener<MyMessage> {
+        public int counter = 0;
+
+        @Override
+        public void receive(MyMessage message) {
+            ++counter;
         }
     }
 

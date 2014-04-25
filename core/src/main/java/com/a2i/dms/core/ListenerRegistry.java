@@ -9,7 +9,6 @@ import com.a2i.dms.Interceptor;
 import com.a2i.dms.core.codec.GenericDecoder;
 import com.a2i.dms.core.member.Member;
 import com.a2i.dms.core.member.MemberKey;
-import com.a2i.dms.util.RelationalMap;
 import com.a2i.dms.util.TopicUtils;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
@@ -47,7 +45,8 @@ public class ListenerRegistry {
 
     private Member me;
 
-    private final RelationalMap<Registration> map = new RelationalMap<>();
+//    private final RelationalMap<Registration> map = new RelationalMap<>();
+    private final Map<Member, Map<String, List<Registration>>> map = new HashMap<>();
 
     private final Map<String, List<Interceptor>> interceptors = new HashMap<>();
 
@@ -86,59 +85,91 @@ public class ListenerRegistry {
         };
 
         reactor.on(Selectors.regex(TopicUtils.getTopicString(topic, partition)), consumer);
-
-        List<Registration> regs = map.query(me, topic);
-        if(!regs.isEmpty()) {
-            regs.get(0).setConsumer(consumer);
-            regs.get(0).setListener(listener);
-        } else {
-            LOG.warn("Could not find myself in the registrations");
-        }
     }
 
     public void removeAllLocalListeners(String topic) {
-        List<Registration> regs = map.query(me, topic);
+        Map<String, List<Registration>> allRegs = map.get(me);
         
-        if(!regs.isEmpty()) {
-            LOG.trace("Removing " + regs.size() + " registration");
-            reactor.getConsumerRegistry().unregister(topic);
-            map.remove(regs);
-        } else {
-            LOG.trace("No listeners registered for topic " + topic);
+        if(allRegs != null) {
+            List<Registration> regs = allRegs.get(topic);
+
+            if(regs != null) {
+                LOG.trace("Removing " + regs.size() + " registration");
+                reactor.getConsumerRegistry().unregister(topic);
+                regs.clear();
+            } else {
+                LOG.trace("No listeners registered for topic " + topic);
+            }
         }
     }
 
     public void removeRegistrations(List<Registration> regs) {
-        map.remove(regs);
+        for(Map<String, List<Registration>> allRegs : map.values()) {
+            if(allRegs != null) {
+                for(String key : allRegs.keySet()) {
+                    allRegs.get(key).removeAll(regs);
+                }
+            }
+        }
     }
 
     public List<Registration> getAllRegistrations() {
-        return map.query();
+        List<Registration> ret = new ArrayList<>();
+        
+        for(Map<String, List<Registration>> allRegs : map.values()) {
+            if(allRegs != null) {
+                for(String key : allRegs.keySet()) {
+                    ret.addAll(allRegs.get(key));
+                }
+            }
+        }
+
+        return ret;
     }
 
     public List<Member> getRegisteredMembers(String topic) {
         List<Member> ret = new ArrayList<>();
 
-        List<Registration> members = map.query(topic);
-        for(Registration reg : members) {
-            ret.add(reg.getMember());
+        for(Member member : map.keySet()) {
+            Map<String, List<Registration>> allRegs = map.get(member);
+            if(allRegs != null) {
+                for(String key : allRegs.keySet()) {
+                    if(key.equals(topic)) {
+                        ret.add(member);
+                    }
+                }
+            }
         }
 
         return ret;
     }
 
     protected synchronized void registerMemberForTopic(String topic, String partition, Member member) {
-        Pattern pattern = Pattern.compile(partition);
 
-        List<Registration> regs = map.query(member, topic, pattern);
+        if(map.get(member) == null) {
+            map.put(member, new HashMap<String, List<Registration>>());
+        }
 
-        if(regs.isEmpty()) {
-            Registration reg = new Registration(member, topic, pattern);
-            map.add(reg);
+        if(map.get(member).get(topic) == null) {
+            map.get(member).put(topic, new ArrayList<Registration>());
+        }
+
+        boolean found = false;
+        for(Registration reg : map.get(member).get(topic)) {
+            if(topic.equals(reg.getTopic()) && partition.equals(reg.getPartition()) && member.equals(reg.getMember())) {
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            Registration reg = new Registration(member, topic, partition);
+            map.get(member).get(topic).add(reg);
 
             if(LOG.isTraceEnabled()) {
                 LOG.trace(new StringBuilder()
-                        .append("Registering member '")
+                        .append(MemberKey.getKey(me))
+                        .append(": Registering member '")
                         .append(MemberKey.getKey(member))
                         .append("' for topic '")
                         .append(topic)

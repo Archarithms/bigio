@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,6 +28,7 @@ public class TestRemoteMessagesUDP {
     private static final Logger LOG = LoggerFactory.getLogger(TestRemoteMessagesUDP.class);
 
     private static final MyMessageListener listener = new MyMessageListener();
+    private static final VolumeListener volumeListener = new VolumeListener();
     private static final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
     private static final String MESSAGE = "This is a test";
@@ -45,10 +47,11 @@ public class TestRemoteMessagesUDP {
         speaker1 = Starter.bootstrap();
         speaker2 = Starter.bootstrap();
 
-        speaker2.addListener("MyTopic", listener);
-        speaker2.addListener("DelayedTopic", delayedListener);
-        speaker2.addListener("AllPartitionTopic", ".*", listener);
-        speaker2.addListener("SpecificPartitionTopic", "MyPartition", listener);
+        speaker2.addListener("MyUDPTopic", listener);
+        speaker2.addListener("VolumeTopic", volumeListener);
+        speaker2.addListener("DelayedUDPTopic", delayedListener);
+        speaker2.addListener("AllUDPPartitionTopic", ".*", listener);
+        speaker2.addListener("SpecificUDPPartitionTopic", "MyUDPPartition", listener);
         
         Thread.sleep(1000l);
     }
@@ -64,10 +67,23 @@ public class TestRemoteMessagesUDP {
     }
 
     @Test
+    public void testVolume() throws Exception {
+        failed = false;
+        
+        for(int i = 0; i < 1000; ++i) {
+            speaker1.send("VolumeTopic", new MyMessage(MESSAGE + i));
+        }
+
+        Thread.sleep(1000l);
+
+        assertTrue(volumeListener.counter == 1000);
+    }
+
+    @Test
     public void testMessage() throws Exception {
         failed = false;
         
-        speaker1.send("MyTopic", new MyMessage(MESSAGE + "1"));
+        speaker1.send("MyUDPTopic", new MyMessage(MESSAGE + "1"));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
@@ -82,7 +98,7 @@ public class TestRemoteMessagesUDP {
 
         queue.clear();
 
-        speaker2.send("MyTopic", new MyMessage(MESSAGE + "1"));
+        speaker2.send("MyUDPTopic", new MyMessage(MESSAGE + "1"));
         m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
@@ -102,7 +118,7 @@ public class TestRemoteMessagesUDP {
     public void testAllPartitions() throws Exception {
         failed = false;
         
-        speaker1.send("AllPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        speaker1.send("AllUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
@@ -115,7 +131,7 @@ public class TestRemoteMessagesUDP {
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
-        speaker2.send("AllPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        speaker2.send("AllUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
         m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
@@ -135,7 +151,7 @@ public class TestRemoteMessagesUDP {
     public void testSpecificPartitions() throws Exception {
         failed = false;
         
-        speaker1.send("SpecificPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        speaker1.send("SpecificUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
@@ -144,7 +160,7 @@ public class TestRemoteMessagesUDP {
             fail();
         }
 
-        speaker1.send("SpecificPartitionTopic",  new MyMessage(MESSAGE + "2"));
+        speaker1.send("SpecificUDPPartitionTopic",  new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
@@ -152,11 +168,11 @@ public class TestRemoteMessagesUDP {
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
-        speaker1.send("SpecificPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
+        speaker1.send("SpecificUDPPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
-        speaker2.send("SpecificPartitionTopic", "MyPartition", new MyMessage(MESSAGE + "1"));
+        speaker2.send("SpecificUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
         m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
@@ -165,7 +181,7 @@ public class TestRemoteMessagesUDP {
             fail();
         }
 
-        speaker2.send("SpecificPartitionTopic", new MyMessage(MESSAGE + "2"));
+        speaker2.send("SpecificUDPPartitionTopic", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
@@ -173,7 +189,7 @@ public class TestRemoteMessagesUDP {
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
-        speaker2.send("SpecificPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
+        speaker2.send("SpecificUDPPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
         m = queue.poll(500l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
@@ -184,7 +200,7 @@ public class TestRemoteMessagesUDP {
     public void testDelay() throws Exception {
         failed = false;
 
-        speaker1.send("DelayedTopic", new MyMessage(MESSAGE + "8"), 2000);
+        speaker1.send("DelayedUDPTopic", new MyMessage(MESSAGE + "8"), 2000);
         MyMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
         assertNull(m);
 
@@ -212,6 +228,15 @@ public class TestRemoteMessagesUDP {
             if (!success) {
                 failed = true;
             }
+        }
+    }
+
+    private static class VolumeListener implements MessageListener<MyMessage> {
+        public int counter = 0;
+
+        @Override
+        public void receive(MyMessage message) {
+            ++counter;
         }
     }
 
