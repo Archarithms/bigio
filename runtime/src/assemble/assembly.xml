@@ -9,6 +9,8 @@
     </formats>
     <dependencySets>
         <dependencySet>
+            <fileMode>0664</fileMode>
+            <directoryMode>0777</directoryMode>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>com.a2i.dms:dms-core</include>
@@ -19,6 +21,8 @@
             </excludes>
         </dependencySet>
         <dependencySet>
+            <fileMode>0664</fileMode>
+            <directoryMode>0777</directoryMode>
             <outputDirectory>lib</outputDirectory>
             <excludes>
                 <exclude>com.a2i.dms:dms-core</exclude>
@@ -29,6 +33,8 @@
     </dependencySets>
     <fileSets>
         <fileSet>
+            <fileMode>0664</fileMode>
+            <directoryMode>0777</directoryMode>
             <directory>./</directory>
             <outputDirectory>/logs</outputDirectory>
             <excludes>
@@ -36,6 +42,8 @@
             </excludes>
         </fileSet>
         <fileSet>
+            <fileMode>0664</fileMode>
+            <directoryMode>0777</directoryMode>
             <directory>./</directory>
             <outputDirectory>/components</outputDirectory>
             <excludes>
@@ -43,6 +51,8 @@
             </excludes>
         </fileSet>
         <fileSet>
+            <fileMode>0664</fileMode>
+            <directoryMode>0777</directoryMode>
             <directory>config</directory>
             <outputDirectory>/config</outputDirectory>
             <includes>

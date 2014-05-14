@@ -11,12 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import org.msgpack.MessagePack;
 import org.msgpack.packer.Packer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author atrimble
  */
 public class GossipEncoder {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GossipEncoder.class);
 
     private static final MessagePack msgPack = new MessagePack();
     
@@ -30,6 +34,10 @@ public class GossipEncoder {
             List<Integer> memberList = new ArrayList<>();
             String[] keys = m.split(":");
             String[] memIp = keys[0].split("\\.");
+            if(memIp.length < 4) {
+                LOG.warn(keys[0] + " is not a valid IP address.");
+                continue;
+            }
             memberList.add(Integer.parseInt(memIp[0]));
             memberList.add(Integer.parseInt(memIp[1]));
             memberList.add(Integer.parseInt(memIp[2]));

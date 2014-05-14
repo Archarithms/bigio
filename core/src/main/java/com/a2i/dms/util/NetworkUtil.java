@@ -134,7 +134,7 @@ public class NetworkUtil {
                 switch(Parameters.INSTANCE.currentOS()) {
                     case WIN_64:
                     case WIN_32:
-                        networkInterfaceName = "net0";
+                        networkInterfaceName = "lo";
                         break;
                     case LINUX_64:
                     case LINUX_32:
