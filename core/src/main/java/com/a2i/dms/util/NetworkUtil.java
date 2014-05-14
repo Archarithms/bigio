@@ -165,7 +165,7 @@ public class NetworkUtil {
                     InetAddress i = (InetAddress) e.nextElement();
                     String address = i.getHostAddress();
 
-                    if(!address.startsWith("fe")) {
+                    if(!address.contains(":")) {
                         inetAddress = i;
                         ip = address;
                         break;
