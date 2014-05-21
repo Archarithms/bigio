@@ -137,8 +137,8 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:git@github.com/Archarithms/bigio.git</connection>
-        <developerConnection>scm:git:git@github.com/Archarithms/bigio.git</developerConnection>
+        <connection>scm:git:https://github.com/Archarithms/bigio.git</connection>
+        <developerConnection>scm:git:https://github.com/Archarithms/bigio.git</developerConnection>
         <tag>bigio-1.0</tag>
         <url>https://github.com/Archarithms/bigio.git</url>
     </scm>
