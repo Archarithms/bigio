@@ -3,12 +3,12 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.a2i.dms</groupId>
-    <artifactId>dms</artifactId>
+    <groupId>com.a2i.bigio</groupId>
+    <artifactId>bigio</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>Distributed Message System</name>
-    <description>DMS Parent Module</description>
+    <name>BigIO</name>
+    <description>BigIO Parent Module</description>
 
     <properties>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>

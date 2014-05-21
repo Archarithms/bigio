@@ -6,15 +6,15 @@
     <modelVersion>4.0.0</modelVersion>
     
     <parent>
-        <groupId>com.a2i.dms</groupId>
-        <artifactId>dms</artifactId>
+        <groupId>com.a2i.bigio</groupId>
+        <artifactId>bigio</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
-    <artifactId>dms-core</artifactId>
+    <artifactId>bigio-core</artifactId>
     <packaging>jar</packaging>
-    <name>DMS Core</name>
+    <name>BigIO Core</name>
 
     <dependencies>
         <dependency>
@@ -24,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>dms-agent</artifactId>
+            <artifactId>bigio-agent</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -125,7 +125,7 @@
                     <archive>
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifestEntries>
-                            <Premain-Class>com.a2i.dms.agent.MessageTransformer</Premain-Class>
+                            <Premain-Class>com.a2i.bigio.agent.MessageTransformer</Premain-Class>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -145,10 +145,10 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
-                                    <artifactId>dms-agent</artifactId>
+                                    <artifactId>bigio-agent</artifactId>
                                     <version>${project.version}</version>
                                     <outputDirectory>${project.build.directory}/agents</outputDirectory>
-                                    <destFileName>dms-agent-${project.version}.jar</destFileName>
+                                    <destFileName>bigio-agent-${project.version}.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -160,9 +160,9 @@
                 <version>2.16</version>
                 <configuration>
                     <argLine>
-                        -javaagent:${project.build.directory}/agents/dms-agent-${project.version}.jar 
-                        -Dcom.a2i.dms.binDir=target
-                        -Dcom.a2i.dms.components=com.a2i.dms.Speaker
+                        -javaagent:${project.build.directory}/agents/bigio-agent-${project.version}.jar 
+                        -Dcom.a2i.bigio.binDir=target
+                        -Dcom.a2i.bigio.components=com.a2i.bigio.Speaker
                     </argLine>
                     <!--additionalClasspathElements>
                         <additionalClasspathElement>src/test/resources</additionalClasspathElement>

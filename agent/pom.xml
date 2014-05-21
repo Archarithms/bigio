@@ -6,15 +6,15 @@
     <modelVersion>4.0.0</modelVersion>
     
     <parent>
-        <groupId>com.a2i.dms</groupId>
-        <artifactId>dms</artifactId>
+        <groupId>com.a2i.bigio</groupId>
+        <artifactId>bigio</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
-    <artifactId>dms-agent</artifactId>
+    <artifactId>bigio-agent</artifactId>
     <packaging>jar</packaging>
-    <name>DMS Agent</name>
+    <name>BigIO Agent</name>
 
     <dependencies>
         <dependency>
@@ -69,7 +69,7 @@
                     <archive>
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifestEntries>
-                            <Premain-Class>com.a2i.dms.agent.MessageTransformer</Premain-Class>
+                            <Premain-Class>com.a2i.bigio.agent.MessageTransformer</Premain-Class>
                         </manifestEntries>
                     </archive>
                 </configuration>
