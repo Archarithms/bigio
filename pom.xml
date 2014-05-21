@@ -5,7 +5,7 @@
     <groupId>com.a2i.bigio</groupId>
     <artifactId>bigio</artifactId>
     <packaging>pom</packaging>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
     <name>BigIO</name>
     <description>BigIO Parent Module</description>
     <url>http://bigio.io</url>
@@ -139,7 +139,7 @@
     <scm>
         <connection>scm:git:https://github.com/Archarithms/bigio.git</connection>
         <developerConnection>scm:git:https://github.com/Archarithms/bigio.git</developerConnection>
-        <tag>bigio-1.0</tag>
+        <tag>HEAD</tag>
         <url>https://github.com/Archarithms/bigio.git</url>
     </scm>
 
