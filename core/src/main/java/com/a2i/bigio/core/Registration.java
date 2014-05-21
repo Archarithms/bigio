@@ -32,8 +32,9 @@ package com.a2i.bigio.core;
 import com.a2i.bigio.core.member.Member;
 
 /**
- *
- * @author atrimble
+ * A class representing a member/topic/partition registration.
+ * 
+ * @author Andy Trimble
  */
 public class Registration {
     private Member member = null;

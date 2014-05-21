@@ -67,8 +67,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A discovery protocol implemented using multicast.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class MCDiscovery extends Thread {
@@ -78,11 +79,11 @@ public class MCDiscovery extends Thread {
     @Inject
     private MemberHolder memberHolder;
 
-    private static final String PROTOCOL_PROPERTY = "com.a2i.protocol";
+    private static final String PROTOCOL_PROPERTY = "com.a2i.bigio.protocol";
     private static final String DEFAULT_PROTOCOL = "tcp";
-    private static final String MULTICAST_ENABLED_PROPERTY = "com.a2i.multicast.enabled";
-    private static final String MULTICAST_GROUP_PROPERTY = "com.a2i.multicast.group";
-    private static final String MULTICAST_PORT_PROPERTY = "com.a2i.multicast.port";
+    private static final String MULTICAST_ENABLED_PROPERTY = "com.a2i.bigio.multicast.enabled";
+    private static final String MULTICAST_GROUP_PROPERTY = "com.a2i.bigio.multicast.group";
+    private static final String MULTICAST_PORT_PROPERTY = "com.a2i.bigio.multicast.port";
     private static final String DEFAULT_MULTICAST_GROUP = "239.0.0.1";
     private static final String DEFAULT_MULTICAST_PORT = "8989";
     private static final int THREADS = 2;

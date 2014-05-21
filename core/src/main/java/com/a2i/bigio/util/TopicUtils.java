@@ -30,8 +30,9 @@
 package com.a2i.bigio.util;
 
 /**
- *
- * @author atrimble
+ * A utility class for working with topics and partitions.
+ * 
+ * @author Andy Trimble
  */
 public class TopicUtils {
 

@@ -35,8 +35,9 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- *
- * @author atrimble
+ * A representation of a generic BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public abstract class AbstractMember implements Member {
 

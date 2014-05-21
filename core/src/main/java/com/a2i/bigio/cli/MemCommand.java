@@ -39,8 +39,10 @@ import java.lang.management.OperatingSystemMXBean;
 import java.util.List;
 
 /**
- *
- * @author atrimble
+ * This is the "mem" CLI command. This command will print information on current
+ * memory usage.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class MemCommand implements CommandLine {

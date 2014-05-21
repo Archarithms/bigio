@@ -35,8 +35,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
- * @author atrimble
+ * An annotation for indicating that a field should be injected by BigIO's 
+ * container. This annotation should be placed on the field itself.
+ * 
+ * @author Andy Trimble
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

@@ -65,10 +65,10 @@ import org.slf4j.LoggerFactory;
 @Component
 public class ClusterService {
 
-    private static final String PROTOCOL_PROPERTY = "com.a2i.protocol";
+    private static final String PROTOCOL_PROPERTY = "com.a2i.bigio.protocol";
     private static final String DEFAULT_PROTOCOL = "tcp";
-    private static final String GOSSIP_PORT_PROPERTY = "com.a2i.port.gossip";
-    private static final String DATA_PORT_PROPERTY = "com.a2i.port.data";
+    private static final String GOSSIP_PORT_PROPERTY = "com.a2i.bigio.port.gossip";
+    private static final String DATA_PORT_PROPERTY = "com.a2i.bigio.port.data";
 
     @Inject
     private MCDiscovery multicast;

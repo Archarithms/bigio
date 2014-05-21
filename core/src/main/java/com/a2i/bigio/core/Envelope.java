@@ -30,9 +30,10 @@
 package com.a2i.bigio.core;
 
 /**
- *
- * @author atrimble
- * @param <T>
+ * A message envelope containing the BigIO metadata for all messages.
+ * 
+ * @author Andy Trimble
+ * @param <T> the wrapped message type
  */
 public class Envelope<T> {
     

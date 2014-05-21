@@ -30,9 +30,10 @@
 package com.a2i.bigio.core;
 
 /**
- *
- * @author atrimble
- * @param <T>
+ * This is an interface for defining listeners of messages.
+ * 
+ * @author Andy Trimble
+ * @param <T> a type of message
  */
 public interface MessageListener<T> {
     public void receive(T message);

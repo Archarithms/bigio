@@ -38,8 +38,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This is the "members" CLI command. This command will print all discovered
+ * members in a BigIO cluster.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class MembersCommand implements CommandLine {

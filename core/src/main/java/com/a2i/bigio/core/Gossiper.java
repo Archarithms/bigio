@@ -43,13 +43,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This is the gossip protocol implementation.
+ * 
+ * @author Andy Trimble
  */
 public class Gossiper {
 
-    private static final String GOSSIP_INTERVAL_PROPERTY = "com.a2i.gossip.interval";
-    private static final String CLEANUP_INTERVAL_PROPERTY = "com.a2i.gossip.cleanup";
+    private static final String GOSSIP_INTERVAL_PROPERTY = "com.a2i.bigio.gossip.interval";
+    private static final String CLEANUP_INTERVAL_PROPERTY = "com.a2i.bigio.gossip.cleanup";
     private static final String DEFAULT_GOSSIP_INTERVAL = "250";
     private static final String DEFAULT_CLEANUP_INTERVAL = "10000";
     

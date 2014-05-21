@@ -40,8 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This is a class for encoding gossip messages.
+ * 
+ * @author Andy Trimble
  */
 public class GossipEncoder {
 

@@ -41,8 +41,9 @@ import org.msgpack.template.Templates;
 import org.msgpack.unpacker.Unpacker;
 
 /**
- *
- * @author atrimble
+ * This is a class for decoding gossip messages.
+ * 
+ * @author Andy Trimble
  */
 public class GossipDecoder {
 

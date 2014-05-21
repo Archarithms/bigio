@@ -34,8 +34,10 @@ import com.a2i.bigio.Component;
 import com.a2i.bigio.core.Container;
 
 /**
- *
- * @author atrimble
+ * This is the "components" CLI command. This command will print out all of the
+ * instantiated components inside a running BigIO instance.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class ComponentsCommand implements CommandLine {

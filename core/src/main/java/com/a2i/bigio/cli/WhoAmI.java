@@ -36,8 +36,10 @@ import com.a2i.bigio.core.ClusterService;
 import com.a2i.bigio.core.member.MemberKey;
 
 /**
- *
- * @author atrimble
+ * This is the "whoami" CLI command. This command will display IP and port
+ * information about the current BigIO instance.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class WhoAmI implements CommandLine {

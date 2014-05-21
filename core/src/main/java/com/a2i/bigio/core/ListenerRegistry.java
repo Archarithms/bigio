@@ -53,8 +53,9 @@ import reactor.event.selector.Selectors;
 import reactor.function.Consumer;
 
 /**
- *
- * @author atrimble
+ * A class for managing listener registrations.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class ListenerRegistry {

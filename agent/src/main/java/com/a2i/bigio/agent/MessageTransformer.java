@@ -39,8 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A java agent for injecting encoding/decoding logic into messages.
+ * 
+ * @author Andy Trimble
  */
 public class MessageTransformer implements ClassFileTransformer {
 

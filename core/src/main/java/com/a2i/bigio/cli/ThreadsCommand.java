@@ -35,8 +35,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
 /**
- *
- * @author atrimble
+ * This is the "threads" CLI command. This command will display a list of
+ * the current threads inside the JVM.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class ThreadsCommand implements CommandLine {

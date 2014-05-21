@@ -35,8 +35,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
- * @author atrimble
+ * An annotation for indicating that an object is a handled component.
+ * 
+ * @author Andy Trimble
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

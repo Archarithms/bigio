@@ -42,8 +42,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
- * @author atrimble
+ * This is the "listeners" CLI command. This command will print all of the
+ * registered listeners in a BigIO cluster.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class ListenersCommand implements CommandLine {

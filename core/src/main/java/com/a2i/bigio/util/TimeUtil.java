@@ -33,8 +33,9 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 /**
- *
- * @author atrimble
+ * A utility class for converting times.
+ * 
+ * @author Andy Trimble
  */
 public class TimeUtil {
     private static final TimeZone TIME_ZONE = TimeZone.getTimeZone("GMT");

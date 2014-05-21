@@ -45,8 +45,9 @@ import reactor.event.selector.Selectors;
 import reactor.function.Consumer;
 
 /**
- *
- * @author atrimble
+ * A representation of the current BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public abstract class MeMember extends AbstractMember {
 

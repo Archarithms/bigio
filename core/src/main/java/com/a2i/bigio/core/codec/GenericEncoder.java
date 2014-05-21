@@ -38,8 +38,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This is a class for encoding generic messages. Generic messages have the
+ * encoding/decoding logic injected at runtime using ASM. This class
+ * reflectively calls the injected encode method.
+ * 
+ * @author Andy Trimble
  */
 public class GenericEncoder {
 

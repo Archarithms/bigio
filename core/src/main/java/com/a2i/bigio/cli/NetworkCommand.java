@@ -40,8 +40,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This is the "net" CLI command. This command will print information about the
+ * available network interfaces.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class NetworkCommand implements CommandLine {

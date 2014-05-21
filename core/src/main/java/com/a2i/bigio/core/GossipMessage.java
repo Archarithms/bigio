@@ -36,8 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A message that contains the gossiped data.
+ * 
+ * @author Andy Trimble
  */
 public class GossipMessage {
 

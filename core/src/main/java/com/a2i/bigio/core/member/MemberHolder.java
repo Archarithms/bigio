@@ -38,8 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A class for containing all known BigIO cluster members.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class MemberHolder {

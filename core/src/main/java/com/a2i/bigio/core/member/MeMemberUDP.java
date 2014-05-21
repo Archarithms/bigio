@@ -69,8 +69,9 @@ import org.slf4j.LoggerFactory;
 import reactor.event.Event;
 
 /**
- *
- * @author atrimble
+ * A UDP implementation of the current BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public class MeMemberUDP extends MeMember {
 

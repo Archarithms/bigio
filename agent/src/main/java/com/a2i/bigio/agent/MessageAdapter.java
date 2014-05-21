@@ -79,8 +79,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A message adapter for injecting encoding/decoding code into messages.
+ * 
+ * @author Andy Trimble
  */
 public class MessageAdapter extends ClassVisitor {
 

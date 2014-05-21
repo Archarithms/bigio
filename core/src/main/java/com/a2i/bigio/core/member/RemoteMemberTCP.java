@@ -63,14 +63,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A TCP implementation of a remote BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public class RemoteMemberTCP extends RemoteMember {
 
-    private static final String MAX_RETRY_COUNT_PROPERTY = "com.a2i.remote.maxRetry";
-    private static final String RETRY_INTERVAL_PROPERTY = "com.a2i.remote.retryInterval";
-    private static final String CONNECTION_TIMEOUT_PROPERTY = "com.a2i.remote.connectionTimeout";
+    private static final String MAX_RETRY_COUNT_PROPERTY = "com.a2i.bigio.remote.maxRetry";
+    private static final String RETRY_INTERVAL_PROPERTY = "com.a2i.bigio.remote.retryInterval";
+    private static final String CONNECTION_TIMEOUT_PROPERTY = "com.a2i.bigio.remote.connectionTimeout";
     private static final String DEFAULT_MAX_RETRY_COUNT = "3";
     private static final String DEFAULT_RETRY_INTERVAL = "2000";
     private static final String DEFAULT_CONNECTION_TIMEOUT = "5000";

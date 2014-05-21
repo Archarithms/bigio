@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is the main entry point into A2I Sim.
+ * This is the main entry point into BigIO.
  * 
  * @author Andy Trimble
  */

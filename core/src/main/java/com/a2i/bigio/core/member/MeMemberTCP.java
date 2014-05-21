@@ -63,8 +63,9 @@ import org.slf4j.LoggerFactory;
 import reactor.event.Event;
 
 /**
- *
- * @author atrimble
+ * A TCP implementation of the current BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public class MeMemberTCP extends MeMember {
 

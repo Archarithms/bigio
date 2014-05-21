@@ -39,8 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This is the "log" CLI command. This command will set the console log level.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class LogCommand implements CommandLine {

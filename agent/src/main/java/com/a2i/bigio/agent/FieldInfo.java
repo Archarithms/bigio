@@ -30,8 +30,9 @@
 package com.a2i.bigio.agent;
 
 /**
- *
- * @author atrimble
+ * A representation of a field.
+ * 
+ * @author Andy Trimble
  */
 public class FieldInfo {
     private final String name;

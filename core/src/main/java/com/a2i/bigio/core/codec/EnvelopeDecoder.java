@@ -37,8 +37,9 @@ import org.msgpack.MessagePack;
 import org.msgpack.unpacker.Unpacker;
 
 /**
- *
- * @author atrimble
+ * This is a class for decoding envelope messages.
+ * 
+ * @author Andy Trimble
  */
 public class EnvelopeDecoder {
     

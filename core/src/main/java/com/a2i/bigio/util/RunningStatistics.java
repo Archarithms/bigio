@@ -32,8 +32,9 @@ package com.a2i.bigio.util;
 import java.io.Serializable;
 
 /**
- *
- * @author atrimble
+ * A utility class for keeping track of running statistics.
+ * 
+ * @author Andy Trimble
  */
 public class RunningStatistics implements Serializable {
 

@@ -35,8 +35,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- *
- * @author atrimble
+ * An interface defining a BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public interface Member {
     

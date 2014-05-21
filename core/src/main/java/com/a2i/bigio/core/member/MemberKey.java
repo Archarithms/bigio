@@ -32,8 +32,9 @@ package com.a2i.bigio.core.member;
 import com.a2i.bigio.core.GossipMessage;
 
 /**
- *
- * @author atrimble
+ * An abstraction class for defining unique BigIO cluster members.
+ * 
+ * @author Andy Trimble
  */
 public class MemberKey {
     public static String getKey(Member member) {

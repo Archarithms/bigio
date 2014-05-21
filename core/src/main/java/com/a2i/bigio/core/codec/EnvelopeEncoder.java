@@ -36,8 +36,9 @@ import org.msgpack.MessagePack;
 import org.msgpack.packer.Packer;
 
 /**
- *
- * @author atrimble
+ * This is a class for encoding envelope messages.
+ * 
+ * @author Andy Trimble
  */
 public class EnvelopeEncoder {
 

@@ -45,7 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * The component that handles the CLI of BigIO.
+ * 
  * @author Andy Trimble
  */
 @Component

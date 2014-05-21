@@ -34,8 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A representation of a remote BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public abstract class RemoteMember extends AbstractMember {
 

@@ -30,8 +30,9 @@
 package com.a2i.bigio.core;
 
 /**
- *
- * @author atrimble
+ * An enumeration for the Operating Systems that BigIO supports.
+ * 
+ * @author Andy Trimble
  */
 public enum OperatingSystem {
     WIN_64, WIN_32, LINUX_64, LINUX_32, MAC_64, MAC_32;

@@ -29,14 +29,6 @@
 
 package com.a2i.bigio.core;
 
-///*
-// * To change this license header, choose License Headers in Project Properties.
-// * To change this template file, choose Tools | Templates
-// * and open the template in the editor.
-// */
-//
-//package com.a2i.speak.cluster.gossip;
-//
 //import com.a2i.speak.cluster.RPCMessage;
 //import io.netty.bootstrap.Bootstrap;
 //import io.netty.buffer.ByteBuf;

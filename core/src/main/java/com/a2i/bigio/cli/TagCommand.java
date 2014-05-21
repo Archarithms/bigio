@@ -38,8 +38,9 @@ import com.a2i.bigio.core.member.MemberHolder;
 import com.a2i.bigio.core.member.MemberKey;
 
 /**
- *
- * @author atrimble
+ * This is the "tag" CLI command. This command will display/modify member tags.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class TagCommand implements CommandLine {

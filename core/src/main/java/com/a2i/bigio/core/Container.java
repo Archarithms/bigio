@@ -61,8 +61,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This is the BigIO container implementation.
+ * 
+ * @author Andy Trimble
  */
 public enum Container {
     INSTANCE;

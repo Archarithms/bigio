@@ -30,8 +30,9 @@
 package com.a2i.bigio.core.member;
 
 /**
- *
- * @author atrimble
+ * An enumeration for defining the current state of a BigIO cluster member.
+ * 
+ * @author Andy Trimble
  */
 public enum MemberStatus {
     Alive, Left, Failed, Unknown;

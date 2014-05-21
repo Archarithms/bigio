@@ -30,8 +30,9 @@
 package com.a2i.bigio.core;
 
 /**
- *
- * @author atrimble
+ * A generic class for objects wishing to receive gossip messages.
+ * 
+ * @author Andy Trimble
  */
 public interface GossipListener {
     public void accept(GossipMessage message);
