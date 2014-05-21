@@ -175,10 +175,10 @@
     </distributionManagement>
 
     <scm>
-        <connection>scm:git:git@75.76.181.3:andrew.trimble/a2i-sim.git</connection>
-        <developerConnection>scm:git:git@75.76.181.3:andrew.trimble/a2i-sim.git</developerConnection>
+        <connection>scm:git:git@github.com/Archarithms/bigio.git</connection>
+        <developerConnection>scm:git:git@github.com/Archarithms/bigio.git</developerConnection>
         <tag>HEAD</tag>
-        <url>http://75.76.181.3/andrew.trimble/a2i-sim</url>
+        <url>https://github.com/Archarithms/bigio.git</url>
     </scm>
 
 </project>
