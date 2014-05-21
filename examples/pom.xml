@@ -15,6 +15,15 @@
     <artifactId>bigio-examples</artifactId>
     <packaging>jar</packaging>
     <name>BigIO Examples</name>
+    <url>http://bigio.io</url>
+
+    <licenses>
+        <license>
+            <name>Simplified BSD License</name>
+            <url>http://opensource.org/licenses/BSD-2-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <dependencies>
         <dependency>
