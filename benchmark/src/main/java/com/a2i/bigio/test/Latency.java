@@ -10,7 +10,6 @@ import com.a2i.bigio.Component;
 import com.a2i.bigio.Inject;
 import com.a2i.bigio.Parameters;
 import com.a2i.bigio.Speaker;
-import com.a2i.bigio.Starter;
 import com.a2i.bigio.core.MessageListener;
 import com.a2i.bigio.core.codec.GenericEncoder;
 import java.io.IOException;

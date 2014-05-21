@@ -5,9 +5,6 @@
  */
 package com.a2i.bigio;
 
-import com.a2i.bigio.DeliveryType;
-import com.a2i.bigio.Speaker;
-import com.a2i.bigio.Starter;
 import com.a2i.bigio.core.MessageListener;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;

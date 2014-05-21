@@ -4,9 +4,6 @@
 
 package com.a2i.bigio;
 
-import com.a2i.bigio.Speaker;
-import com.a2i.bigio.Message;
-import com.a2i.bigio.Starter;
 import com.a2i.bigio.core.MessageListener;
 import com.a2i.bigio.core.member.Member;
 import java.util.Collection;

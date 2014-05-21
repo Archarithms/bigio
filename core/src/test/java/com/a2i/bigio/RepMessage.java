@@ -6,7 +6,6 @@
 
 package com.a2i.bigio;
 
-import com.a2i.bigio.Message;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;

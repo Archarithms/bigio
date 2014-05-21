@@ -4,8 +4,6 @@
 
 package com.a2i.bigio;
 
-import com.a2i.bigio.Speaker;
-import com.a2i.bigio.Parameters;
 import com.a2i.bigio.core.Container;
 import com.a2i.bigio.core.member.MemberStatus;
 import static org.junit.Assert.assertTrue;
