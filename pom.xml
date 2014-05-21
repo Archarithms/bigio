@@ -1,11 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.a2i.bigio</groupId>
     <artifactId>bigio</artifactId>
     <packaging>pom</packaging>
-    <version>1.0</version>
+    <version>1.0-SNAPSHOT</version>
     <name>BigIO</name>
     <description>BigIO Parent Module</description>
     <url>http://bigio.io</url>
@@ -137,9 +138,9 @@
     </dependencyManagement>
 
     <scm>
-        <connection>scm:git:https://github.com/Archarithms/bigio.git</connection>
-        <developerConnection>scm:git:https://github.com/Archarithms/bigio.git</developerConnection>
-        <tag>bigio-1.0</tag>
+        <connection>scm:git:git@github.com/Archarithms/bigio.git</connection>
+        <developerConnection>scm:git:git@github.com/Archarithms/bigio.git</developerConnection>
+        <tag>HEAD</tag>
         <url>https://github.com/Archarithms/bigio.git</url>
     </scm>
 
