@@ -1,1 +1,3 @@
 BigIO is a distributed, purely Java remote messaging system.
+
+More info coming soon...
