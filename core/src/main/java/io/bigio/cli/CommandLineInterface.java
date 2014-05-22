@@ -34,7 +34,6 @@ import io.bigio.Initialize;
 import io.bigio.Inject;
 import io.bigio.Parameters;
 import io.bigio.Starter;
-import io.bigio.core.ClusterService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,20 +54,24 @@ public class CommandLineInterface extends Thread {
     private ConsoleReader reader = null;
 
     @Inject
-    private ClusterService cluster;
-
-    @Inject
     private final List<CommandLine> commands = new ArrayList<>();
 
     private final static Logger LOG = LoggerFactory.getLogger(CommandLineInterface.class);
 
+    /**
+     * Start the command line interface thread.
+     */
     @Initialize
     public void init() {
         start();
     }
 
+    /**
+     * The thread entry point.
+     */
     @Override
     public void run() {
+        // Set up the terminal configuration
         switch (Parameters.INSTANCE.currentOS()) {
             case WIN_64:
             case WIN_32:
@@ -87,9 +90,7 @@ public class CommandLineInterface extends Thread {
         }
 
         try {
-        
             reader = new ConsoleReader();
-
             reader.setHandleUserInterrupt(true);
             reader.setPrompt("bigio> ");
 

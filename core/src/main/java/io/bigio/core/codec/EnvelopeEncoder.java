@@ -44,6 +44,13 @@ public class EnvelopeEncoder {
 
     private static final MessagePack msgPack = new MessagePack();
     
+    /**
+     * Encode a message envelope.
+     * 
+     * @param message a message to encode.
+     * @return the encoded message.
+     * @throws IOException in case of an encode error.
+     */
     public static byte[] encode(Envelope message) throws IOException {
         ByteArrayOutputStream msgBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream out = new ByteArrayOutputStream();

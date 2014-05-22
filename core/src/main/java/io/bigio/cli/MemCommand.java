@@ -47,15 +47,35 @@ import java.util.List;
 @Component
 public class MemCommand implements CommandLine {
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "mem";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         printOSStats();
         printMemStats();
+    }
+
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
+    @Override
+    public String help() {
+        return "Prints information about the current state of JVM memory.";
     }
     
     protected static void printOSStats() {
@@ -110,10 +130,5 @@ public class MemCommand implements CommandLine {
         }
 
         System.out.println(stats.toString());
-    }
-
-    @Override
-    public String help() {
-        return "Prints information about the current state of JVM memory.";
     }
 }

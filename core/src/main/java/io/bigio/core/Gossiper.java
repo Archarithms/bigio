@@ -69,6 +69,13 @@ public class Gossiper {
 
     private final MembershipGossiper thread = new MembershipGossiper();
 
+    /**
+     * Constructor.
+     * 
+     * @param me the current BigIO member.
+     * @param memberHolder the member container.
+     * @param registry the listener container.
+     */
     @SuppressWarnings("CallToThreadStartDuringObjectConstruction")
     public Gossiper(Member me, MemberHolder memberHolder, ListenerRegistry registry) {
 
@@ -84,6 +91,9 @@ public class Gossiper {
         thread.start();
     }
 
+    /**
+     * Shutdown the gossiping thread.
+     */
     public void shutdown() {
         thread.shutdown();
     }

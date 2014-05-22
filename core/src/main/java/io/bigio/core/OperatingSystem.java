@@ -36,10 +36,4 @@ package io.bigio.core;
  */
 public enum OperatingSystem {
     WIN_64, WIN_32, LINUX_64, LINUX_32, MAC_64, MAC_32;
-    
-    
-
-    OperatingSystem() {
-        
-    }
 }

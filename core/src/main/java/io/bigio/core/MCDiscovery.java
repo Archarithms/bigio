@@ -100,16 +100,29 @@ public class MCDiscovery extends Thread {
     private Member me;
     private String protocol;
 
+    /**
+     * Constructor.
+     */
     public MCDiscovery() {
         enabled = Boolean.parseBoolean(Parameters.INSTANCE.getProperty(MULTICAST_ENABLED_PROPERTY, "true"));
         multicastGroup = Parameters.INSTANCE.getProperty(MULTICAST_GROUP_PROPERTY, DEFAULT_MULTICAST_GROUP);
         multicastPort = Integer.parseInt(Parameters.INSTANCE.getProperty(MULTICAST_PORT_PROPERTY, DEFAULT_MULTICAST_PORT));
     }
 
+    /**
+     * Set the member container.
+     * 
+     * @param memberHolder the member container.
+     */
     public void setMemberHolder(MemberHolder memberHolder) {
         this.memberHolder = memberHolder;
     }
 
+    /**
+     * Initialize the discovery service.
+     * 
+     * @param me the current member.
+     */
     public void initialize(Member me) {
         this.me = me;
 
@@ -122,13 +135,23 @@ public class MCDiscovery extends Thread {
         }
     }
 
-    public void shutdown() throws InterruptedException {
+    /**
+     * Shutdown the discovery service.
+     */
+    public void shutdown() {
         if(isEnabled() && workerGroup != null) {
             workerGroup.shutdownGracefully();
-            join();
+            try {
+                join();
+            } catch (InterruptedException ex) {
+                LOG.error("Interrupted", ex);
+            }
         }
     }
 
+    /**
+     * Setup the multicast facilities.
+     */
     public void setupNetworking() {
         if(NetworkUtil.getNetworkInterface() == null) {
             LOG.error("Cannot form cluster. No Network interface can be found.");
@@ -213,6 +236,9 @@ public class MCDiscovery extends Thread {
         }
     }
 
+    /**
+     * Run the multicast listener.
+     */
     @Override
     public void run() {
         try {
@@ -227,6 +253,12 @@ public class MCDiscovery extends Thread {
         LOG.info("Connection to Clustering agent closed.");
     }
 
+    /**
+     * Send a gossip message over multicast.
+     * 
+     * @param message a message.
+     * @throws IOException in case of a sending error.
+     */
     public void sendMessage(GossipMessage message) throws IOException {
 
         byte[] bytes = GossipEncoder.encode(message);

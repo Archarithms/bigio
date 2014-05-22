@@ -51,11 +51,21 @@ public class MembersCommand implements CommandLine {
     @Inject
     private Speaker speaker;
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "members";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         System.out.println();
@@ -64,6 +74,11 @@ public class MembersCommand implements CommandLine {
         }
     }
 
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
     @Override
     public String help() {
         return "Prints the set of known members of the cluster.";

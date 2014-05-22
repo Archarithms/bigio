@@ -36,5 +36,11 @@ package io.bigio.core;
  * @param <T> a type of message
  */
 public interface MessageListener<T> {
+
+    /**
+     * Receive a message.
+     * 
+     * @param message a message.
+     */
     public void receive(T message);
 }

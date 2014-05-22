@@ -59,8 +59,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * This class handles communication between nodes in a cluster.
+ * 
+ * @author Andy Trimble
  */
 @Component
 public class ClusterService {
@@ -90,26 +91,55 @@ public class ClusterService {
 
     private boolean shuttingDown = false;
 
+    /**
+     * Default constructor.
+     */
     public ClusterService() {
         
     }
 
+    /**
+     * Set the multicast discovery object. Only used in bootstrapping.
+     * 
+     * @param multicast the multicast discovery object.
+     */
     public void setMulticastDiscovery(MCDiscovery multicast) {
         this.multicast = multicast;
     }
 
+    /**
+     * Set the member container. Only used in bootstrapping.
+     * 
+     * @param memberHolder the member container.
+     */
     public void setMemberHolder(MemberHolder memberHolder) {
         this.memberHolder = memberHolder;
     }
 
+    /**
+     * Set the listener registry. Only used in bootstrapping.
+     * 
+     * @param registry the listener registry.
+     */
     public void setRegistry(ListenerRegistry registry) {
         this.registry = registry;
     }
 
+    /**
+     * Get the listener registry.
+     * 
+     * @return the listener registry.
+     */
     public ListenerRegistry getRegistry() {
         return registry;
     }
 
+    /**
+     * Set the delivery method.
+     * 
+     * @param topic a topic.
+     * @param type the type of method delivery.
+     */
     public void setDeliveryType(String topic, DeliveryType type) {
         deliveries.put(topic, type);
         if(type == DeliveryType.ROUND_ROBIN) {
@@ -117,19 +147,48 @@ public class ClusterService {
         }
     }
 
+    /**
+     * Add an interceptor to a topic.
+     * 
+     * @param topic a topic.
+     * @param interceptor an interceptor.
+     */
     public void addInterceptor(String topic, Interceptor interceptor) {
         registry.addInterceptor(topic, interceptor);
     }
 
+    /**
+     * Add a topic/partition listener.
+     * 
+     * @param <T> the message type.
+     * @param topic a topic.
+     * @param partition a partition.
+     * @param consumer a listener.
+     */
     public <T> void addListener(String topic, String partition, MessageListener<T> consumer) {
         registry.registerMemberForTopic(topic, partition, me);
         registry.addLocalListener(topic, partition, consumer);
     }
 
+    /**
+     * Remove all listeners on a topic.
+     * 
+     * @param topic a topic.
+     */
     public void removeAllListeners(String topic) {
         registry.removeAllLocalListeners(topic);
     }
 
+    /**
+     * Setn a message.
+     * 
+     * @param <T> a message type.
+     * @param topic a topic.
+     * @param partition a partition.
+     * @param message a message.
+     * @param offsetMilliseconds time offset of the message.
+     * @throws IOException in case of error in delivery.
+     */
     public <T> void sendMessage(String topic, String partition, T message, int offsetMilliseconds) throws IOException {
         Envelope envelope = new Envelope();
         envelope.setDecoded(false);
@@ -206,26 +265,59 @@ public class ClusterService {
         }
     }
 
+    /**
+     * Set a message on a topic/partition with no execution offset.
+     * 
+     * @param <T> a message type.
+     * @param topic a topic.
+     * @param partition a partition.
+     * @param message a message.
+     * @throws IOException in case of delivery error.
+     */
     public <T> void sendMessage(String topic, String partition, T message) throws IOException {
         sendMessage(topic, partition, message, 0);
     }
 
+    /**
+     * Get the list of known members. Members returned by this method may be
+     * either active or dead.
+     * 
+     * @return the list of known members.
+     */
     public Collection<Member> getAllMembers() {
         return memberHolder.getAllMembers();
     }
     
+    /**
+     * Get the list of active members.
+     * 
+     * @return the list of active members.
+     */
     public Collection<Member> getActiveMembers() {
         return memberHolder.getActiveMembers();
     }
     
+    /**
+     * Get the list of dead members.
+     * 
+     * @return the list of dead members.
+     */
     public Collection<Member> getDeadMembers() {
         return memberHolder.getDeadMembers();
     }
 
+    /**
+     * Get the member representing this BigIO instance.
+     * 
+     * @return the current member.
+     */
     public Member getMe() {
         return me;
     }
 
+    /**
+     * Initialize communication.
+     */
     public void initialize() {
 
         String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
@@ -288,14 +380,25 @@ public class ClusterService {
         registry.setMe(me);
     }
 
+    /**
+     * TODO: Implement manually joining a cluster.
+     * 
+     * @param ip an initial peer to which to connect.
+     */
     public void join(String ip) {
         
     }
 
+    /**
+     * TODO: Implement manually leaving a cluster.
+     */
     public void leave() {
         
     }
 
+    /**
+     * Shutdown communication objects.
+     */
     public void shutdown() {
         shuttingDown = true;
         

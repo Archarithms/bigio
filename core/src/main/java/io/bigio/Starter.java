@@ -53,8 +53,6 @@ public class Starter {
         if(MONITOR_THREAD_CONTENTION) {
             ManagementFactory.getThreadMXBean().setThreadContentionMonitoringEnabled(MONITOR_THREAD_CONTENTION);
         }
-
-//        Starter.bootstrap();
     }
 
     /**
@@ -77,11 +75,20 @@ public class Starter {
         return speaker;
     }
 
+    /**
+     * Exit the system.
+     */
     public static void exit() {
         LOG.info("Goodbye");
         System.exit(0);
     }
 
+    /**
+     * The main method for BigIO.
+     * 
+     * @param args command line arguments
+     * @throws Exception in case of an error in the Starter.
+     */
     public static void main(String[] args) throws Exception {
         Parameters.INSTANCE.currentOS(); // Just to load the properties
         Container.INSTANCE.scan();

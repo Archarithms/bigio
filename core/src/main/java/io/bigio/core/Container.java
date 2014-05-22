@@ -92,6 +92,9 @@ public enum Container {
     
     private static final Logger LOG = LoggerFactory.getLogger(Container.class);
     
+    /**
+     * Scan for components.
+     */
     public void scan() {
         loadProperties();
         loadJars();
@@ -100,10 +103,22 @@ public enum Container {
         inject();
     }
 
+    /**
+     * Get the managed instance of a class.
+     * 
+     * @param <T> a class type.
+     * @param clazz a class.
+     * @return the managed instance of the class.
+     */
     public <T> T getInstance(Class<T> clazz) {
         return (T)instances.get(clazz);
     }
 
+    /**
+     * Get the managed components.
+     * 
+     * @return the set of managed components.
+     */
     public Set<Class<?>> getComponents() {
         return instances.keySet();
     }

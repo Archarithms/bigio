@@ -45,18 +45,39 @@ public class EnvelopeDecoder {
     
     private static final MessagePack msgPack = new MessagePack();
 
+    /**
+     * Decode a message envelope.
+     * 
+     * @param bytes the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of a decode error.
+     */
     public static Envelope decode(ByteBuf bytes) throws IOException {
         Unpacker unpacker = msgPack.createUnpacker(new ByteBufInputStream(bytes));
         Envelope message = decode(unpacker);
         return message;
     }
     
+    /**
+     * Decode a message envelope.
+     * 
+     * @param bytes the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of a decode error.
+     */
     public static Envelope decode(byte[] bytes) throws IOException {
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
         Envelope message = decode(unpacker);
         return message;
     }
 
+    /**
+     * Decode a message envelope.
+     * 
+     * @param unpacker a MsgPack object containing the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of a decode error.
+     */
     private static Envelope decode(Unpacker unpacker) throws IOException {
 
         Envelope message = new Envelope();

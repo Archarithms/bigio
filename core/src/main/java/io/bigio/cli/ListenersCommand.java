@@ -53,11 +53,21 @@ public class ListenersCommand implements CommandLine {
     @Inject
     private ListenerRegistry registry;
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "listeners";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         StringBuilder buff = new StringBuilder();
@@ -80,6 +90,11 @@ public class ListenersCommand implements CommandLine {
         System.out.println(buff.toString());
     }
 
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
     @Override
     public String help() {
         return "Displays the current set of registered listeners";

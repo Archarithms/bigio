@@ -42,11 +42,21 @@ import io.bigio.core.Container;
 @Component
 public class ComponentsCommand implements CommandLine {
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "components";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         for(Class<?> cl : Container.INSTANCE.getComponents()) {
@@ -54,6 +64,11 @@ public class ComponentsCommand implements CommandLine {
         }
     }
 
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
     @Override
     public String help() {
         return "Lists the components running in this container";

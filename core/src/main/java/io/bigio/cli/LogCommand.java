@@ -50,11 +50,21 @@ public class LogCommand implements CommandLine {
 
     private static final String USAGE = "Usage: log [all|trace|debug|info|warn|error|off|none]";
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "log";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         if (args.length < 2) {
@@ -63,7 +73,17 @@ public class LogCommand implements CommandLine {
             setLoggingLevel(args[1]);
         }
     }
-    
+
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
+    @Override
+    public String help() {
+        return "Sets the console log level. " + USAGE;
+    }
+
     private void setLoggingLevel(String level) {
 
         ch.qos.logback.classic.Logger rootLogger = 
@@ -101,10 +121,5 @@ public class LogCommand implements CommandLine {
         } else if(level.equalsIgnoreCase("none")) {
             threshold.setLevel(Level.OFF.levelStr);
         }
-    }
-
-    @Override
-    public String help() {
-        return "Sets the console log level. " + USAGE;
     }
 }

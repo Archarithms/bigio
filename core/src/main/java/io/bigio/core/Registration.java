@@ -41,6 +41,13 @@ public class Registration {
     private String topic = null;
     private String partition = null;
 
+    /**
+     * Construct a new registration object.
+     * 
+     * @param member a member.
+     * @param topic a topic.
+     * @param partition a partition.
+     */
     public Registration(Member member, String topic, String partition) {
         this.member = member;
         this.topic = topic;

@@ -35,8 +35,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
- * @author atrimble
+ * A method level annotation for marking initialization code. Methods marked
+ * with this annotation will be executed by the container once all of the 
+ * injected dependencies have been met.
+ * 
+ * @author Andy Trimble
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

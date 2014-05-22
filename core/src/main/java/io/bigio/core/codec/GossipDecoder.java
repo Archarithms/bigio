@@ -58,6 +58,13 @@ public class GossipDecoder {
     private static final Template<List<Integer>> clockTemplate = 
             Templates.tList(Templates.TInteger);
     
+    /**
+     * Decode a gossip message.
+     * 
+     * @param bytes the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of an error in decoding.
+     */
     public static GossipMessage decode(ByteBuffer bytes) throws IOException {
 
         // Discard the message length.
@@ -72,6 +79,13 @@ public class GossipDecoder {
 
     }
 
+    /**
+     * Decode a gossip message.
+     * 
+     * @param bytes the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of an error in decoding.
+     */
     public static GossipMessage decode(byte[] bytes) throws IOException {
 
         Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
@@ -79,6 +93,13 @@ public class GossipDecoder {
         return decode(unpacker);
     }
 
+    /**
+     * Decode a gossip message.
+     * 
+     * @param unpacker an object containing the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of an error in decoding.
+     */
     private static GossipMessage decode(Unpacker unpacker) throws IOException {
         GossipMessage message = new GossipMessage();
 

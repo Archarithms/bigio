@@ -50,6 +50,13 @@ public class GossipEncoder {
 
     private static final MessagePack msgPack = new MessagePack();
     
+    /**
+     * Encode a gossip message.
+     * 
+     * @param message a message.
+     * @return the encoded form of the message.
+     * @throws IOException in case of an encoding error.
+     */
     public static byte[] encode(GossipMessage message) throws IOException {
         ByteArrayOutputStream msgBuffer = new ByteArrayOutputStream();
         ByteArrayOutputStream out = new ByteArrayOutputStream();

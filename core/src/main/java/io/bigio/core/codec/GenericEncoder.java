@@ -50,6 +50,13 @@ public class GenericEncoder {
 
     private static final Map<Class, Method> METHODS = new HashMap<>();
 
+    /**
+     * Encode a message payload.
+     * 
+     * @param message a message.
+     * @return the encoded form of the message.
+     * @throws IOException in case of an error in encoding.
+     */
     public static byte[] encode(Object message) throws IOException {
 
         if(message.getClass().getAnnotation(io.bigio.Message.class) != null) {

@@ -43,15 +43,35 @@ import java.lang.management.ThreadMXBean;
 @Component
 public class ThreadsCommand implements CommandLine {
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "threads";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         MemCommand.printOSStats();
         printThreadStats();
+    }
+
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
+    @Override
+    public String help() {
+        return "Prints information on threads in this JVM.";
     }
 
     private void printThreadStats() {
@@ -69,10 +89,5 @@ public class ThreadsCommand implements CommandLine {
         }
 
         System.out.println(stats.toString());
-    }
-
-    @Override
-    public String help() {
-        return "Prints information on threads in this JVM.";
     }
 }

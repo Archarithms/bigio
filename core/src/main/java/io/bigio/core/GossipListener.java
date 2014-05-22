@@ -35,5 +35,11 @@ package io.bigio.core;
  * @author Andy Trimble
  */
 public interface GossipListener {
+
+    /**
+     * Receive a gossip message.
+     * 
+     * @param message a gossip message.
+     */
     public void accept(GossipMessage message);
 }

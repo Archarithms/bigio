@@ -47,16 +47,31 @@ public class WhoAmI implements CommandLine {
     @Inject
     private ClusterService cluster;
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "whoami";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         System.out.println(MemberKey.getKey(cluster.getMe()));
     }
 
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
     @Override
     public String help() {
         return "Prints information on this cluster node.";

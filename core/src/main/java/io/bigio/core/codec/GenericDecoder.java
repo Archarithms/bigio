@@ -50,6 +50,14 @@ public class GenericDecoder {
 
     private static final Map<Class, Method> METHODS = new HashMap<>();
     
+    /**
+     * Decode a message payload.
+     * 
+     * @param className the type of message.
+     * @param bytes the raw message.
+     * @return a decoded message.
+     * @throws IOException in case of a decoding error.
+     */
     public static Object decode(String className, byte[] bytes) throws IOException {
 
         try {

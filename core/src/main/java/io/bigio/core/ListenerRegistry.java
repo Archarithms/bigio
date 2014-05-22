@@ -71,11 +71,13 @@ public class ListenerRegistry {
 
     private Member me;
 
-//    private final RelationalMap<Registration> map = new RelationalMap<>();
     private final Map<Member, Map<String, List<Registration>>> map = new HashMap<>();
 
     private final Map<String, List<Interceptor>> interceptors = new HashMap<>();
 
+    /**
+     * Constructor.
+     */
     public ListenerRegistry() {
         reactor = Reactors.reactor()
                 .env(environment)
@@ -83,6 +85,12 @@ public class ListenerRegistry {
                 .get();
     }
 
+    /**
+     * Add a topic interceptor.
+     * 
+     * @param topic a topic.
+     * @param interceptor an interceptor.
+     */
     public void addInterceptor(String topic, Interceptor interceptor) {
         if(interceptors.get(topic) == null) {
             interceptors.put(topic, new ArrayList<Interceptor>());
@@ -90,14 +98,31 @@ public class ListenerRegistry {
         interceptors.get(topic).add(interceptor);
     }
 
+    /**
+     * Set the current member.
+     * 
+     * @param me the current member.
+     */
     public void setMe(Member me) {
         this.me = me;
     }
 
+    /**
+     * Get the current member.
+     * @return the current member.
+     */
     public Member getMe() {
         return me;
     }
 
+    /**
+     * Add a listener that is located in the same VM as the current member.
+     * 
+     * @param <T> a message type.
+     * @param topic a topic.
+     * @param partition a partition.
+     * @param listener a listener.
+     */
     public <T> void addLocalListener(final String topic, final String partition, final MessageListener<T> listener) {
         Consumer<Event<Envelope>> consumer = new Consumer<Event<Envelope>>() {
             @Override
@@ -115,6 +140,11 @@ public class ListenerRegistry {
         reactor.on(Selectors.regex(TopicUtils.getTopicString(topic, partition)), consumer);
     }
 
+    /**
+     * Remove all local listeners on a given topic.
+     * 
+     * @param topic a topic.
+     */
     public void removeAllLocalListeners(String topic) {
         Map<String, List<Registration>> allRegs = map.get(me);
         
@@ -131,6 +161,11 @@ public class ListenerRegistry {
         }
     }
 
+    /**
+     * Remove topic/partition registrations. 
+     * 
+     * @param regs a set of registrations.
+     */
     public void removeRegistrations(List<Registration> regs) {
         for(Map<String, List<Registration>> allRegs : map.values()) {
             if(allRegs != null) {
@@ -141,6 +176,11 @@ public class ListenerRegistry {
         }
     }
 
+    /**
+     * Get all topic/partition registrations. 
+     * 
+     * @return the list of all registrations.
+     */
     public List<Registration> getAllRegistrations() {
         List<Registration> ret = new ArrayList<>();
         
@@ -155,6 +195,13 @@ public class ListenerRegistry {
         return ret;
     }
 
+    /**
+     * Get all members that have at least one listener registered for a given 
+     * topic.
+     * 
+     * @param topic a topic.
+     * @return all members that have at least one registered listener.
+     */
     public List<Member> getRegisteredMembers(String topic) {
         List<Member> ret = new ArrayList<>();
 
@@ -172,6 +219,13 @@ public class ListenerRegistry {
         return ret;
     }
 
+    /**
+     * Register a member for a topic-partition.
+     * 
+     * @param topic a topic.
+     * @param partition a partition.
+     * @param member a member.
+     */
     protected synchronized void registerMemberForTopic(String topic, String partition, Member member) {
 
         if(map.get(member) == null) {
@@ -208,6 +262,12 @@ public class ListenerRegistry {
         }
     }
 
+    /**
+     * Send a message.
+     * 
+     * @param envelope a message envelope.
+     * @throws IOException in case of a sending error.
+     */
     public void send(Envelope envelope) throws IOException {
         if(!envelope.isDecoded()) {
             // decode actual message

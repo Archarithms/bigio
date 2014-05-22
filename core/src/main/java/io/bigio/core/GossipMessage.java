@@ -53,16 +53,31 @@ public class GossipMessage {
     private final List<Integer> clock = new ArrayList<>();
     private final Map<String, List<String>> listeners = new HashMap<>();
 
+    /**
+     * Default constructor.
+     */
     public GossipMessage() {
         
     }
 
+    /**
+     * Constructor with sender's information.
+     * 
+     * @param ip the IP address of the sender.
+     * @param gossipPort the gossip port of the sender.
+     * @param dataPort the data port of the sender.
+     */
     public GossipMessage(String ip, int gossipPort, int dataPort) {
         this.ip = ip;
         this.gossipPort = gossipPort;
         this.dataPort = dataPort;
     }
 
+    /**
+     * Produce a nice textual representation of the message.
+     * 
+     * @return the message as a string.
+     */
     @Override
     public String toString() {
         StringBuilder buff = new StringBuilder();

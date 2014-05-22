@@ -53,11 +53,21 @@ public class TagCommand implements CommandLine {
     @Inject
     private MemberHolder memberHolder;
 
+    /**
+     * Get the command string.
+     * 
+     * @return the command.
+     */
     @Override
     public String getCommand() {
         return "tag";
     }
 
+    /**
+     * Execute the command.
+     * 
+     * @param args the arguments to the command (if any).
+     */
     @Override
     public void execute(String... args) {
         if(args.length < 2) {
@@ -97,6 +107,11 @@ public class TagCommand implements CommandLine {
         }
     }
 
+    /**
+     * Return the help/description string for display.
+     * 
+     * @return the help/description string
+     */
     @Override
     public String help() {
         return "Sets or displays tag information. " + USAGE;
