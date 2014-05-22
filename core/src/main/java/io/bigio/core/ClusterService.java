@@ -404,11 +404,7 @@ public class ClusterService {
         
         gossiper.shutdown();
 
-        try {
-            multicast.shutdown();
-        } catch (InterruptedException ex) {
-            LOG.warn("Interrupted while shutting down multicast agent.", ex);
-        }
+        multicast.shutdown();
 
         for(Member member : memberHolder.getAllMembers()) {
             ((AbstractMember)member).shutdown();

@@ -144,7 +144,7 @@ public class MCDiscovery extends Thread {
             try {
                 join();
             } catch (InterruptedException ex) {
-                LOG.error("Interrupted", ex);
+                LOG.warn("Interrupted while shutting down multicast agent.", ex);
             }
         }
     }
