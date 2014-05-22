@@ -16,6 +16,23 @@
     <packaging>jar</packaging>
     <name>BigIO Benchmark</name>
 
+    <licenses>
+        <license>
+            <name>Simplified BSD License</name>
+            <url>http://opensource.org/licenses/BSD-2-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Andrew Trimble</name>
+            <email>andrew.trimble@archarithms.com</email>
+            <organization>Archarithms Inc.</organization>
+            <organizationUrl>http://www.archarithms.com</organizationUrl>
+        </developer>
+    </developers>
+
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

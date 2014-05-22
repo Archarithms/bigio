@@ -25,6 +25,15 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <name>Andrew Trimble</name>
+            <email>andrew.trimble@archarithms.com</email>
+            <organization>Archarithms Inc.</organization>
+            <organizationUrl>http://www.archarithms.com</organizationUrl>
+        </developer>
+    </developers>
+
     <dependencies>
         <dependency>
             <groupId>org.msgpack</groupId>

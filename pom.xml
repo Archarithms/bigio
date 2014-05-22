@@ -19,6 +19,15 @@
         </license>
     </licenses>
 
+    <developers>
+        <developer>
+            <name>Andrew Trimble</name>
+            <email>andrew.trimble@archarithms.com</email>
+            <organization>Archarithms Inc.</organization>
+            <organizationUrl>http://www.archarithms.com</organizationUrl>
+        </developer>
+    </developers>
+
     <properties>
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
@@ -27,6 +36,30 @@
         <asm.version>4.2</asm.version>
         <logback.version>1.1.1</logback.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <modules>
         <module>core</module>
@@ -143,5 +176,16 @@
         <tag>HEAD</tag>
         <url>https://github.com/Archarithms/bigio.git</url>
     </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+    </distributionManagement>
 
 </project>
