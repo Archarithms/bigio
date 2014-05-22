@@ -5,7 +5,7 @@
     <property name="FILE_LEVEL" value="DEBUG"/>
 
     <!-- Set these to the highest level required -->
-    <logger name="com.a2i" level="DEBUG"/>
+    <logger name="io.bigio" level="DEBUG"/>
     <logger name="io.netty.handler.logging.LoggingHandler" level="DEBUG"/>
 
     <!-- The log file -->

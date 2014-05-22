@@ -13,11 +13,11 @@
             <directoryMode>0777</directoryMode>
             <outputDirectory>bin</outputDirectory>
             <includes>
-                <include>com.a2i.bigio:bigio-core</include>
-                <include>com.a2i.bigio:bigio-agent</include>
+                <include>io.bigio:bigio-core</include>
+                <include>io.bigio:bigio-agent</include>
             </includes>
             <excludes>
-                <exclude>com.a2i.bigio:bigio-runtime</exclude>
+                <exclude>io.bigio:bigio-runtime</exclude>
             </excludes>
         </dependencySet>
         <dependencySet>
@@ -25,9 +25,9 @@
             <directoryMode>0777</directoryMode>
             <outputDirectory>lib</outputDirectory>
             <excludes>
-                <exclude>com.a2i.bigio:bigio-core</exclude>
-                <exclude>com.a2i.bigio:bigio-agent</exclude>
-                <exclude>com.a2i.bigio:bigio-runtime</exclude>
+                <exclude>io.bigio:bigio-core</exclude>
+                <exclude>io.bigio:bigio-agent</exclude>
+                <exclude>io.bigio:bigio-runtime</exclude>
             </excludes>
         </dependencySet>
     </dependencySets>
