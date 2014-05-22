@@ -14,4 +14,4 @@ your Maven pom.
 
 A zipped runtime package can be downloaded here: (coming soon)
 
-For more information, please see the wiki at this link: https://github.com/Archarithms/bigio/wiki
+For more information, please see our [wiki](https://github.com/Archarithms/bigio/wiki)
