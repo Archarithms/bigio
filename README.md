@@ -1,3 +1,5 @@
+Fast, distributed messaging in Java.
+
 ### BigIO
 
 BigIO is a fast, distributed messaging framework written entirely in Java. The 
