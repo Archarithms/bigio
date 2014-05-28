@@ -18,7 +18,7 @@ your Maven pom.
 <dependency>
     <groupId>io.bigio</groupId>
     <artifactId>bigio-core</artifactId>
-    <version>1.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
