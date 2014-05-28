@@ -17,7 +17,7 @@ your Maven pom.
 ```XML
 <dependency>
     <groupId>io.bigio</groupId>
-    <artifactId>bigio-core</groupId>
+    <artifactId>bigio-core</artifactId>
     <version>1.0</version>
 </dependency>
 ```
