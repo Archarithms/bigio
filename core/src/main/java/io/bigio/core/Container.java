@@ -205,6 +205,9 @@ public enum Container {
         if(toInstantiate.isEmpty()) {
             for(Class<?> cl : components) {
                 try {
+                    if(LOG.isTraceEnabled()) {
+                        LOG.trace("Instantiating " + cl.getName());
+                    }
                     instances.put(cl, cl.newInstance());
                 } catch (InstantiationException ex) {
                     LOG.error("Error instantiating class " + cl.getName(), ex);
@@ -214,6 +217,9 @@ public enum Container {
             }
         } else {
             for(Class<?> cl : toInstantiate) {
+                if(LOG.isTraceEnabled()) {
+                    LOG.trace("Instantiating " + cl.getName());
+                }
                 instantiateTree(cl);
             }
         }
@@ -222,6 +228,9 @@ public enum Container {
     private void instantiateTree(Class<?> clazz) {
         if(instances.get(clazz) == null) {
             try {
+                if(LOG.isTraceEnabled()) {
+                    LOG.trace("Instantiating " + clazz.getName());
+                }
                 instances.put(clazz, clazz.newInstance());
             } catch (InstantiationException ex) {
                 LOG.error("Error instantiating class " + clazz.getName(), ex);
