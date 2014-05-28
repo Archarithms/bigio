@@ -61,8 +61,7 @@ public class CommandLineInterface extends Thread {
     /**
      * Start the command line interface thread.
      */
-    @Initialize
-    public void init() {
+    public CommandLineInterface() {
         start();
     }
 
