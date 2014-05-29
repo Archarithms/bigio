@@ -27,7 +27,7 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.core;
+package io.bigio;
 
 /**
  * This is an interface for defining listeners of messages.

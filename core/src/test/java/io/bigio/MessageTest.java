@@ -8,7 +8,6 @@ package io.bigio;
 import io.bigio.DeliveryType;
 import io.bigio.Starter;
 import io.bigio.Speaker;
-import io.bigio.core.MessageListener;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;

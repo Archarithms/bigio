@@ -31,7 +31,6 @@ package io.bigio;
 
 import io.bigio.cli.CommandLineInterface;
 import io.bigio.core.ClusterService;
-import io.bigio.core.MessageListener;
 import io.bigio.core.member.Member;
 import io.bigio.util.TopicUtils;
 import java.util.Collection;

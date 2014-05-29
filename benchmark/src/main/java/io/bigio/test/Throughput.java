@@ -32,7 +32,7 @@ package io.bigio.test;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
 import io.bigio.Starter;
-import io.bigio.core.MessageListener;
+import io.bigio.MessageListener;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;

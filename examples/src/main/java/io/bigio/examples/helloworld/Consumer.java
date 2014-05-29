@@ -32,8 +32,8 @@ package io.bigio.examples.helloworld;
 import io.bigio.Component;
 import io.bigio.Initialize;
 import io.bigio.Inject;
+import io.bigio.MessageListener;
 import io.bigio.Speaker;
-import io.bigio.core.MessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,10 +51,14 @@ public class Consumer {
 
     @Initialize
     public void init() {
+        speaker.addListener("HelloWorld", (HelloWorldMessage message) -> {
+            LOG.info("As a lambda expression: " + message.getMessage());
+        });
+        
         speaker.addListener("HelloWorld", new MessageListener<HelloWorldMessage>() {
             @Override
             public void receive(HelloWorldMessage message) {
-                LOG.info(message.getMessage());
+                LOG.info("As an anonymous inner class: " + message.getMessage());
             }
         });
     }

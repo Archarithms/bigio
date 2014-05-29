@@ -29,6 +29,7 @@
 
 package io.bigio.core;
 
+import io.bigio.MessageListener;
 import io.bigio.Component;
 import io.bigio.DeliveryType;
 import io.bigio.Inject;

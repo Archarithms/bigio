@@ -29,6 +29,7 @@
 
 package io.bigio.core;
 
+import io.bigio.MessageListener;
 import io.bigio.Component;
 import io.bigio.Interceptor;
 import io.bigio.core.codec.GenericDecoder;

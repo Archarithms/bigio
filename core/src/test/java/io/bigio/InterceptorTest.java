@@ -10,7 +10,6 @@ import io.bigio.Interceptor;
 import io.bigio.Starter;
 import io.bigio.Speaker;
 import io.bigio.core.Envelope;
-import io.bigio.core.MessageListener;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;

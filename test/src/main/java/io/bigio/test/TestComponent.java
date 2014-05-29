@@ -33,7 +33,7 @@ import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.Speaker;
 import io.bigio.core.Envelope;
-import io.bigio.core.MessageListener;
+import io.bigio.MessageListener;
 import io.bigio.core.codec.EnvelopeEncoder;
 import io.bigio.core.codec.GenericEncoder;
 import io.bigio.util.TimeUtil;

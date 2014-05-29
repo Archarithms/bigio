@@ -33,7 +33,7 @@ import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
-import io.bigio.core.MessageListener;
+import io.bigio.MessageListener;
 import io.bigio.core.codec.GenericEncoder;
 import java.io.IOException;
 import java.util.ArrayList;
