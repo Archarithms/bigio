@@ -63,7 +63,6 @@
     <modules>
         <module>core</module>
         <module>agent</module>
-        <module>test</module>
         <module>benchmark</module>
         <module>runtime</module>
         <module>examples</module>
