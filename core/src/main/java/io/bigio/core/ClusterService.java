@@ -29,11 +29,11 @@
 
 package io.bigio.core;
 
-import io.bigio.MessageListener;
 import io.bigio.Component;
 import io.bigio.DeliveryType;
 import io.bigio.Inject;
 import io.bigio.Interceptor;
+import io.bigio.MessageListener;
 import io.bigio.Parameters;
 import io.bigio.core.codec.GenericEncoder;
 import io.bigio.core.member.AbstractMember;
