@@ -22,6 +22,9 @@ your Maven pom.
 </dependency>
 ```
 
-A zipped runtime package can be downloaded [here] (http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.0.1/bigio-runtime-1.0.1.zip)
+A zipped runtime package can be downloaded [here](http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.0.1/bigio-runtime-1.0.1.zip)
 
-For more information, please see our [wiki](https://github.com/Archarithms/bigio/wiki)
+For more information, please see the [wiki](https://github.com/Archarithms/bigio/wiki)
+or our [website](http://bigio.io)
+
+The Javadocs can be viewed [here](http://bigio.io/javadoc/)
