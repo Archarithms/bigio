@@ -32,8 +32,10 @@ package io.bigio.examples.helloworld;
 import io.bigio.Component;
 import io.bigio.Initialize;
 import io.bigio.Inject;
+import io.bigio.Interceptor;
 import io.bigio.MessageListener;
 import io.bigio.Speaker;
+import io.bigio.core.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +61,19 @@ public class Consumer {
             @Override
             public void receive(HelloWorldMessage message) {
                 LOG.info("As an anonymous inner class: " + message.getMessage());
+            }
+        });
+
+        speaker.addInterceptor("HelloWorld", (Envelope envelope) -> {
+            LOG.info("Interceptor as a lambda expression: " + envelope.getSenderKey() + " : " + envelope.getTopic());
+            return envelope;
+        });
+
+        speaker.addInterceptor("HelloWorld", new Interceptor() {
+            @Override
+            public Envelope intercept(Envelope envelope) {
+                LOG.info("Interceptor as an anonymous inner class: " + envelope.getSenderKey() + " : " + envelope.getTopic());
+                return envelope;
             }
         });
     }
