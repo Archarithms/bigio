@@ -172,6 +172,8 @@ public class NetworkUtil {
                     default:
                         LOG.error("Cannot determine operating system. Cluster cannot form.");
                 }
+            } else {
+                networkInterfaceName = networkInterfaceName.trim();
             }
             
             nic = NetworkInterface.getByName(networkInterfaceName);
