@@ -18,6 +18,10 @@ setup(
     author_email='andrew.trimble@archarithms.com',
     license='BSD',
 
+    download_url='www.bigio.io',
+    packages=['bigio'],
+    install_requires=['netifaces'],
+
     classifiers=[
         'Development Status :: 3 - Alpha',
 

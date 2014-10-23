@@ -1,213 +1,159 @@
-/*
- * Copyright (c) 2014, Archarithms Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer. 
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those
- * of the authors and should not be interpreted as representing official policies, 
- * either expressed or implied, of the FreeBSD Project.
- */
+#
+# Copyright (c) 2014, Archarithms Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer. 
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are those
+# of the authors and should not be interpreted as representing official policies, 
+# either expressed or implied, of the FreeBSD Project.
+#
 
-package io.bigio.util;
+import logging
+import netifaces
+from bigio import Parameters
+from bigio.core import OperatingSystem
+from random import shuffle
 
-import io.bigio.Parameters;
-import io.netty.util.NetUtil;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+#
+# A utility class providing network tools.
+# 
+# @author Andy Trimble
+#
 
-/**
- * A utility class providing network tools.
- * 
- * @author Andy Trimble
- */
-public class NetworkUtil {
+logger = logging.getLogger('NetworkUtil')
 
-    private static final Logger LOG = LoggerFactory.getLogger(NetworkUtil.class);
+NETWORK_INTERFACE_PROPETY = "io.bigio.network"
 
-    private static final String NETWORK_INTERFACE_PROPETY = "io.bigio.network";
+nic = None
+
+ip = 'localhost'
+
+START_PORT = 32768;
+END_PORT = 65536;
+NUM_CANDIDATES = END_PORT - START_PORT;
+PORTS = []
+
+def init():
+    for i in range(START_PORT, END_PORT):
+        PORTS.append(i)
     
-    private static NetworkInterface nic = null;
-    private static InetAddress inetAddress = null;
+    shuffle(PORTS)
+    return
 
-    private static String ip;
+def findNIC():
+    
+    networkInterfaceName = Parameters.getProperty(NETWORK_INTERFACE_PROPETY);
 
-    private static final int START_PORT = 32768;
-    private static final int END_PORT = 65536;
-    private static final int NUM_CANDIDATES = END_PORT - START_PORT;
+    if networkInterfaceName is None:
+        if Parameters.currentOS() == OperatingSystem.WIN_64 or Parameters.currentOS() == OperatingSystem.WIN_32:
+            networkInterfaceName = "lo"
+        elif Parameters.currentOS() == OperatingSystem.LINUX_64 or Parameters.currentOS() == OperatingSystem.LINUX_32:
+            networkInterfaceName = "eth0"
+        elif Parameters.currentOS() == OperatingSystem.MAC_64 or Parameters.currentOS() == OperatingSystem.MAC_32:
+            networkInterfaceName = "en0"
+        else:
+            logger.error("Cannot determine operating system. Cluster cannot form.")
+    else:
+        networkInterfaceName = networkInterfaceName.trim();
+    
+    nic = NetworkInterface.getByName(networkInterfaceName);
 
-    private static final List<Integer> PORTS = new ArrayList<>();
-    private static Iterator<Integer> portIterator;
-
-    static {
-        for (int i = START_PORT; i < END_PORT; i ++) {
-            PORTS.add(i);
-        }
-        Collections.shuffle(PORTS);
+    if(nic != null && !nic.isUp()) {
+        LOG.error("Selected network interface '" + networkInterfaceName + 
+                "' is down. Please select an alternate network " + 
+                "interface using the property 'io.bigio.network' in your " +
+                "configuration file (ex. io.bigio.network=eth0). For " +
+                "a list of available interfaces, type 'net' into the shell.");
     }
 
-    /**
-     * Get the IP address of this instance.
-     * 
-     * @return the IP address associated with the selected network interface
-     */
-    public static String getIp() {
-        if(nic == null) {
-            findNIC();
-        }
+    if(nic != null) {
+        Enumeration e = nic.getInetAddresses();
+        while(e.hasMoreElements()) {
+            InetAddress i = (InetAddress) e.nextElement();
+            String address = i.getHostAddress();
 
-        return ip;
-    }
-
-    /**
-     * Get the configured network interface.
-     * 
-     * @return the network interface this member is using
-     */
-    public static NetworkInterface getNetworkInterface() {
-        if(nic == null) {
-            findNIC();
-        }
-
-        return nic;
-    }
-
-    /**
-     * Get the InetAddress object.
-     * 
-     * @return the InetAddress object
-     */
-    public static InetAddress getInetAddress() {
-        if(nic == null) {
-            findNIC();
-        }
-
-        return inetAddress;
-    }
-
-    /**
-     * Get a random unused port between START_PORT and END_PORT.
-     * 
-     * @return a random unused port
-     */
-    public static int getFreePort() {
-        for (int i = 0; i < NUM_CANDIDATES; i ++) {
-            int port = nextCandidatePort();
-            try {
-                // Ensure it is possible to bind on both wildcard and loopback.
-                ServerSocket ss;
-                ss = new ServerSocket();
-                ss.setReuseAddress(false);
-                ss.bind(new InetSocketAddress(port));
-                ss.close();
-
-                ss = new ServerSocket();
-                ss.setReuseAddress(false);
-                ss.bind(new InetSocketAddress(NetUtil.LOCALHOST, port));
-                ss.close();
-
-                return port;
-            } catch (IOException e) {
-                // ignore
+            if(!address.contains(":")) {
+                inetAddress = i;
+                ip = address;
+                break;
             }
         }
-
-        throw new RuntimeException("unable to find a free port");
+    } else {
+        LOG.error("Selected network interface '" + networkInterfaceName + 
+                "' cannot be found. Please select an alternate network " + 
+                "interface using the property 'io.bigio.network' in your " +
+                "configuration file (ex. io.bigio.network=eth0). For " +
+                "a list of available interfaces, type 'net' into the shell.");
     }
+    
+#
+# Get the IP address of this instance.
+# 
+# @return the IP address associated with the selected network interface
+#
+@staticmethod
+def getIp():
+    if nic == None:
+        findNIC()
 
-    private static int nextCandidatePort() {
-        if (portIterator == null || !portIterator.hasNext()) {
-            portIterator = PORTS.iterator();
-        }
-        return portIterator.next();
-    }
+    return ip;
 
-    private static void findNIC() {
-        try {
-            String networkInterfaceName = Parameters.INSTANCE.getProperty(NETWORK_INTERFACE_PROPETY);
+#
+# Get the configured network interface.
+# 
+# @return the network interface this member is using
+#
+def getNetworkInterface():
+    if nic is None:
+        findNIC();
 
-            if(networkInterfaceName == null || "".equals(networkInterfaceName)) {
-                switch(Parameters.INSTANCE.currentOS()) {
-                    case WIN_64:
-                    case WIN_32:
-                        networkInterfaceName = "lo";
-                        break;
-                    case LINUX_64:
-                    case LINUX_32:
-                        networkInterfaceName = "eth0";
-                        break;
-                    case MAC_64:
-                    case MAC_32:
-                        networkInterfaceName = "en0";
-                        break;
-                    default:
-                        LOG.error("Cannot determine operating system. Cluster cannot form.");
-                }
-            } else {
-                networkInterfaceName = networkInterfaceName.trim();
-            }
+    return nic;
+
+#
+# Get a random unused port between START_PORT and END_PORT.
+# 
+# @return a random unused port
+#
+def getFreePort():
+    for port in PORTS:
+        
+        try:
+            comSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            comSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        except socket.error, msg:
+            continue
             
-            nic = NetworkInterface.getByName(networkInterfaceName);
+        try:
+            comSocket.bind(('', port))
+            comSocket.connect()
+            
+            comSocket.close()
+            
+            return port
+        
+        except socket.error, msg:
+            continue
+        
 
-            if(nic != null && !nic.isUp()) {
-                LOG.error("Selected network interface '" + networkInterfaceName + 
-                        "' is down. Please select an alternate network " + 
-                        "interface using the property 'io.bigio.network' in your " +
-                        "configuration file (ex. io.bigio.network=eth0). For " +
-                        "a list of available interfaces, type 'net' into the shell.");
-            }
+    return None;
 
-            if(nic != null) {
-                Enumeration e = nic.getInetAddresses();
-                while(e.hasMoreElements()) {
-                    InetAddress i = (InetAddress) e.nextElement();
-                    String address = i.getHostAddress();
-
-                    if(!address.contains(":")) {
-                        inetAddress = i;
-                        ip = address;
-                        break;
-                    }
-                }
-            } else {
-                LOG.error("Selected network interface '" + networkInterfaceName + 
-                        "' cannot be found. Please select an alternate network " + 
-                        "interface using the property 'io.bigio.network' in your " +
-                        "configuration file (ex. io.bigio.network=eth0). For " +
-                        "a list of available interfaces, type 'net' into the shell.");
-            }
-        } catch(SocketException ex) {
-            LOG.error("Unable to determine IP address", ex);
-            nic = null;
-        }
-    }
-}
+init()

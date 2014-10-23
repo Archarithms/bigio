@@ -1,348 +1,289 @@
-/*
- * Copyright (c) 2014, Archarithms Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer. 
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * The views and conclusions contained in the software and documentation are those
- * of the authors and should not be interpreted as representing official policies, 
- * either expressed or implied, of the FreeBSD Project.
- */
+#
+# Copyright (c) 2014, Archarithms Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer. 
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are those
+# of the authors and should not be interpreted as representing official policies, 
+# either expressed or implied, of the FreeBSD Project.
+#
 
-package io.bigio.core;
+import logging
+import random
+from bigio import DeliveryType
+from bigio import Parameters
+from bigio.core import Envelope
+from bigio.core import Gossiper
+from bigio.core import ListenerRegistry
+from bigio.core import MCDiscovery
+from bigio.core.codec import GenericEncoder
+from bigio.core.member import MemberHolder
+from bigio.core.member import MemberKey
+from bigio.core.member import MeMember
+from bigio.util import NetworkUtil
+from bigio.util import TimeUtil
 
-import io.bigio.Component;
-import io.bigio.DeliveryType;
-import io.bigio.Inject;
-import io.bigio.Interceptor;
-import io.bigio.MessageListener;
-import io.bigio.Parameters;
-import io.bigio.core.codec.GenericEncoder;
-import io.bigio.core.member.AbstractMember;
-import io.bigio.core.member.MeMember;
-import io.bigio.core.member.MeMemberTCP;
-import io.bigio.core.member.MeMemberUDP;
-import io.bigio.core.member.Member;
-import io.bigio.core.member.MemberHolder;
-import io.bigio.core.member.MemberKey;
-import io.bigio.core.member.MemberStatus;
-import io.bigio.core.member.RemoteMemberTCP;
-import io.bigio.core.member.RemoteMemberUDP;
-import io.bigio.util.NetworkUtil;
-import io.bigio.util.TimeUtil;
-import io.bigio.util.TopicUtils;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+#
+# This class handles communication between nodes in a cluster.
+# 
+# @author Andy Trimble
+#
+class ClusterService():
 
-/**
- * This class handles communication between nodes in a cluster.
- * 
- * @author Andy Trimble
- */
-@Component
-public class ClusterService {
+    PROTOCOL_PROPERTY = 'io.bigio.protocol'
+    DEFAULT_PROTOCOL = 'tcp'
+    GOSSIP_PORT_PROPERTY = 'io.bigio.port.gossip'
+    DATA_PORT_PROPERTY = 'io.bigio.port.data'
 
-    private static final String PROTOCOL_PROPERTY = "io.bigio.protocol";
-    private static final String DEFAULT_PROTOCOL = "tcp";
-    private static final String GOSSIP_PORT_PROPERTY = "io.bigio.port.gossip";
-    private static final String DATA_PORT_PROPERTY = "io.bigio.port.data";
+    multicast = MCDiscovery
 
-    @Inject
-    private MCDiscovery multicast;
+    memberHolder = MemberHolder
 
-    @Inject
-    private MemberHolder memberHolder;
+    registry = ListenerRegistry
 
-    @Inject
-    private ListenerRegistry registry;
+    me = MeMember
 
-    private MeMember me;
+    gossiper = Gossiper
 
-    private Gossiper gossiper;
+    logger = logging.getLogger('ClusterService')
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClusterService.class);
+    deliveries = dict()
+    roundRobinIndex = dict()
 
-    private final Map<String, DeliveryType> deliveries = new ConcurrentHashMap<>();
-    private final Map<String, Integer> roundRobinIndex = new ConcurrentHashMap<>();
+    shuttingDown = False
 
-    private boolean shuttingDown = false;
+    #
+    # Default constructor.
+    #
+    def __init__(self):
+        return
 
-    /**
-     * Default constructor.
-     */
-    public ClusterService() {
+    #
+    # Set the multicast discovery object. Only used in bootstrapping.
+    # 
+    # @param multicast the multicast discovery object.
+    #
+    def setMulticastDiscovery(self, multicast):
+        self.multicast = multicast
+        return
+
+    #
+    # Set the member container. Only used in bootstrapping.
+    # 
+    # @param memberHolder the member container.
+    #
+    def setMemberHolder(self, memberHolder):
+        self.memberHolder = memberHolder
+        return
+
+    #
+    # Set the listener registry. Only used in bootstrapping.
+    # 
+    # @param registry the listener registry.
+    #
+    def setRegistry(self, registry):
+        self.registry = registry
+        return
+
+    #
+    # Get the listener registry.
+    # 
+    # @return the listener registry.
+    #
+    def getRegistry(self):
+        return self.registry
+
+    #
+    # Set the delivery method.
+    # 
+    # @param topic a topic.
+    # @param type the type of method delivery.
+    #
+    def setDeliveryType(self, topic, deliveryType):
+        self.deliveries[topic] = deliveryType
         
-    }
+        if deliveryType == DeliveryType.ROUND_ROBIN:
+            self.roundRobinIndex[topic] = 0
+            
+        return
 
-    /**
-     * Set the multicast discovery object. Only used in bootstrapping.
-     * 
-     * @param multicast the multicast discovery object.
-     */
-    public void setMulticastDiscovery(MCDiscovery multicast) {
-        this.multicast = multicast;
-    }
+    #
+    # Add an interceptor to a topic.
+    # 
+    # @param topic a topic.
+    # @param interceptor an interceptor.
+    #
+    def addInterceptor(self, topic, interceptor):
+        self.registry.addInterceptor(topic, interceptor)
+        return
 
-    /**
-     * Set the member container. Only used in bootstrapping.
-     * 
-     * @param memberHolder the member container.
-     */
-    public void setMemberHolder(MemberHolder memberHolder) {
-        this.memberHolder = memberHolder;
-    }
+    #
+    # Add a topic/partition listener.
+    # 
+    # @param <T> the message type.
+    # @param topic a topic.
+    # @param partition a partition.
+    # @param consumer a listener.
+    #
+    def addListener(self, topic, partition, consumer):
+        self.registry.registerMemberForTopic(topic, partition, self.me)
+        self.registry.addLocalListener(topic, partition, consumer)
+        return
 
-    /**
-     * Set the listener registry. Only used in bootstrapping.
-     * 
-     * @param registry the listener registry.
-     */
-    public void setRegistry(ListenerRegistry registry) {
-        this.registry = registry;
-    }
+    #
+    # Remove all listeners on a topic.
+    # 
+    # @param topic a topic.
+    #
+    def removeAllListeners(self, topic):
+        self.registry.removeAllLocalListeners(topic);
+        return
 
-    /**
-     * Get the listener registry.
-     * 
-     * @return the listener registry.
-     */
-    public ListenerRegistry getRegistry() {
-        return registry;
-    }
+    #
+    # Send a message.
+    # 
+    # @param <T> a message type.
+    # @param topic a topic.
+    # @param partition a partition.
+    # @param message a message.
+    # @param offsetMilliseconds time offset of the message.
+    # @throws IOException in case of error in delivery.
+    #
+    def sendMessage(self, topic, partition, message, offsetMilliseconds=0):
+        envelope = Envelope()
+        envelope.setDecoded(False)
+        envelope.setExecuteTime(offsetMilliseconds)
+        envelope.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight())
+        envelope.setSenderKey(MemberKey.getMemberKey(self.me))
+        envelope.setTopic(topic)
+        envelope.setPartition(partition)
+        envelope.setClassName(message.getClass().getName())
 
-    /**
-     * Set the delivery method.
-     * 
-     * @param topic a topic.
-     * @param type the type of method delivery.
-     */
-    public void setDeliveryType(String topic, DeliveryType type) {
-        deliveries.put(topic, type);
-        if(type == DeliveryType.ROUND_ROBIN) {
-            roundRobinIndex.put(topic, 0);
-        }
-    }
+        if topic in self.deliveries:
+            delivery = self.deliveries[topic]
+        else:
+            delivery = DeliveryType.BROADCAST
+            self.deliveries[topic] = delivery
 
-    /**
-     * Add an interceptor to a topic.
-     * 
-     * @param topic a topic.
-     * @param interceptor an interceptor.
-     */
-    public void addInterceptor(String topic, Interceptor interceptor) {
-        registry.addInterceptor(topic, interceptor);
-    }
+        if delivery == DeliveryType.ROUND_ROBIN:
+            if len(self.registry.getRegisteredMembers(topic)) > 0:
 
-    /**
-     * Add a topic/partition listener.
-     * 
-     * @param <T> the message type.
-     * @param topic a topic.
-     * @param partition a partition.
-     * @param consumer a listener.
-     */
-    public <T> void addListener(String topic, String partition, MessageListener<T> consumer) {
-        registry.registerMemberForTopic(topic, partition, me);
-        registry.addLocalListener(topic, partition, consumer);
-    }
-
-    /**
-     * Remove all listeners on a topic.
-     * 
-     * @param topic a topic.
-     */
-    public void removeAllListeners(String topic) {
-        registry.removeAllLocalListeners(topic);
-    }
-
-    /**
-     * Setn a message.
-     * 
-     * @param <T> a message type.
-     * @param topic a topic.
-     * @param partition a partition.
-     * @param message a message.
-     * @param offsetMilliseconds time offset of the message.
-     * @throws IOException in case of error in delivery.
-     */
-    public <T> void sendMessage(String topic, String partition, T message, int offsetMilliseconds) throws IOException {
-        Envelope envelope = new Envelope();
-        envelope.setDecoded(false);
-        envelope.setExecuteTime(offsetMilliseconds);
-        envelope.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
-        envelope.setSenderKey(MemberKey.getKey(me));
-        envelope.setTopic(topic);
-        envelope.setPartition(partition);
-        envelope.setClassName(message.getClass().getName());
-
-        DeliveryType delivery = deliveries.get(topic);
-        if(delivery == null) {
-            delivery = DeliveryType.BROADCAST;
-            deliveries.put(topic, delivery);
-        }
-
-        switch(delivery) {
-            case ROUND_ROBIN:
-
-                if(registry.getRegisteredMembers(topic).size() > 0) {
-
-                    int index = (roundRobinIndex.get(topic) + 1) % 
-                            registry.getRegisteredMembers(topic).size();
-                    roundRobinIndex.put(topic, index);
+                index = (self.roundRobinIndex[topic] + 1) % len(self.registry.getRegisteredMembers(topic))
+                self.roundRobinIndex[topic] = index
                 
-                    Member member = registry.getRegisteredMembers(topic).get(index);
+                member = self.registry.getRegisteredMembers(topic)[index]
 
-                    if(me.equals(member)) {
-                        envelope.setMessage(message);
-                        envelope.setDecoded(true);
-                    } else {
-                        envelope.setPayload(GenericEncoder.encode(message));
-                        envelope.setDecoded(false);
-                    }
+                if(self.me.equals(member)):
+                    envelope.setMessage(message)
+                    envelope.setDecoded(True)
+                else:
+                    envelope.setPayload(GenericEncoder.encode(message))
+                    envelope.setDecoded(False)
 
-                    member.send(envelope);
-                }
-
-                break;
-            case RANDOM:
-
-                if(registry.getRegisteredMembers(topic).size() > 0) {
-                    int index = (int)(Math.random() *
-                            registry.getRegisteredMembers(topic).size());
-
-                    Member member = registry.getRegisteredMembers(topic).get(index);
-
-                    if(me.equals(member)) {
-                        envelope.setMessage(message);
-                        envelope.setDecoded(true);
-                    } else {
-                        envelope.setPayload(GenericEncoder.encode(message));
-                        envelope.setDecoded(false);
-                    }
-
-                    member.send(envelope);
-                }
+                member.send(envelope)
                 
-                break;
-            case BROADCAST:
-            default:
-                for(Member member : registry.getRegisteredMembers(topic)) {
+        elif delivery == DeliveryType.RANDOM:
+            if len(self.registry.getRegisteredMembers(topic)) > 0:
+                index = (int)(random.random() * self.registry.getRegisteredMembers(topic).size())
 
-                    if(me.equals(member)) {
-                        envelope.setMessage(message);
-                        envelope.setDecoded(true);
-                    } else {
-                        envelope.setPayload(GenericEncoder.encode(message));
-                        envelope.setDecoded(false);
-                    }
+                member = self.registry.getRegisteredMembers(topic)[index]
 
-                    member.send(envelope);
-                }
-        }
-    }
+                if self.me.equals(member):
+                    envelope.setMessage(message)
+                    envelope.setDecoded(True)
+                else:
+                    envelope.setPayload(GenericEncoder.encode(message))
+                    envelope.setDecoded(False)
 
-    /**
-     * Set a message on a topic/partition with no execution offset.
-     * 
-     * @param <T> a message type.
-     * @param topic a topic.
-     * @param partition a partition.
-     * @param message a message.
-     * @throws IOException in case of delivery error.
-     */
-    public <T> void sendMessage(String topic, String partition, T message) throws IOException {
-        sendMessage(topic, partition, message, 0);
-    }
+                member.send(envelope);
+                    
+        else:
+            for member in self.registry.getRegisteredMembers(topic):
+                if self.me.equals(member):
+                    envelope.setMessage(message);
+                    envelope.setDecoded(True);
+                else:
+                    envelope.setPayload(GenericEncoder.encode(message));
+                    envelope.setDecoded(False);
 
-    /**
-     * Get the list of known members. Members returned by this method may be
-     * either active or dead.
-     * 
-     * @return the list of known members.
-     */
-    public Collection<Member> getAllMembers() {
-        return memberHolder.getAllMembers();
-    }
+                member.send(envelope);
+        return
+
+    #
+    # Get the list of known members. Members returned by this method may be
+    # either active or dead.
+    # 
+    # @return the list of known members.
+    #
+    def getAllMembers(self):
+        return self.memberHolder.getAllMembers()
     
-    /**
-     * Get the list of active members.
-     * 
-     * @return the list of active members.
-     */
-    public Collection<Member> getActiveMembers() {
-        return memberHolder.getActiveMembers();
-    }
+    #
+    # Get the list of active members.
+    # 
+    # @return the list of active members.
+    #
+    def getActiveMembers(self):
+        return self.memberHolder.getActiveMembers()
     
-    /**
-     * Get the list of dead members.
-     * 
-     * @return the list of dead members.
-     */
-    public Collection<Member> getDeadMembers() {
-        return memberHolder.getDeadMembers();
-    }
+    #
+    # Get the list of dead members.
+    # 
+    # @return the list of dead members.
+    #
+    def getDeadMembers(self):
+        return self.memberHolder.getDeadMembers()
 
-    /**
-     * Get the member representing this BigIO instance.
-     * 
-     * @return the current member.
-     */
-    public Member getMe() {
-        return me;
-    }
+    #
+    # Get the member representing this BigIO instance.
+    # 
+    # @return the current member.
+    #
+    def getMe(self):
+        return self.me
 
-    /**
-     * Initialize communication.
-     */
-    public void initialize() {
+    #
+    # Initialize communication.
+    #
+    def initialize(self):
 
-        String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
-        String gossipPort = Parameters.INSTANCE.getProperty(GOSSIP_PORT_PROPERTY);
-        String dataPort = Parameters.INSTANCE.getProperty(DATA_PORT_PROPERTY);
+        protocol = Parameters.getProperty(self.PROTOCOL_PROPERTY, self.DEFAULT_PROTOCOL);
+        gossipPort = Parameters.getProperty(self.GOSSIP_PORT_PROPERTY);
+        dataPort = Parameters.getProperty(self.DATA_PORT_PROPERTY);
 
-        int gossipPortInt;
-        int dataPortInt;
 
-        if(gossipPort == null) {
-            LOG.trace("Finding a random port for gossiping.");
-            gossipPortInt = NetworkUtil.getFreePort();
-        } else {
-            gossipPortInt = Integer.parseInt(gossipPort);
-        }
+        if gossipPort is None:
+            self.logger.trace("Finding a random port for gossiping.")
+            gossipPortInt = NetworkUtil.getFreePort()
+        else:
+            gossipPortInt = int(gossipPort)
 
-        if(dataPort == null) {
-            LOG.trace("Finding a random port for data.");
+        if dataPort is None:
+            self.logger.trace("Finding a random port for data.");
             dataPortInt = NetworkUtil.getFreePort();
-        } else {
-            dataPortInt = Integer.parseInt(dataPort);
-        }
+        else:
+            dataPortInt = int(dataPort);
 
-        String myAddress = NetworkUtil.getIp();
+        myAddress = NetworkUtil.getIp();
 
         if(LOG.isDebugEnabled()) {
             StringBuilder greeting = new StringBuilder();
@@ -381,25 +322,25 @@ public class ClusterService {
         registry.setMe(me);
     }
 
-    /**
-     * TODO: Implement manually joining a cluster.
-     * 
-     * @param ip an initial peer to which to connect.
-     */
+    /#*
+     # TODO: Implement manually joining a cluster.
+     # 
+     # @param ip an initial peer to which to connect.
+     #/
     public void join(String ip) {
         
     }
 
-    /**
-     * TODO: Implement manually leaving a cluster.
-     */
+    /#*
+     # TODO: Implement manually leaving a cluster.
+     #/
     public void leave() {
         
     }
 
-    /**
-     * Shutdown communication objects.
-     */
+    /#*
+     # Shutdown communication objects.
+     #/
     public void shutdown() {
         shuttingDown = true;
         
