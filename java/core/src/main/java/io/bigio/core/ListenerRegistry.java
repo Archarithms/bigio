@@ -290,7 +290,7 @@ public class ListenerRegistry {
                    reactor.notify(TopicUtils.getNotifyTopicString(env.getTopic(), env.getPartition()), Event.wrap(env));
                }
             }, envelope.getExecuteTime(), TimeUnit.MILLISECONDS);
-        } else {
+        } else if(envelope.getExecuteTime() >= 0) {
             reactor.notify(TopicUtils.getNotifyTopicString(envelope.getTopic(), envelope.getPartition()), Event.wrap(envelope));
         }
     }
