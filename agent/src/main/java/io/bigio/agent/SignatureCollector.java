@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
-import static org.objectweb.asm.Opcodes.ASM4;
+import static org.objectweb.asm.Opcodes.ASM5;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class SignatureCollector extends ClassVisitor {
     private final Map<String, String> signatures = new HashMap<>();
 
     public SignatureCollector(ClassVisitor cv) {
-        super(ASM4, cv);
+        super(ASM5, cv);
     }
 
     @Override
