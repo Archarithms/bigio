@@ -18,11 +18,11 @@ your Maven pom.
 <dependency>
     <groupId>io.bigio</groupId>
     <artifactId>bigio-core</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
-A zipped runtime package can be downloaded [here](http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.0.1/bigio-runtime-1.0.1.zip)
+A zipped runtime package can be downloaded [here](http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.0.2/bigio-runtime-1.0.2.zip)
 
 For more information, please see the [wiki](https://github.com/Archarithms/bigio/wiki)
 or our [website](http://bigio.io)

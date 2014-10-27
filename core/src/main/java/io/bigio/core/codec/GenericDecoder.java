@@ -29,6 +29,8 @@
 
 package io.bigio.core.codec;
 
+import io.bigio.Parameters;
+import io.bigio.agent.MessageTransformer;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -49,7 +51,7 @@ public class GenericDecoder {
     private static final Logger LOG = LoggerFactory.getLogger(GenericDecoder.class);
 
     private static final Map<Class, Method> METHODS = new HashMap<>();
-    
+
     /**
      * Decode a message payload.
      * 
@@ -65,15 +67,21 @@ public class GenericDecoder {
 
             if(clazz.getAnnotation(io.bigio.Message.class) != null) {
                 try {
-                    Method method = METHODS.get(clazz);
+                    if(!MessageTransformer.USE_JAVASSIST) {
+                        Method method = METHODS.get(clazz);
 
-                    if(method == null) {
-                        method = clazz.getMethod("_decode_", byte[].class);
-                        METHODS.put(clazz, method);
+                        if(method == null) {
+                            method = clazz.getMethod("_decode_", byte[].class);
+                            METHODS.put(clazz, method);
+                        }
                     }
                     
                     Object obj = clazz.newInstance();
-                    method.invoke(obj, bytes);
+                    if(MessageTransformer.USE_JAVASSIST) {
+                        ((BigIOMessage)obj).bigiodecode(bytes);
+                    } else {
+                        METHODS.get(clazz).invoke(obj, bytes);
+                    }
                     return obj;
                 } catch (NoSuchMethodException ex) {
                     LOG.error("Cannot find encoding method.", ex);
