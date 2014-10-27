@@ -1,0 +1,18 @@
+/*
+ * Copyright 2014 Archarithms Inc.
+ */
+
+package io.bigio.test.throughput;
+
+import io.bigio.Parameters;
+
+/**
+ *
+ * @author atrimble
+ */
+public class ThroughputConsumer {
+    public static void main(String[] args) {
+        Parameters.INSTANCE.setProperty("com.a2i.benchmark.role", "consumer");
+        new Throughput().bootstrap().go();
+    }
+}

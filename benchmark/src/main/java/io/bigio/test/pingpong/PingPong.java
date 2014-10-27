@@ -27,14 +27,15 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test;
+package io.bigio.test.pingpong;
 
 import io.bigio.Component;
 import io.bigio.Inject;
+import io.bigio.MessageListener;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
+import io.bigio.Starter;
 import io.bigio.core.Envelope;
-import io.bigio.MessageListener;
 import io.bigio.core.codec.EnvelopeEncoder;
 import io.bigio.core.codec.GenericEncoder;
 import io.bigio.util.TimeUtil;
@@ -116,9 +117,9 @@ public class PingPong {
     };
 
     public PingPong() {
-        SimpleMessage m = new SimpleMessage("m", 0, 0);
+        SimpleMessage sample = new SimpleMessage("m", 0, 0);
         try {
-            byte[] payload = GenericEncoder.encode(m);
+            byte[] payload = GenericEncoder.encode(sample);
             Envelope envelope = new Envelope();
             envelope.setDecoded(false);
             envelope.setExecuteTime(0);
@@ -151,7 +152,7 @@ public class PingPong {
                     localThread.join();
                     memThread.join();
                 } catch(InterruptedException ex) {
-                    ex.printStackTrace();
+                    LOG.error("Thread interrupted.", ex);
                 }
 
                 long count = messageCount;
@@ -171,98 +172,101 @@ public class PingPong {
         });
     }
 
+    public PingPong bootstrap() {
+        this.speaker = Starter.bootstrap();
+        return this;
+    }
+
     @PostConstruct
     public void go() {
         String role = Parameters.INSTANCE.getProperty("com.a2i.benchmark.role", "local");
 
-        if(role.equals("producer")) {
-            LOG.info("Running as a producer");
-            speaker.addListener("HelloWorldProducer", new MessageListener<SimpleMessage>() {
-                @Override
-                public void receive(SimpleMessage message) {
-                    if(messageCount >= throwAway && !warmedUp) {
-                        LOG.info("Reached the warm-up threshold: resetting stats");
-                        warmedUp = true;
-                        messageCount = 0;
-                        memThread.start();
-                        time = System.currentTimeMillis();
-                    }
-
-                    ++messageCount;
-
-                    if(messageCount > maxMessages) {
-                        running = false;
-                        LOG.info("Finished");
-                    }
-
-                    try {
-                        if(running) {
-                            speaker.send("HelloWorldConsumer", m);
+        switch (role) {
+            case "producer":
+                LOG.info("Running as a producer");
+                speaker.addListener("HelloWorldProducer", new MessageListener<SimpleMessage>() {
+                    @Override
+                    public void receive(SimpleMessage message) {
+                        if(messageCount >= throwAway && !warmedUp) {
+                            LOG.info("Reached the warm-up threshold: resetting stats");
+                            warmedUp = true;
+                            messageCount = 0;
+                            memThread.start();
+                            time = System.currentTimeMillis();
                         }
-                    } catch (Exception ex) {
-                        LOG.error("Error", ex);
-                    }
-                }
-            });
-            injectThread.start();
-        } else if(role.equals("consumer")) {
-            LOG.info("Running as a consumer");
-            speaker.addListener("HelloWorldConsumer", new MessageListener<SimpleMessage>() {
-                @Override
-                public void receive(SimpleMessage message) {
-                    if(messageCount >= throwAway && !warmedUp) {
-                        LOG.info("Reached the warm-up threshold: resetting stats");
-                        warmedUp = true;
-                        messageCount = 0;
-                        memThread.start();
-                        time = System.currentTimeMillis();
-                    }
-                    
-                    ++messageCount;
-
-                    if(messageCount > maxMessages) {
-                        running = false;
-                        LOG.info("Finished");
-                    }
-
-                    try {
-                        if(running) {
-                            speaker.send("HelloWorldProducer", m);
+                        
+                        ++messageCount;
+                        
+                        if(messageCount > maxMessages) {
+                            running = false;
+                            LOG.info("Finished");
                         }
-                    } catch (Exception ex) {
-                        LOG.error("Error", ex);
+                        
+                        try {
+                            if(running) {
+                                speaker.send("HelloWorldConsumer", m);
+                            }
+                        } catch (Exception ex) {
+                            LOG.error("Error", ex);
+                        }
                     }
-                }
-            });
-        } else {
-            LOG.info("Running in VM only");
-            speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
-                @Override
-                public void receive(SimpleMessage message) {
-                    if(messageCount >= throwAway && !warmedUp) {
-                        LOG.info("Reached the warm-up threshold: resetting stats");
-                        warmedUp = true;
-                        messageCount = 0;
-                        memThread.start();
-                        time = System.currentTimeMillis();
+                }); injectThread.start();
+                break;
+            case "consumer":
+                LOG.info("Running as a consumer");
+                speaker.addListener("HelloWorldConsumer", new MessageListener<SimpleMessage>() {
+                    @Override
+                    public void receive(SimpleMessage message) {
+                        if(messageCount >= throwAway && !warmedUp) {
+                            LOG.info("Reached the warm-up threshold: resetting stats");
+                            warmedUp = true;
+                            messageCount = 0;
+                            memThread.start();
+                            time = System.currentTimeMillis();
+                        }
+                        
+                        ++messageCount;
+                        
+                        if(messageCount > maxMessages) {
+                            running = false;
+                            LOG.info("Finished");
+                        }
+                        
+                        try {
+                            if(running) {
+                                speaker.send("HelloWorldProducer", m);
+                            }
+                        } catch (Exception ex) {
+                            LOG.error("Error", ex);
+                        }
                     }
-
-                    ++messageCount;
-
-                    if(messageCount > maxMessages) {
-                        running = false;
-                        LOG.info("Finished");
+                }); break;
+            default:
+                LOG.info("Running in VM only");
+                speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
+                    @Override
+                    public void receive(SimpleMessage message) {
+                        if(messageCount >= throwAway && !warmedUp) {
+                            LOG.info("Reached the warm-up threshold: resetting stats");
+                            warmedUp = true;
+                            messageCount = 0;
+                            memThread.start();
+                            time = System.currentTimeMillis();
+                        }
+                        
+                        ++messageCount;
+                        
+                        if(messageCount > maxMessages) {
+                            running = false;
+                            LOG.info("Finished");
+                        }
                     }
-                }
-            });
-
-            System.gc();
-
+                }); System.gc();
             try {
                 Thread.sleep(1000l);
             } catch(InterruptedException ex) {}
-
-            localThread.start();
+                localThread.start();
+                break;
         }
     }
 

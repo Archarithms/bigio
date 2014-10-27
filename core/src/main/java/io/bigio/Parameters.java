@@ -105,6 +105,16 @@ public enum Parameters {
     }
 
     /**
+     * Set a property.
+     * 
+     * @param name the name of the property.
+     * @param value the value of the property.
+     */
+    public void setProperty(String name, String value) {
+        properties.setProperty(name, value);
+    }
+
+    /**
      * Get the operating system.
      * 
      * @return the operating system.
@@ -144,6 +154,11 @@ public enum Parameters {
         options.add(FileVisitOption.FOLLOW_LINKS);
 
         try {
+            if(!Files.isDirectory(configDir)) {
+                LOG.info("Cannot find default configuration directory. Using defaults.");
+                return;
+            }
+
             Files.walkFileTree(configDir, options, MAX_DEPTH, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {

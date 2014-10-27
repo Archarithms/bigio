@@ -27,12 +27,12 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test;
+package io.bigio.test.throughput;
 
+import io.bigio.MessageListener;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
 import io.bigio.Starter;
-import io.bigio.MessageListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -49,29 +49,26 @@ public class ThroughputThreaded {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThroughputThreaded.class);
     
-    private final Speaker speaker;
+    private Speaker speaker;
 
     private boolean headerPrinted = false;
-    
     
     private final int initialBytes = 16;
     private final int maxBytes = 16384 + 1;
 
-    private final List<LatencyMessage> messages = new ArrayList<>();
+    private final List<ThroughputMessage> messages = new ArrayList<>();
     private final List<Integer> sizes = new ArrayList<>();
 
     private final List<ProducerListener> producers = new ArrayList<>();
 
     private int currentMessageIndex = 0;
-    private LatencyMessage currentMessage;
+    private ThroughputMessage currentMessage;
 
     private static final int THREADS = 8;
     private static final long DURATION = 60000l;
     private final long THROW_AWAY = 1l;
 
     public ThroughputThreaded() {
-        this.speaker = Starter.bootstrap();
-        
         int currentBytes = initialBytes;
         while(currentBytes < maxBytes) {
             StringBuilder padding = new StringBuilder();
@@ -81,7 +78,7 @@ public class ThroughputThreaded {
             if(currentBytes < 64) {
                 padding.append("aa");
             }
-            LatencyMessage m = new LatencyMessage();
+            ThroughputMessage m = new ThroughputMessage();
             m.padding = padding.toString();
             m.sendTime = System.nanoTime();
             messages.add(m);
@@ -90,6 +87,11 @@ public class ThroughputThreaded {
         }
         currentMessage = messages.get(0);
         currentMessageIndex = 0;
+    }
+
+    public ThroughputThreaded bootstrap() {
+        this.speaker = Starter.bootstrap();
+        return this;
     }
 
     private void printStats() {
@@ -181,7 +183,7 @@ public class ThroughputThreaded {
         }
     }
 
-    private class ConsumerListener implements MessageListener<LatencyMessage> {
+    private class ConsumerListener implements MessageListener<ThroughputMessage> {
 
         private final String producerTopic;
 
@@ -190,7 +192,7 @@ public class ThroughputThreaded {
         }
 
         @Override
-        public void receive(LatencyMessage message) {
+        public void receive(ThroughputMessage message) {
             try {
                 speaker.send(producerTopic, message);
             } catch (Exception ex) {
@@ -199,7 +201,7 @@ public class ThroughputThreaded {
         }
     }
 
-    private class ProducerListener implements MessageListener<LatencyMessage> {
+    private class ProducerListener implements MessageListener<ThroughputMessage> {
         private long startTime;
         private long endTime;
         private boolean running = true;
@@ -231,7 +233,7 @@ public class ThroughputThreaded {
         }
 
         @Override
-        public void receive(LatencyMessage message) {
+        public void receive(ThroughputMessage message) {
             if(messageCount >= THROW_AWAY && !warmedUp) {
                 warmedUp = true;
                 messageCount = 0;
@@ -269,9 +271,5 @@ public class ThroughputThreaded {
         public int getMessageCount() {
             return messageCount;
         }
-    }
-
-    public static void main(String[] args) {
-        new ThroughputThreaded().go();
     }
 }

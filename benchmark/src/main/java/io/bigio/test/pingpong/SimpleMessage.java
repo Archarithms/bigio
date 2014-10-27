@@ -27,7 +27,7 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test;
+package io.bigio.test.pingpong;
 
 import io.bigio.Message;
 

@@ -27,13 +27,14 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test;
+package io.bigio.test.latency;
 
 import io.bigio.Component;
 import io.bigio.Inject;
+import io.bigio.MessageListener;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
-import io.bigio.MessageListener;
+import io.bigio.Starter;
 import io.bigio.core.codec.GenericEncoder;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -146,12 +147,15 @@ public class Latency {
                 try {
                     injectThread.join();
                 } catch(InterruptedException ex) {
-                    ex.printStackTrace();
+                    LOG.error("Inject thread interrupted.", ex);
                 }
-
-//                printStats();
             }
         });
+    }
+
+    public Latency bootstrap() {
+        this.speaker = Starter.bootstrap();
+        return this;
     }
 
     private void printStats() {
@@ -161,20 +165,20 @@ public class Latency {
         for(long l : latencies) {
             sum += l;
         }
-        int sampleSize = latencies.size();
-        double average = (double)sum / sampleSize;
+        int currentSampleSize = latencies.size();
+        double average = (double)sum / currentSampleSize;
         double deviationSum = 0;
         for(long l : latencies) {
             deviationSum += (l - average) * (l - average);
         }
-        double deviation = deviationSum / (sum / sampleSize - 1);
+        double deviation = deviationSum / (sum / currentSampleSize - 1);
         deviation = Math.sqrt(deviation);
 
-        int percentile_50_sample_index = (50 * sampleSize) / 100;
-        int percentile_90_sample_index = (90 * sampleSize) / 100;
-        int percentile_99_sample_index = (99 * sampleSize) / 100;
+        int percentile_50_sample_index = (50 * currentSampleSize) / 100;
+        int percentile_90_sample_index = (90 * currentSampleSize) / 100;
+        int percentile_99_sample_index = (99 * currentSampleSize) / 100;
         int percentile_9999_sample_index = 
-            (9999 * sampleSize) / 10000;
+            (9999 * currentSampleSize) / 10000;
 
         average /= 1000.0; //convert to usec
         deviation /= 1000.0; //convert to usec
@@ -183,7 +187,7 @@ public class Latency {
             get(0)/1000.0;
         double max_sample = (double)
             latencies.
-            get(sampleSize-1)/1000.0;
+            get(currentSampleSize-1)/1000.0;
         double percentile_50_sample = (double)
             latencies.
             get(percentile_50_sample_index)/1000.0;
@@ -221,7 +225,7 @@ public class Latency {
                         percentile_99_sample,
                         percentile_9999_sample,
                         max_sample,
-                        sampleSize);
+                        currentSampleSize);
     }
 
     @PostConstruct
@@ -229,16 +233,17 @@ public class Latency {
         LOG.info("Going");
         String role = Parameters.INSTANCE.getProperty("com.a2i.benchmark.role", "local");
 
-        if(role.equals("producer")) {
-            LOG.info("Running as a producer");
-            speaker.addListener("HelloWorldProducer", new MessageListener<LatencyMessage>() {
-                long lat = 0;
-
-                @Override
-                public void receive(LatencyMessage message) {
-                    try {
-                        seeded = true;
-                        speaker.send("HelloWorldConsumer", message);
+        switch (role) {
+            case "producer":
+                LOG.info("Running as a producer");
+                speaker.addListener("HelloWorldProducer", new MessageListener<LatencyMessage>() {
+                    long lat = 0;
+                    
+                    @Override
+                    public void receive(LatencyMessage message) {
+                        try {
+                            seeded = true;
+                            speaker.send("HelloWorldConsumer", message);
 //                        if(running) {
 //
 //                            ++messageCount;
@@ -257,65 +262,61 @@ public class Latency {
 //                            currentMessage.sendTime = System.nanoTime();
 //                            speaker.send("HelloWorldConsumer", currentMessage);
 //                        }
-                    } catch (Exception ex) {
-                        LOG.error("Error", ex);
-                    }
-                }
-            });
-            injectThread.start();
-        } else if(role.equals("consumer")) {
-            LOG.info("Running as a consumer");
-            speaker.addListener("HelloWorldConsumer", new MessageListener<LatencyMessage>() {
-                long lat = 0;
-
-                @Override
-                public void receive(LatencyMessage message) {
-
-                    lat = System.nanoTime() - message.sendTime - clockOverhead;
-                    if(messageCount > throwAway) {
-
-                        // Some weird bug that gives us a bogus latency
-                        // It's too big to be reasonable, so throw it out.
-                        if(lat < 1e15) {
-                            latencies.add(lat);
-                        } else {
-                            --messageCount;
+                        } catch (Exception ex) {
+                            LOG.error("Error", ex);
                         }
-
+                    }
+                }); injectThread.start();
+                break;
+            case "consumer":
+                LOG.info("Running as a consumer");
+                speaker.addListener("HelloWorldConsumer", new MessageListener<LatencyMessage>() {
+                    long lat = 0;
+                    
+                    @Override
+                    public void receive(LatencyMessage message) {
+                        
+                        lat = System.nanoTime() - message.sendTime - clockOverhead;
+                        if(messageCount > throwAway) {
+                            
+                            // Some weird bug that gives us a bogus latency
+                            // It's too big to be reasonable, so throw it out.
+                            if(lat < 1e15) {
+                                latencies.add(lat);
+                            } else {
+                                --messageCount;
+                            }
+                            
 //                        if(lat > 5000 * 1000) {
 //                            System.out.println("Slow " + messageCount + " - " + (lat / 1000));
 //                        }
-                    }
-
-                    ++messageCount;
-                    
-                    if(messageCount > sampleSize + throwAway) {
-                        printStats();
-                        messageCount = 0;
-                        latencies.clear();
-
-                        ++currentMessageIndex;
-                        if(currentMessageIndex == messages.size()) {
-                            System.exit(0);
-                        } else {
-                            currentMessage = messages.get(currentMessageIndex);
+                        }
+                        
+                        ++messageCount;
+                        
+                        if(messageCount > sampleSize + throwAway) {
+                            printStats();
+                            messageCount = 0;
+                            latencies.clear();
+                            
+                            ++currentMessageIndex;
+                            if(currentMessageIndex == messages.size()) {
+                                System.exit(0);
+                            } else {
+                                currentMessage = messages.get(currentMessageIndex);
+                            }
+                        }
+                        
+                        try {
+                            if(running) {
+                                currentMessage.sendTime = System.nanoTime();
+                                speaker.send("HelloWorldProducer", currentMessage);
+                            }
+                        } catch (Exception ex) {
+                            LOG.error("Error", ex);
                         }
                     }
-
-                    try {
-                        if(running) {
-                            currentMessage.sendTime = System.nanoTime();
-                            speaker.send("HelloWorldProducer", currentMessage);
-                        }
-                    } catch (Exception ex) {
-                        LOG.error("Error", ex);
-                    }
-                }
-            });
+                }); break;
         }
-    }
-
-    public static void main(String[] args) {
-        new Latency().go();
     }
 }

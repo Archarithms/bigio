@@ -27,12 +27,12 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test;
+package io.bigio.test.throughput;
 
+import io.bigio.MessageListener;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
 import io.bigio.Starter;
-import io.bigio.MessageListener;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -61,10 +61,10 @@ public class Throughput {
     private final int initialBytes = 16;
     private final int maxBytes = 16384 + 1;
 
-    private final List<LatencyMessage> messages = new ArrayList<>();
+    private final List<ThroughputMessage> messages = new ArrayList<>();
     private final List<Integer> sizes = new ArrayList<>();
 
-    private LatencyMessage currentMessage;
+    private ThroughputMessage currentMessage;
 
     private boolean seeded = false;
 
@@ -97,7 +97,7 @@ public class Throughput {
             if(currentBytes < 64) {
                 padding.append("aa");
             }
-            LatencyMessage m = new LatencyMessage();
+            ThroughputMessage m = new ThroughputMessage();
             m.padding = padding.toString();
             m.sendTime = System.nanoTime();
             messages.add(m);
@@ -118,10 +118,15 @@ public class Throughput {
                 try {
                     seedThread.join();
                 } catch(InterruptedException ex) {
-                    ex.printStackTrace();
+                    LOG.error("Thread interrupted.", ex);
                 }
             }
         });
+    }
+
+    public Throughput bootstrap() {
+        this.speaker = Starter.bootstrap();
+        return this;
     }
 
     private void printStats() {
@@ -149,63 +154,64 @@ public class Throughput {
     public void go() {
         String role = Parameters.INSTANCE.getProperty("com.a2i.benchmark.role", "local");
 
-        if(role.equals("producer")) {
-            LOG.info("Running as a producer");
-            speaker.addListener("HelloWorldProducer", new MessageListener<LatencyMessage>() {
-                @Override
-                public void receive(LatencyMessage message) {
+        switch (role) {
+            case "producer":
+                LOG.info("Running as a producer");
+                speaker.addListener("HelloWorldProducer", new MessageListener<ThroughputMessage>() {
+                    @Override
+                    public void receive(ThroughputMessage message) {
 //                    if(!seeded) {
 //                        seeded = true;
 //                        LOG.info("Beginning test");
 //                    }
-
-                    if(messageCount >= throwAway && !warmedUp) {
-                        warmedUp = true;
-                        messageCount = 0;
-                        startTime = System.currentTimeMillis();
-                    }
-
-                    ++messageCount;
-                    
-                    if(messageCount > sampleSize) {
-                        endTime = System.currentTimeMillis();
                         
-                        printStats();
-                        messageCount = 0;
-                        warmedUp = false;
-
-                        ++currentMessageIndex;
-                        if(currentMessageIndex == messages.size()) {
-                            System.exit(0);
-                        } else {
-                            currentMessage = messages.get(currentMessageIndex);
+                        if(messageCount >= throwAway && !warmedUp) {
+                            warmedUp = true;
+                            messageCount = 0;
+                            startTime = System.currentTimeMillis();
+                        }
+                        
+                        ++messageCount;
+                        
+                        if(messageCount > sampleSize) {
+                            endTime = System.currentTimeMillis();
+                            
+                            printStats();
+                            messageCount = 0;
+                            warmedUp = false;
+                            
+                            ++currentMessageIndex;
+                            if(currentMessageIndex == messages.size()) {
+                                System.exit(0);
+                            } else {
+                                currentMessage = messages.get(currentMessageIndex);
+                            }
+                        }
+                        
+                        try {
+                            if(running) {
+                                speaker.send("HelloWorldConsumer", currentMessage);
+                            }
+                        } catch (Exception ex) {
+                            LOG.error("Error", ex);
                         }
                     }
-
-                    try {
-                        if(running) {
-                            speaker.send("HelloWorldConsumer", currentMessage);
+                }); seedThread.start();
+                break;
+            case "consumer":
+                LOG.info("Running as a consumer");
+                speaker.addListener("HelloWorldConsumer", new MessageListener<ThroughputMessage>() {
+                    @Override
+                    public void receive(ThroughputMessage message) {
+                        try {
+                            if(running) {
+                                speaker.send("HelloWorldProducer", message);
+                            }
+                        } catch (Exception ex) {
+                            LOG.error("Error", ex);
                         }
-                    } catch (Exception ex) {
-                        LOG.error("Error", ex);
                     }
-                }
-            });
-            seedThread.start();
-        } else if(role.equals("consumer")) {
-            LOG.info("Running as a consumer");
-            speaker.addListener("HelloWorldConsumer", new MessageListener<LatencyMessage>() {
-                @Override
-                public void receive(LatencyMessage message) {
-                    try {
-                        if(running) {
-                            speaker.send("HelloWorldProducer", message);
-                        }
-                    } catch (Exception ex) {
-                        LOG.error("Error", ex);
-                    }
-                }
-            });
+                }); break;
         }
     }
 

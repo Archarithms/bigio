@@ -53,10 +53,17 @@ public class MessageTransformer implements ClassFileTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTransformer.class);
     
-    public static final boolean USE_JAVASSIST = true;
+    public static boolean USE_JAVASSIST = true;
 
     public static void premain(String agentArgs, Instrumentation inst) {
         inst.addTransformer(new MessageTransformer(), false);
+        String prop = System.getProperty("io.bigio.noJavassist");
+        if(prop != null && "true".equals(prop)) {
+            LOG.info("Using ASM for bytecode transformations.");
+            USE_JAVASSIST = false;
+        } else {
+            LOG.info("Using Javassist for bytecode transformations.");
+        }
     }
 
     @Override

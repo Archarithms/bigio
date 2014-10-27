@@ -30,12 +30,13 @@
 package io.bigio.test;
 
 import io.bigio.Inject;
+import io.bigio.MessageListener;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
 import io.bigio.core.Envelope;
-import io.bigio.MessageListener;
 import io.bigio.core.codec.EnvelopeEncoder;
 import io.bigio.core.codec.GenericEncoder;
+import io.bigio.test.pingpong.SimpleMessage;
 import io.bigio.util.TimeUtil;
 import java.io.IOException;
 import javax.annotation.PostConstruct;

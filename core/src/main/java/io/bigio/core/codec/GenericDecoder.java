@@ -29,7 +29,6 @@
 
 package io.bigio.core.codec;
 
-import io.bigio.Parameters;
 import io.bigio.agent.MessageTransformer;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
