@@ -177,7 +177,6 @@
                     <argLine>
                         -javaagent:${project.build.directory}/agents/bigio-agent-${project.version}.jar 
                         -Dio.bigio.binDir=target
-                        -Dio.bigio.components=io.bigio.Speaker
                     </argLine>
                 </configuration>
             </plugin>

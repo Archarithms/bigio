@@ -209,6 +209,17 @@ public enum Container {
                         LOG.trace("Instantiating " + cl.getName());
                     }
                     instances.put(cl, cl.newInstance());
+                    if(!dependencies.containsKey(cl) && initializations.containsKey(cl)) {
+                        try {
+                            initializations.get(cl).invoke(instances.get(cl));
+                        } catch (IllegalAccessException ex) {
+                            LOG.error("Illegal access", ex);
+                        } catch (IllegalArgumentException ex) {
+                            LOG.error("Illegal argument", ex);
+                        } catch (InvocationTargetException ex) {
+                            LOG.error("Invocation Target Exception", ex);
+                        }
+                    }
                 } catch (InstantiationException ex) {
                     LOG.error("Error instantiating class " + cl.getName(), ex);
                 } catch (IllegalAccessException ex) {
@@ -221,6 +232,17 @@ public enum Container {
                     LOG.trace("Instantiating " + cl.getName());
                 }
                 instantiateTree(cl);
+                if(!dependencies.containsKey(cl)) {
+                    try {
+                        initializations.get(cl).invoke(instances.get(cl));
+                    } catch (IllegalAccessException ex) {
+                        LOG.error("Illegal access", ex);
+                    } catch (IllegalArgumentException ex) {
+                        LOG.error("Illegal argument", ex);
+                    } catch (InvocationTargetException ex) {
+                        LOG.error("Invocation Target Exception", ex);
+                    }
+                }
             }
         }
     }
