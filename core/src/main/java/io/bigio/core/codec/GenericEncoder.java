@@ -29,12 +29,8 @@
 
 package io.bigio.core.codec;
 
-import io.bigio.agent.MessageTransformer;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +45,6 @@ public class GenericEncoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(GenericEncoder.class);
 
-    private static final Map<Class, Method> METHODS = new HashMap<>();
-    
     /**
      * Encode a message payload.
      * 
@@ -62,30 +56,9 @@ public class GenericEncoder {
 
         if(message.getClass().getAnnotation(io.bigio.Message.class) != null) {
             try {
-                if(!MessageTransformer.USE_JAVASSIST) {
-                    Method method = METHODS.get(message.getClass());
-
-                    if(method == null) {
-                        method = message.getClass().getMethod("_encode_");
-                    }
-                    METHODS.put(message.getClass(), method);
-                }
-
                 byte[] ret;
-                if(MessageTransformer.USE_JAVASSIST) {
-                    ret = (byte[])((BigIOMessage)message).bigioencode();
-                } else {
-                    ret = (byte[])METHODS.get(message.getClass()).invoke(message);
-                }
+                ret = (byte[])((BigIOMessage)message).bigioencode();
                 return ret;
-            } catch (NoSuchMethodException ex) {
-                LOG.error("Cannot find encoding method.", ex);
-            } catch (SecurityException ex) {
-                LOG.error("Security exception.", ex);
-            } catch (IllegalAccessException ex) {
-                LOG.error("Illegal method access.", ex);
-            } catch (InvocationTargetException ex) {
-                LOG.error("Invocation exception.", ex);
             } catch (Exception ex) {
                 LOG.error("Exception serializing.", ex);
             }

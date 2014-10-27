@@ -26,6 +26,7 @@
  * of the authors and should not be interpreted as representing official policies, 
  * either expressed or implied, of the FreeBSD Project.
  */
+
 package io.bigio.agent;
 
 import java.io.ByteArrayInputStream;
@@ -52,18 +53,9 @@ import org.slf4j.LoggerFactory;
 public class MessageTransformer implements ClassFileTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTransformer.class);
-    
-    public static boolean USE_JAVASSIST = true;
 
     public static void premain(String agentArgs, Instrumentation inst) {
         inst.addTransformer(new MessageTransformer(), false);
-        String prop = System.getProperty("io.bigio.noJavassist");
-        if(prop != null && "true".equals(prop)) {
-            LOG.info("Using ASM for bytecode transformations.");
-            USE_JAVASSIST = false;
-        } else {
-            LOG.info("Using Javassist for bytecode transformations.");
-        }
     }
 
     @Override
@@ -71,59 +63,42 @@ public class MessageTransformer implements ClassFileTransformer {
             Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
             byte[] b) throws IllegalClassFormatException {
 
-        if (USE_JAVASSIST) {
-            ClassPool pool = ClassPool.getDefault();
-            CtClass clazz = null;
+        ClassPool pool = ClassPool.getDefault();
+        CtClass clazz = null;
 
-            try {
-                clazz = pool.makeClass(new ByteArrayInputStream(b));
+        try {
+            clazz = pool.makeClass(new ByteArrayInputStream(b));
 
-                if (clazz.hasAnnotation(Class.forName("io.bigio.Message"))) {
-                    LOG.trace("Creating serialization helper for class " + className);
-                    ClassReader cr = new ClassReader(b);
-                    ClassWriter cw = new ClassWriter(cr, 0);
-                    ClassVisitor cv = new SignatureCollector(cw);
-                    cr.accept(cv, 0);
-                    Map<String, String> signatures = ((SignatureCollector) cv).getSignatures();
+            if (clazz.hasAnnotation(Class.forName("io.bigio.Message"))) {
+                LOG.trace("Creating serialization helper for class " + className);
+                ClassReader cr = new ClassReader(b);
+                ClassWriter cw = new ClassWriter(cr, 0);
+                ClassVisitor cv = new SignatureCollector(cw);
+                cr.accept(cv, 0);
+                Map<String, String> signatures = ((SignatureCollector) cv).getSignatures();
 
-                    JATransformer.transform(clazz, signatures, pool);
-                }
-            } catch (IOException ex) {
-                LOG.error("IO Error", ex);
-                return null;
-            } catch (ClassNotFoundException ex) {
-                LOG.error("Cannot find message annotation.", ex);
-                return null;
-            } finally {
-                if (clazz != null) {
-                    clazz.detach();
-                }
+                JATransformer.transform(clazz, signatures, pool);
             }
-
-            try {
-                return clazz.toBytecode();
-            } catch (IOException ex) {
-                LOG.error("IOException.", ex);
-            } catch (CannotCompileException ex) {
-                LOG.error("Cannot compile.", ex);
-            }
-
+        } catch (IOException ex) {
+            LOG.error("IO Error", ex);
             return null;
-        } else {
-            ClassReader cr = new ClassReader(b);
-            ClassWriter cw = new ClassWriter(cr, 0);
-            ClassVisitor cv = new MessageAdapter(cw);
-            cr.accept(cv, 0);
-            if (((MessageAdapter) cv).wasMessage() || ((MessageAdapter) cv).wasEnum()) {
-//            LOG.info("Returning transformed class for '" + className + "'");
-
-//            cr = new ClassReader(cw.toByteArray());
-//            cv = new TraceClassVisitor(new PrintWriter(System.out));
-//            cr.accept(cv, 0);
-                return cw.toByteArray();
-            } else {
-                return null;
+        } catch (ClassNotFoundException ex) {
+            LOG.error("Cannot find message annotation.", ex);
+            return null;
+        } finally {
+            if (clazz != null) {
+                clazz.detach();
             }
         }
+
+        try {
+            return clazz.toBytecode();
+        } catch (IOException ex) {
+            LOG.error("IOException.", ex);
+        } catch (CannotCompileException ex) {
+            LOG.error("Cannot compile.", ex);
+        }
+
+        return null;
     }
 }

@@ -49,8 +49,6 @@ public class GenericDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(GenericDecoder.class);
 
-    private static final Map<Class, Method> METHODS = new HashMap<>();
-
     /**
      * Decode a message payload.
      * 
@@ -66,30 +64,11 @@ public class GenericDecoder {
 
             if(clazz.getAnnotation(io.bigio.Message.class) != null) {
                 try {
-                    if(!MessageTransformer.USE_JAVASSIST) {
-                        Method method = METHODS.get(clazz);
-
-                        if(method == null) {
-                            method = clazz.getMethod("_decode_", byte[].class);
-                            METHODS.put(clazz, method);
-                        }
-                    }
-                    
                     Object obj = clazz.newInstance();
-                    if(MessageTransformer.USE_JAVASSIST) {
-                        ((BigIOMessage)obj).bigiodecode(bytes);
-                    } else {
-                        METHODS.get(clazz).invoke(obj, bytes);
-                    }
+                    ((BigIOMessage)obj).bigiodecode(bytes);
                     return obj;
-                } catch (NoSuchMethodException ex) {
-                    LOG.error("Cannot find encoding method.", ex);
-                } catch (SecurityException ex) {
-                    LOG.error("Security exception.", ex);
                 } catch (IllegalAccessException ex) {
                     LOG.error("Illegal method access.", ex);
-                } catch (InvocationTargetException ex) {
-                    LOG.error("Invocation exception.", ex);
                 } catch (InstantiationException ex) {
                     LOG.error("Cannot create new message.", ex);
                 }

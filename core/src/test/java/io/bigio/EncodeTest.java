@@ -21,13 +21,8 @@ public class EncodeTest {
         RepMessage message = MessageUtils.createMessage();
         RepMessage decodedMessage = new RepMessage();
 
-        if(MessageTransformer.USE_JAVASSIST) {
-            byte[] bytes = (byte[])message.getClass().getMethod("bigioencode").invoke(message);
-            decodedMessage.getClass().getMethod("bigiodecode", byte[].class).invoke(decodedMessage, bytes);
-        } else {
-            byte[] bytes = (byte[])message.getClass().getMethod("_encode_").invoke(message);
-            decodedMessage.getClass().getMethod("_decode_", byte[].class).invoke(decodedMessage, bytes);
-        }
+        byte[] bytes = (byte[])message.getClass().getMethod("bigioencode").invoke(message);
+        decodedMessage.getClass().getMethod("bigiodecode", byte[].class).invoke(decodedMessage, bytes);
 
         MessageUtils.testMessageEquality(message, decodedMessage);
     }
