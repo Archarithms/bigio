@@ -179,6 +179,7 @@
                         -Dio.bigio.binDir=target
                         -Dio.bigio.components=io.bigio.Speaker
                     </argLine>
+                    <test>SubMessageTest</test>
                 </configuration>
             </plugin>
         </plugins>
