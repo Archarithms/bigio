@@ -12,9 +12,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -80,8 +77,6 @@ public class SubMessageTest {
             doubles.add(value);
         }
 
-        LOG.info("RER: Running my test.");
-
         speaker1.send("MyUDPTopic", new MyMessage(MESSAGE + "1", doubles));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
@@ -114,8 +109,6 @@ public class SubMessageTest {
             doubles.add(value);
         }
 
-        LOG.info("RER: Running my fail test ");
-
         speaker1.send("FAIL", new FailMessage(MESSAGE + "2", doubles));
         FailMessage m = failQueue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
@@ -126,11 +119,9 @@ public class SubMessageTest {
             List<Double> value = doubles.get(i);
             List<Double> receivedValue = received.get(i);
             for (int j = 0; j < 6; ++j) {
-                LOG.info("FAIL Testing: " + i + " " + j + ": " + value.get(j) + " == " + receivedValue.get(j));
                 assertEquals(value.get(j), receivedValue.get(j), 0.0001);
             }
         }
-
     }
 
     private static class MyMessageListener implements MessageListener<MyMessage> {
@@ -172,11 +163,6 @@ public class SubMessageTest {
 
         }
 
-        public MyMessage(String message) {
-            this.message = message;
-            this.cov.instantiate();
-        }
-
         public MyMessage(String message, List<List<Double>> doubles) {
             this.message = message;
             this.cov.instantiate();
@@ -196,30 +182,6 @@ public class SubMessageTest {
         public String getMessage() {
             return message;
         }
-
-    }
-
-    @Message
-    public static class SubMessage2DArray {
-
-        public List<List<Double>> a = new ArrayList<>(6);
-
-        public SubMessage2DArray() {
-////            new Exception().printStackTrace();
-//            instantiate();
-        }
-
-        public void instantiate() {
-//            new Exception().printStackTrace();
-            for (int i = 0; i < 6; ++i) {
-                List<Double> l = new ArrayList<>(6);
-                for (int j = 0; j < 6; ++j) {
-                    l.add(0.0);
-                }
-                a.add(l);
-            }
-        }
-
     }
 
     @Message
@@ -231,11 +193,6 @@ public class SubMessageTest {
 
         public FailMessage() {
 
-        }
-
-        public FailMessage(String message) {
-            this.message = message;
-            this.cov.instantiate();
         }
 
         public FailMessage(String message, List<List<Double>> doubles) {
@@ -257,7 +214,6 @@ public class SubMessageTest {
         public String getMessage() {
             return message;
         }
-
     }
 
     @Message
@@ -278,6 +234,37 @@ public class SubMessageTest {
                 a.add(l);
             }
         }
+    }
 
+    @Message
+    public static class SubMessage2DArray {
+
+        public List<List<Double>> a = new ArrayList<>(6);
+
+        public SubMessage2DArray() {
+
+        }
+
+        public void instantiate() {
+            for (int i = 0; i < 6; ++i) {
+                List<Double> l = new ArrayList<>(6);
+                for (int j = 0; j < 6; ++j) {
+                    l.add(0.0);
+                }
+                a.add(l);
+            }
+        }
+    }
+
+    private static void print(List<List<Double>> arr) {
+        for(List<Double> l : arr) {
+            StringBuilder buff = new StringBuilder();
+
+            for(Double d : l) {
+                buff.append(d).append(" ");
+            }
+
+            LOG.info(buff.toString());
+        }
     }
 }
