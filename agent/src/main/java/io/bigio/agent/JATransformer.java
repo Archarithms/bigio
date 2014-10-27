@@ -63,12 +63,14 @@ public class JATransformer {
                         case "java.lang.Double":
                         case "java.lang.String":
                             encodeBuff.append("try { packer.write(").append(field.getName()).append("); } catch(Exception ex) { ex.printStackTrace(); }");
+                            decodeBuff.append(field.getName()).append(".clear();");
                             decodeBuff.append(field.getName()).append(".addAll((java.util.List)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
                             break;
                         default:
                             encodeBuff.append("java.util.List newList = new java.util.ArrayList();");
                             encodeBuff.append("encodeList(newList, ").append(field.getName()).append(", ").append(type).append(".class);");
                             encodeBuff.append("packer.write(newList);");
+                            decodeBuff.append(field.getName()).append(".clear();");
                             decodeBuff.append(field.getName()).append(".addAll((java.util.List)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
                             break;
                     }
@@ -84,12 +86,14 @@ public class JATransformer {
                         case "java.lang.Double":
                         case "java.lang.String":
                             encodeBuff.append("try { packer.write(").append(field.getName()).append("); } catch(Exception ex) { ex.printStackTrace(); }");
+                            decodeBuff.append(field.getName()).append(".clear();");
                             decodeBuff.append(field.getName()).append(".putAll((java.util.Map)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
                             break;
                         default:
                             encodeBuff.append("java.util.Map newMap = new java.util.HashMap();");
                             encodeBuff.append("encodeMap(newMap, ").append(field.getName()).append(", ").append(type).append(".class);");
                             encodeBuff.append("packer.write(newMap);");
+                            decodeBuff.append(field.getName()).append(".clear();");
                             decodeBuff.append(field.getName()).append(".putAll((java.util.Map)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
                             break;
                     }
