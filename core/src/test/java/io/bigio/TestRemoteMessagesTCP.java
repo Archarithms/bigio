@@ -1,7 +1,6 @@
 /*
  * Copyright 2014 Archarithms Inc.
  */
-
 package io.bigio;
 
 import io.bigio.Message;
@@ -52,7 +51,7 @@ public class TestRemoteMessagesTCP {
         speaker2.addListener("DelayedTCPTopic", delayedListener);
         speaker2.addListener("AllTCPPartitionTopic", ".*", listener);
         speaker2.addListener("SpecificTCPPartitionTopic", "MyTCPPartition", listener);
-        
+
         Thread.sleep(1000l);
     }
 
@@ -60,15 +59,15 @@ public class TestRemoteMessagesTCP {
     public static void shutdown() throws InterruptedException {
         speaker1.shutdown();
         speaker2.shutdown();
-        
+
         Thread.sleep(1000l);
     }
 
     @Test
     public void testVolume() throws Exception {
         failed = false;
-        
-        for(int i = 0; i < 1000; ++i) {
+
+        for (int i = 0; i < 1000; ++i) {
             speaker1.send("VolumeTopic", new MyMessage(MESSAGE + i));
         }
 
@@ -80,13 +79,13 @@ public class TestRemoteMessagesTCP {
     @Test
     public void testMessage() throws Exception {
         failed = false;
-        
+
         speaker1.send("MyTCPTopic", new MyMessage(MESSAGE + "1"));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
 
-        if(failed) {
+        if (failed) {
             fail();
         }
 
@@ -101,7 +100,7 @@ public class TestRemoteMessagesTCP {
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
 
-        if(failed) {
+        if (failed) {
             fail();
         }
 
@@ -115,13 +114,13 @@ public class TestRemoteMessagesTCP {
     @Test
     public void testAllPartitions() throws Exception {
         failed = false;
-        
+
         speaker1.send("AllTCPPartitionTopic", "MyTCPPartition", new MyMessage(MESSAGE + "1"));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
 
-        if(failed) {
+        if (failed) {
             fail();
         }
 
@@ -134,7 +133,7 @@ public class TestRemoteMessagesTCP {
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
 
-        if(failed) {
+        if (failed) {
             fail();
         }
 
@@ -148,13 +147,13 @@ public class TestRemoteMessagesTCP {
     @Test
     public void testSpecificPartitions() throws Exception {
         failed = false;
-        
+
         speaker1.send("SpecificTCPPartitionTopic", "MyTCPPartition", new MyMessage(MESSAGE + "1"));
         MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
 
-        if(failed) {
+        if (failed) {
             fail();
         }
 
@@ -175,7 +174,7 @@ public class TestRemoteMessagesTCP {
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "1");
 
-        if(failed) {
+        if (failed) {
             fail();
         }
 
@@ -208,7 +207,7 @@ public class TestRemoteMessagesTCP {
         assertNotNull(m);
         assertEquals(m.getMessage(), MESSAGE + "8");
 
-        if(failed) {
+        if (failed) {
             fail();
         }
 
@@ -220,7 +219,7 @@ public class TestRemoteMessagesTCP {
         @Override
         public void receive(MyMessage message) {
             LOG.info("Got a message " + message.getMessage());
-            
+
             boolean success = queue.offer(message);
 
             if (!success) {
@@ -230,6 +229,7 @@ public class TestRemoteMessagesTCP {
     }
 
     private static class VolumeListener implements MessageListener<MyMessage> {
+
         public int counter = 0;
 
         @Override
@@ -243,7 +243,7 @@ public class TestRemoteMessagesTCP {
         @Override
         public void receive(MyMessage message) {
             LOG.info("Got a delayed message " + message.getMessage());
-            
+
             boolean success = queue.offer(message);
 
             if (!success) {

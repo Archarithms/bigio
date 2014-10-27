@@ -59,6 +59,7 @@ import org.slf4j.LoggerFactory;
 public enum Parameters {
     INSTANCE;
     
+    
     private final Logger LOG;
     private final int MAX_DEPTH;
     private final Properties properties;

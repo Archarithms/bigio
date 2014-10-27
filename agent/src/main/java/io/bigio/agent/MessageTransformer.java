@@ -28,10 +28,16 @@
  */
 package io.bigio.agent;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.Map;
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -40,12 +46,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A java agent for injecting encoding/decoding logic into messages.
- * 
+ *
  * @author Andy Trimble
  */
 public class MessageTransformer implements ClassFileTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTransformer.class);
+    
+    public static final boolean USE_JAVASSIST = true;
 
     public static void premain(String agentArgs, Instrumentation inst) {
         inst.addTransformer(new MessageTransformer(), false);
@@ -56,20 +64,59 @@ public class MessageTransformer implements ClassFileTransformer {
             Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
             byte[] b) throws IllegalClassFormatException {
 
-        ClassReader cr = new ClassReader(b);
-        ClassWriter cw = new ClassWriter(cr, 0);
-        ClassVisitor cv = new MessageAdapter(cw);
-        cr.accept(cv, 0);
-        if (((MessageAdapter) cv).wasMessage() || ((MessageAdapter) cv).wasEnum()) {
+        if (USE_JAVASSIST) {
+            ClassPool pool = ClassPool.getDefault();
+            CtClass clazz = null;
+
+            try {
+                clazz = pool.makeClass(new ByteArrayInputStream(b));
+
+                if (clazz.hasAnnotation(Class.forName("io.bigio.Message"))) {
+                    LOG.trace("Creating serialization helper for class " + className);
+                    ClassReader cr = new ClassReader(b);
+                    ClassWriter cw = new ClassWriter(cr, 0);
+                    ClassVisitor cv = new SignatureCollector(cw);
+                    cr.accept(cv, 0);
+                    Map<String, String> signatures = ((SignatureCollector) cv).getSignatures();
+
+                    JATransformer.transform(clazz, signatures, pool);
+                }
+            } catch (IOException ex) {
+                LOG.error("IO Error", ex);
+                return null;
+            } catch (ClassNotFoundException ex) {
+                LOG.error("Cannot find message annotation.", ex);
+                return null;
+            } finally {
+                if (clazz != null) {
+                    clazz.detach();
+                }
+            }
+
+            try {
+                return clazz.toBytecode();
+            } catch (IOException ex) {
+                LOG.error("IOException.", ex);
+            } catch (CannotCompileException ex) {
+                LOG.error("Cannot compile.", ex);
+            }
+
+            return null;
+        } else {
+            ClassReader cr = new ClassReader(b);
+            ClassWriter cw = new ClassWriter(cr, 0);
+            ClassVisitor cv = new MessageAdapter(cw);
+            cr.accept(cv, 0);
+            if (((MessageAdapter) cv).wasMessage() || ((MessageAdapter) cv).wasEnum()) {
 //            LOG.info("Returning transformed class for '" + className + "'");
 
 //            cr = new ClassReader(cw.toByteArray());
 //            cv = new TraceClassVisitor(new PrintWriter(System.out));
 //            cr.accept(cv, 0);
-
-            return cw.toByteArray();
-        } else {
-            return null;
+                return cw.toByteArray();
+            } else {
+                return null;
+            }
         }
     }
 }

@@ -6,7 +6,6 @@
 
 package io.bigio;
 
-import io.bigio.Message;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
