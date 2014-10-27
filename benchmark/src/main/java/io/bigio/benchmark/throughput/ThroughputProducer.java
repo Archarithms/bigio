@@ -2,7 +2,7 @@
  * Copyright 2014 Archarithms Inc.
  */
 
-package io.bigio.test.throughput;
+package io.bigio.benchmark.throughput;
 
 import io.bigio.Parameters;
 

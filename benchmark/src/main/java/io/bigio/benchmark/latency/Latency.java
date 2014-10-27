@@ -27,7 +27,7 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test.latency;
+package io.bigio.benchmark.latency;
 
 import io.bigio.Component;
 import io.bigio.Inject;

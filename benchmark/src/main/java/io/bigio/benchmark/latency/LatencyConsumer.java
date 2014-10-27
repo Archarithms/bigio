@@ -2,7 +2,7 @@
  * Copyright 2014 Archarithms Inc.
  */
 
-package io.bigio.test.throughput;
+package io.bigio.benchmark.latency;
 
 import io.bigio.Parameters;
 
@@ -10,9 +10,9 @@ import io.bigio.Parameters;
  *
  * @author atrimble
  */
-public class ThroughputConsumer {
+public class LatencyConsumer {
     public static void main(String[] args) {
         Parameters.INSTANCE.setProperty("com.a2i.benchmark.role", "consumer");
-        new Throughput().bootstrap().go();
+        new Latency().bootstrap().go();
     }
 }

@@ -27,7 +27,7 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test.throughput;
+package io.bigio.benchmark.throughput;
 
 import io.bigio.Message;
 

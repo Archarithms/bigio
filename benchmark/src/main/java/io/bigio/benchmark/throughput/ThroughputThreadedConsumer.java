@@ -2,7 +2,7 @@
  * Copyright 2014 Archarithms Inc.
  */
 
-package io.bigio.test.throughput;
+package io.bigio.benchmark.throughput;
 
 import io.bigio.Parameters;
 
@@ -10,9 +10,9 @@ import io.bigio.Parameters;
  *
  * @author atrimble
  */
-public class ThroughputThreadedProducer {
+public class ThroughputThreadedConsumer {
     public static void main(String[] args) {
-        Parameters.INSTANCE.setProperty("com.a2i.benchmark.role", "producer");
+        Parameters.INSTANCE.setProperty("com.a2i.benchmark.role", "consumer");
         new ThroughputThreaded().bootstrap().go();
     }
 }

@@ -27,7 +27,7 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.test;
+package io.bigio.benchmark;
 
 import io.bigio.Inject;
 import io.bigio.MessageListener;
@@ -36,7 +36,7 @@ import io.bigio.Speaker;
 import io.bigio.core.Envelope;
 import io.bigio.core.codec.EnvelopeEncoder;
 import io.bigio.core.codec.GenericEncoder;
-import io.bigio.test.pingpong.SimpleMessage;
+import io.bigio.benchmark.pingpong.SimpleMessage;
 import io.bigio.util.TimeUtil;
 import java.io.IOException;
 import javax.annotation.PostConstruct;

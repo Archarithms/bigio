@@ -2,7 +2,7 @@
  * Copyright 2014 Archarithms Inc.
  */
 
-package io.bigio.test.pingpong;
+package io.bigio.benchmark.pingpong;
 
 import io.bigio.Parameters;
 
