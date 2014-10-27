@@ -32,8 +32,9 @@ package io.bigio.benchmark.pingpong;
 import io.bigio.Message;
 
 /**
- *
- * @author atrimble
+ * A message for the ping-pong benchmark.
+ * 
+ * @author Andrew Trimble
  */
 @Message
 public class SimpleMessage {

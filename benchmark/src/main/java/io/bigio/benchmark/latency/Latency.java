@@ -45,8 +45,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A benchmark class for testing latencies.
+ * 
+ * @author Andrew Trimble
  */
 @Component
 public class Latency {
@@ -114,18 +115,6 @@ public class Latency {
             latencies.add(0l);
         }
         latencies.clear();
-
-//        int currentBytes = maxBytes;
-//        while(currentBytes >= initialBytes) {
-//            StringBuilder padding = new StringBuilder();
-//            for(int i = 0; i < currentBytes - 12; ++i) {
-//                padding.append('a');
-//            }
-//            LatencyMessage m = new LatencyMessage();
-//            m.padding = padding.toString();
-//            messages.add(m);
-//            currentBytes = currentBytes / 2;
-//        }
 
         currentMessageIndex = 0;
         currentMessage = messages.get(currentMessageIndex);
@@ -244,24 +233,6 @@ public class Latency {
                         try {
                             seeded = true;
                             speaker.send("HelloWorldConsumer", message);
-//                        if(running) {
-//
-//                            ++messageCount;
-//
-//                            if(messageCount > sampleSize) {
-//                                messageCount = 0;
-//
-//                                ++currentMessageIndex;
-//                                if(currentMessageIndex == messages.size()) {
-//                                    System.exit(0);
-//                                } else {
-//                                    currentMessage = messages.get(currentMessageIndex);
-//                                }
-//                            }
-//
-//                            currentMessage.sendTime = System.nanoTime();
-//                            speaker.send("HelloWorldConsumer", currentMessage);
-//                        }
                         } catch (Exception ex) {
                             LOG.error("Error", ex);
                         }
@@ -286,10 +257,6 @@ public class Latency {
                             } else {
                                 --messageCount;
                             }
-                            
-//                        if(lat > 5000 * 1000) {
-//                            System.out.println("Slow " + messageCount + " - " + (lat / 1000));
-//                        }
                         }
                         
                         ++messageCount;

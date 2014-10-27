@@ -39,8 +39,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A throughput benchmark.
+ * 
+ * @author Andrew Trimble
  */
 public class Throughput {
 

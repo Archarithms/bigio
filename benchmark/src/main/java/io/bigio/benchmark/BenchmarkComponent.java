@@ -29,14 +29,15 @@
 
 package io.bigio.benchmark;
 
+import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.MessageListener;
 import io.bigio.Parameters;
 import io.bigio.Speaker;
+import io.bigio.benchmark.pingpong.SimpleMessage;
 import io.bigio.core.Envelope;
 import io.bigio.core.codec.EnvelopeEncoder;
 import io.bigio.core.codec.GenericEncoder;
-import io.bigio.benchmark.pingpong.SimpleMessage;
 import io.bigio.util.TimeUtil;
 import java.io.IOException;
 import javax.annotation.PostConstruct;
@@ -44,10 +45,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A legacy benchmark.
+ * 
+ * @author Andrew Trimble
  */
-//@Component
+@Component
 public class BenchmarkComponent {
 
     private static final Logger LOG = LoggerFactory.getLogger(BenchmarkComponent.class);
@@ -67,7 +69,7 @@ public class BenchmarkComponent {
         public void run() {
             try {
                 Thread.sleep(1000l);
-            } catch(Exception ex) {
+            } catch(InterruptedException ex) {
 
             }
 
@@ -131,7 +133,7 @@ public class BenchmarkComponent {
                     senderThread.join();
                     localThread.join();
                 } catch(InterruptedException ex) {
-                    ex.printStackTrace();
+                    LOG.error("Thread interrupted.", ex);
                 }
 
                 time = System.currentTimeMillis() - time;
@@ -156,36 +158,37 @@ public class BenchmarkComponent {
     public void go() {
         String role = Parameters.INSTANCE.getProperty("com.a2i.benchmark.role", "local");
 
-        if(role.equals("producer")) {
-            LOG.info("Running as a producer");
-            senderThread.start();
-        } else if(role.equals("consumer")) {
-            LOG.info("Running as a consumer");
-            speaker.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
-                long lastReceived = 0;
-                @Override
-                public void receive(SimpleMessage message) {
-                    if(messageCount == 0) {
-                        time = System.currentTimeMillis();
-                    } else {
-                        if(message.getSequence() - lastReceived > 1) {
-                            LOG.info("Dropped " + (message.getSequence() - lastReceived) + " messages");
+        switch (role) {
+            case "producer":
+                LOG.info("Running as a producer");
+                senderThread.start();
+                break;
+            case "consumer":
+                LOG.info("Running as a consumer");
+                speaker.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
+                    long lastReceived = 0;
+                    @Override
+                    public void receive(SimpleMessage message) {
+                        if(messageCount == 0) {
+                            time = System.currentTimeMillis();
+                        } else {
+                            if(message.getSequence() - lastReceived > 1) {
+                                LOG.info("Dropped " + (message.getSequence() - lastReceived) + " messages");
+                            }
+                            lastReceived = message.getSequence();
                         }
-                        lastReceived = message.getSequence();
+                        ++messageCount;
                     }
-                    ++messageCount;
-                }
-            });
-        } else {
-            LOG.info("Running in VM only");
-            speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
-                @Override
-                public void receive(SimpleMessage message) {
-                    ++messageCount;
-                }
-            });
-
-            localThread.start();
+                }); break;
+            default:
+                LOG.info("Running in VM only");
+                speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
+                    @Override
+                    public void receive(SimpleMessage message) {
+                        ++messageCount;
+                    }
+                }); localThread.start();
+                break;
         }
     }
 }

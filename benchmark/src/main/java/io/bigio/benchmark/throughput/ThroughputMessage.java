@@ -32,8 +32,9 @@ package io.bigio.benchmark.throughput;
 import io.bigio.Message;
 
 /**
- *
- * @author atrimble
+ * A message for the throughput benchmark.
+ * 
+ * @author Andrew Trimble
  */
 @Message
 public class ThroughputMessage {

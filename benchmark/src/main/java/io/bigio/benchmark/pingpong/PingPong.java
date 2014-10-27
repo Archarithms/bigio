@@ -45,8 +45,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author atrimble
+ * A class implementing a simple ping-pong style benchmark.
+ * 
+ * @author Andrew Trimble
  */
 @Component
 public class PingPong {

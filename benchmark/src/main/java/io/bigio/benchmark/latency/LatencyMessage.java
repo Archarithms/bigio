@@ -32,8 +32,9 @@ package io.bigio.benchmark.latency;
 import io.bigio.Message;
 
 /**
- *
- * @author atrimble
+ * A message for testing latency.
+ * 
+ * @author Andrew Trimble
  */
 @Message
 public class LatencyMessage {
