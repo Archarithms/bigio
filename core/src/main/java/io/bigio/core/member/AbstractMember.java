@@ -48,6 +48,7 @@ public abstract class AbstractMember implements Member {
     private int dataPort;
     private int gossipPort;
     protected MemberHolder memberHolder;
+    protected byte[] publicKey = null;
     
     public abstract void initialize();
     public abstract void shutdown();
@@ -57,10 +58,10 @@ public abstract class AbstractMember implements Member {
     }
 
     public AbstractMember(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
+        this(memberHolder);
         this.ip = ip;
         this.gossipPort = gossipPort;
         this.dataPort = dataPort;
-        this.memberHolder = memberHolder;
     }
 
     public final void setMemberHolder(MemberHolder holder) {
@@ -196,5 +197,21 @@ public abstract class AbstractMember implements Member {
     @Override
     public void setGossipPort(int gossipPort) {
         this.gossipPort = gossipPort;
+    }
+
+    /**
+     * @return the publicKey
+     */
+    @Override
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    /**
+     * @param publicKey the publicKey to set
+     */
+    @Override
+    public void setPublicKey(byte[] publicKey) {
+        this.publicKey = publicKey;
     }
 }

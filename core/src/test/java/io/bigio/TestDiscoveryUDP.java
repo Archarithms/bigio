@@ -7,6 +7,7 @@ package io.bigio;
 import io.bigio.Message;
 import io.bigio.Starter;
 import io.bigio.Speaker;
+import io.bigio.core.ClusterService;
 import io.bigio.core.member.Member;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +35,7 @@ public class TestDiscoveryUDP {
 
     @BeforeClass
     public static void init() throws InterruptedException {
-        System.setProperty("com.a2i.protocol", "udp");
+        Parameters.INSTANCE.setProperty(ClusterService.PROTOCOL_PROPERTY, "udp");
         
         speaker1 = Starter.bootstrap();
         speaker2 = Starter.bootstrap();
@@ -50,7 +51,7 @@ public class TestDiscoveryUDP {
         speaker1.shutdown();
         speaker2.shutdown();
 
-        System.setProperty("com.a2i.protocol", "tcp");
+        Parameters.INSTANCE.setProperty(ClusterService.PROTOCOL_PROPERTY, "tcp");
     }
 
     @Test

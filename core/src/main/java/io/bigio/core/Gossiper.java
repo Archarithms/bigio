@@ -108,6 +108,7 @@ public class Gossiper {
             memberList.setGossipPort(me.getGossipPort());
             memberList.setDataPort(me.getDataPort());
             memberList.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
+            memberList.setPublicKey(me.getPublicKey());
             memberList.getTags().putAll(me.getTags());
 
             for(int i = 0; i < memberHolder.getActiveMembers().size(); ++i) {

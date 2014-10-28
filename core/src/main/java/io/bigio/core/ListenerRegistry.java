@@ -29,10 +29,9 @@
 
 package io.bigio.core;
 
-import io.bigio.MessageListener;
 import io.bigio.Component;
 import io.bigio.Interceptor;
-import io.bigio.core.codec.GenericDecoder;
+import io.bigio.MessageListener;
 import io.bigio.core.member.Member;
 import io.bigio.core.member.MemberKey;
 import io.bigio.util.TopicUtils;
@@ -270,12 +269,6 @@ public class ListenerRegistry {
      * @throws IOException in case of a sending error.
      */
     public void send(Envelope envelope) throws IOException {
-        if(!envelope.isDecoded()) {
-            // decode actual message
-            envelope.setMessage(GenericDecoder.decode(envelope.getClassName(), envelope.getPayload()));
-            envelope.setDecoded(true);
-        }
-
         if(interceptors.containsKey(envelope.getTopic())) {
             for(Interceptor interceptor : interceptors.get(envelope.getTopic())) {
                 envelope = interceptor.intercept(envelope);

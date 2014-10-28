@@ -48,6 +48,7 @@ public class GossipMessage {
     private int gossipPort;
     private int dataPort;
     private int millisecondsSinceMidnight;
+    private byte[] publicKey = null;
     private final Map<String, String> tags = new HashMap<>();
     private final List<String> members = new ArrayList<>();
     private final List<Integer> clock = new ArrayList<>();
@@ -186,5 +187,19 @@ public class GossipMessage {
      */
     public void setMillisecondsSinceMidnight(int millisecondsSinceMidnight) {
         this.millisecondsSinceMidnight = millisecondsSinceMidnight;
+    }
+
+    /**
+     * @return the publicKey
+     */
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    /**
+     * @param publicKey the publicKey to set
+     */
+    public void setPublicKey(byte[] publicKey) {
+        this.publicKey = publicKey;
     }
 }

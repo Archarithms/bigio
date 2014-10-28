@@ -88,6 +88,12 @@ public class GossipEncoder {
         packer.write(message.getGossipPort());
         packer.write(message.getDataPort());
         packer.write(message.getMillisecondsSinceMidnight());
+        if(message.getPublicKey() != null) {
+            packer.write(true);
+            packer.write(message.getPublicKey());
+        } else {
+            packer.write(false);
+        }
         packer.write(message.getTags());
         packer.write(members);
         packer.write(message.getClock());

@@ -46,6 +46,7 @@ public class Envelope<T> {
     private byte[] payload;
 
     private boolean decoded = false;
+    private boolean encrypted = false;
     private T message;
 
     /**
@@ -172,5 +173,19 @@ public class Envelope<T> {
      */
     public void setPartition(String partition) {
         this.partition = partition;
+    }
+
+    /**
+     * @return the encrypted
+     */
+    public boolean isEncrypted() {
+        return encrypted;
+    }
+
+    /**
+     * @param encrypted the encrypted to set
+     */
+    public void setEncrypted(boolean encrypted) {
+        this.encrypted = encrypted;
     }
 }

@@ -28,12 +28,22 @@
  */
 package io.bigio.core.member;
 
+import io.bigio.Parameters;
 import io.bigio.core.Envelope;
 import io.bigio.core.GossipListener;
 import io.bigio.core.GossipMessage;
 import io.bigio.core.ListenerRegistry;
 import io.bigio.core.codec.EnvelopeDecoder;
+import io.bigio.core.codec.GenericDecoder;
 import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import org.msgpack.MessageTypeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +63,9 @@ public abstract class MeMember extends AbstractMember {
 
     private static final Logger LOG = LoggerFactory.getLogger(MeMember.class);
 
+    public static final String ENCRYPTION_PROPERTY = "io.bigio.encryption";
+    private static final String DEFAULT_ENCRYPTION = "false";
+
     protected static final String GOSSIP_TOPIC = "__gossiper";
     protected static final String DECODE_TOPIC = "__decoder";
                 
@@ -61,6 +74,8 @@ public abstract class MeMember extends AbstractMember {
     protected Reactor decoderReactor;
 
     protected ListenerRegistry registry;
+
+    private Cipher cipher = null;
 
     public MeMember(MemberHolder memberHolder, ListenerRegistry registry) {
         super(memberHolder);
@@ -87,11 +102,48 @@ public abstract class MeMember extends AbstractMember {
     public void initialize() {
         initializeReactor();
         initializeServers();
+
+        boolean encryption = Boolean.parseBoolean(
+                Parameters.INSTANCE.getProperty(ENCRYPTION_PROPERTY, DEFAULT_ENCRYPTION));
+
+        if(encryption) {
+            LOG.info("Requiring encrypted message traffic.");
+            try {
+                KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+                keyGen.initialize(2048);
+                KeyPair keyPair = keyGen.generateKeyPair();
+                this.publicKey = keyPair.getPublic().getEncoded();
+                this.cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+                cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+            } catch (NoSuchAlgorithmException ex) {
+                LOG.error("Could not find RSA algorithm.", ex);
+            } catch (NoSuchPaddingException ex) {
+                LOG.error("Could not find padding.", ex);
+            } catch (InvalidKeyException ex) {
+                LOG.error("Invalid public key.", ex);
+            }
+        }
     }
 
     @Override
-    public void send(Envelope message) throws IOException {
-        registry.send(message);
+    public void send(Envelope envelope) throws IOException {
+        if(!envelope.isDecoded()) {
+            if(envelope.isEncrypted()) {
+                try {
+                    envelope.setPayload(cipher.doFinal(envelope.getPayload()));
+                } catch (IllegalBlockSizeException ex) {
+                    LOG.error("Cannot decrypt message.", ex);
+                } catch (BadPaddingException ex) {
+                    LOG.error("Cannog decrypt message.", ex);
+                }
+            }
+
+            // decode message
+            envelope.setMessage(GenericDecoder.decode(envelope.getClassName(), envelope.getPayload()));
+            envelope.setDecoded(true);
+        }
+        
+        registry.send(envelope);
     }
 
     private void initializeReactor() {

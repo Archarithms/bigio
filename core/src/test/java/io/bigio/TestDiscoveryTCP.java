@@ -7,6 +7,7 @@ package io.bigio;
 import io.bigio.Message;
 import io.bigio.Starter;
 import io.bigio.Speaker;
+import io.bigio.core.ClusterService;
 import io.bigio.core.member.Member;
 import java.util.Collection;
 import java.util.List;

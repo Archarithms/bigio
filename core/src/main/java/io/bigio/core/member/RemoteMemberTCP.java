@@ -54,11 +54,21 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import java.io.IOException;
 import java.net.SocketException;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +106,8 @@ public class RemoteMemberTCP extends RemoteMember {
 
     private final RunningStatistics gossipSizeStat = new RunningStatistics();
     private final RunningStatistics dataSizeStat = new RunningStatistics();
+
+    private Cipher cipher = null;
 
     public RemoteMemberTCP(MemberHolder memberHolder) {
         super(memberHolder);
@@ -136,10 +148,37 @@ public class RemoteMemberTCP extends RemoteMember {
                 initializeDataClient();
             }
         });
+
+        if(publicKey != null) {
+            try {
+                this.cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+                PublicKey key = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKey));
+                cipher.init(Cipher.ENCRYPT_MODE, key);
+            } catch (NoSuchAlgorithmException ex) {
+                LOG.error("Cannot find encryption algorithm.", ex);
+            } catch (NoSuchPaddingException ex) {
+                LOG.error("Cannot construct cipher.", ex);
+            } catch (InvalidKeySpecException ex) {
+                LOG.error("Invalid key specification.", ex);
+            } catch (InvalidKeyException ex) {
+                LOG.error("Invalid key.", ex);
+            }
+        }
     }
 
     @Override
     public void send(final Envelope message) throws IOException {
+        if(publicKey != null) {
+            try {
+                message.setPayload(cipher.doFinal(message.getPayload()));
+                message.setEncrypted(true);
+            } catch (IllegalBlockSizeException ex) {
+                LOG.error("Error encrypting message.", ex);
+            } catch (BadPaddingException ex) {
+                LOG.error("Error encrypting message.", ex);
+            }
+        }
+
         byte[] bytes = EnvelopeEncoder.encode(message);
 
         if(LOG.isTraceEnabled()) {

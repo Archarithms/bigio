@@ -63,4 +63,8 @@ public interface Member {
 
     public void send(Envelope message) throws IOException;
 
+    public byte[] getPublicKey();
+
+    public void setPublicKey(byte[] publicKey);
+
 }

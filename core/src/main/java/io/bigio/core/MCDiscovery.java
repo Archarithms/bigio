@@ -79,8 +79,6 @@ public class MCDiscovery extends Thread {
     @Inject
     private MemberHolder memberHolder;
 
-    private static final String PROTOCOL_PROPERTY = "io.bigio.protocol";
-    private static final String DEFAULT_PROTOCOL = "tcp";
     private static final String MULTICAST_ENABLED_PROPERTY = "io.bigio.multicast.enabled";
     private static final String MULTICAST_GROUP_PROPERTY = "io.bigio.multicast.group";
     private static final String MULTICAST_PORT_PROPERTY = "io.bigio.multicast.port";
@@ -126,7 +124,7 @@ public class MCDiscovery extends Thread {
     public void initialize(Member me) {
         this.me = me;
 
-        protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
+        protocol = Parameters.INSTANCE.getProperty(ClusterService.PROTOCOL_PROPERTY, ClusterService.DEFAULT_PROTOCOL);
 
         setupNetworking();
 
@@ -225,6 +223,7 @@ public class MCDiscovery extends Thread {
                 message.getTags().putAll(me.getTags());
                 message.getMembers().add(MemberKey.getKey(me));
                 message.getClock().add(me.getSequence().incrementAndGet());
+                message.setPublicKey(me.getPublicKey());
 
                 sendMessage(message);
             } catch (IOException ex) {
@@ -317,6 +316,11 @@ public class MCDiscovery extends Thread {
                     }
                     member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
                 }
+                
+                if(message.getPublicKey() != null) {
+                    member.setPublicKey(message.getPublicKey());
+                }
+
                 ((AbstractMember)member).initialize();
             } else {
                 if(LOG.isTraceEnabled()) {

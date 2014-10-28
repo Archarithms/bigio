@@ -39,6 +39,8 @@ import org.msgpack.MessagePack;
 import org.msgpack.template.Template;
 import org.msgpack.template.Templates;
 import org.msgpack.unpacker.Unpacker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a class for decoding gossip messages.
@@ -46,6 +48,8 @@ import org.msgpack.unpacker.Unpacker;
  * @author Andy Trimble
  */
 public class GossipDecoder {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GossipDecoder.class);
 
     private static final MessagePack msgPack = new MessagePack();
     
@@ -118,6 +122,10 @@ public class GossipDecoder {
         message.setGossipPort(unpacker.readInt());
         message.setDataPort(unpacker.readInt());
         message.setMillisecondsSinceMidnight(unpacker.readInt());
+        boolean hasPublicKey = unpacker.readBoolean();
+        if(hasPublicKey) {
+            message.setPublicKey(unpacker.readByteArray());
+        }
         message.getTags().putAll(unpacker.read(tagTemplate));
         
         List<List<Integer>> member = unpacker.read(memberTemplate);

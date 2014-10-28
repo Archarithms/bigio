@@ -67,8 +67,8 @@ import org.slf4j.LoggerFactory;
 @Component
 public class ClusterService {
 
-    private static final String PROTOCOL_PROPERTY = "io.bigio.protocol";
-    private static final String DEFAULT_PROTOCOL = "tcp";
+    public static final String PROTOCOL_PROPERTY = "io.bigio.protocol";
+    public static final String DEFAULT_PROTOCOL = "tcp";
     private static final String GOSSIP_PORT_PROPERTY = "io.bigio.port.gossip";
     private static final String DATA_PORT_PROPERTY = "io.bigio.port.data";
 
@@ -456,6 +456,9 @@ public class ClusterService {
                 m.setIp(values[0]);
                 m.setGossipPort(Integer.parseInt(values[1]));
                 m.setDataPort(Integer.parseInt(values[2]));
+                if(message.getPublicKey() != null) {
+                    m.setPublicKey(message.getPublicKey());
+                }
                 ((AbstractMember)m).initialize();
             }
 

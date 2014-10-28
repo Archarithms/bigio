@@ -5,6 +5,7 @@
 package io.bigio;
 
 import io.bigio.core.ClusterService;
+import io.bigio.core.member.MeMember;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -23,9 +24,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author atrimble
  */
-public class TestRemoteMessagesUDP {
+public class TestUDPEncryption {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestRemoteMessagesUDP.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TestUDPEncryption.class);
 
     private static final MyMessageListener listener = new MyMessageListener();
     private static final VolumeListener volumeListener = new VolumeListener();
@@ -43,6 +44,7 @@ public class TestRemoteMessagesUDP {
     @BeforeClass
     public static void init() throws InterruptedException {
         Parameters.INSTANCE.setProperty(ClusterService.PROTOCOL_PROPERTY, "udp");
+        Parameters.INSTANCE.setProperty(MeMember.ENCRYPTION_PROPERTY, "true");
 
         speaker1 = Starter.bootstrap();
         speaker2 = Starter.bootstrap();
@@ -64,19 +66,20 @@ public class TestRemoteMessagesUDP {
         Thread.sleep(1000l);
         
         Parameters.INSTANCE.setProperty(ClusterService.PROTOCOL_PROPERTY, "tcp");
+        Parameters.INSTANCE.setProperty(MeMember.ENCRYPTION_PROPERTY, "false");
     }
 
     @Test
     public void testVolume() throws Exception {
         failed = false;
         
-        for(int i = 0; i < 1000; ++i) {
+        for(int i = 0; i < 100; ++i) {
             speaker1.send("VolumeTopic", new MyMessage(MESSAGE + i));
         }
 
         Thread.sleep(1000l);
 
-        assertTrue(volumeListener.counter == 1000);
+        assertTrue(volumeListener.counter == 100);
     }
 
     @Test
