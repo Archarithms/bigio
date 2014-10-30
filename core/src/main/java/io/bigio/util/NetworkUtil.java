@@ -75,6 +75,10 @@ public class NetworkUtil {
         Collections.shuffle(PORTS);
     }
 
+    private NetworkUtil() {
+
+    }
+
     /**
      * Get the IP address of this instance.
      * 
@@ -118,8 +122,9 @@ public class NetworkUtil {
      * Get a random unused port between START_PORT and END_PORT.
      * 
      * @return a random unused port
+     * @throws java.net.SocketException in the case where a free port cannot be located.
      */
-    public static int getFreePort() {
+    public static int getFreePort() throws SocketException {
         for (int i = 0; i < NUM_CANDIDATES; i ++) {
             int port = nextCandidatePort();
             try {
@@ -141,7 +146,7 @@ public class NetworkUtil {
             }
         }
 
-        throw new RuntimeException("unable to find a free port");
+        throw new SocketException("unable to find a free port");
     }
 
     private static int nextCandidatePort() {

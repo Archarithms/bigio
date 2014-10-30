@@ -43,6 +43,10 @@ import org.msgpack.packer.Packer;
 public class EnvelopeEncoder {
 
     private static final MessagePack msgPack = new MessagePack();
+
+    private EnvelopeEncoder() {
+        
+    }
     
     /**
      * Encode a message envelope.

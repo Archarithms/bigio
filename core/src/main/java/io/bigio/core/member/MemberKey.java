@@ -37,6 +37,11 @@ import io.bigio.core.GossipMessage;
  * @author Andy Trimble
  */
 public class MemberKey {
+
+    private MemberKey() {
+
+    }
+
     public static String getKey(Member member) {
         return new StringBuilder()
                 .append(member.getIp())

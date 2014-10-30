@@ -59,7 +59,6 @@ import org.slf4j.LoggerFactory;
 public enum Parameters {
     INSTANCE;
     
-    
     private final Logger LOG;
     private final int MAX_DEPTH;
     private final Properties properties;
@@ -155,7 +154,7 @@ public enum Parameters {
 
         try {
             if(!Files.isDirectory(configDir)) {
-                LOG.info("Cannot find default configuration directory. Using defaults.");
+                LOG.info("Cannot find default configuration directory. Using default configuration values.");
                 return;
             }
 

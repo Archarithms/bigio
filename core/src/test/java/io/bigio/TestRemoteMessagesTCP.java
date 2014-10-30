@@ -3,7 +3,6 @@
  */
 package io.bigio;
 
-import io.bigio.core.ClusterService;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -65,13 +64,13 @@ public class TestRemoteMessagesTCP {
     public void testVolume() throws Exception {
         failed = false;
 
-        for (int i = 0; i < 1000; ++i) {
+        for (int i = 0; i < 500; ++i) {
             speaker1.send("VolumeTopic", new MyMessage(MESSAGE + i));
         }
 
         Thread.sleep(1000l);
 
-        assertTrue(volumeListener.counter == 1000);
+        assertTrue(volumeListener.counter == 500);
     }
 
     @Test

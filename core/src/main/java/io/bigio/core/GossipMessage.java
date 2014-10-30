@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A message that contains the gossiped data.
@@ -41,8 +39,6 @@ import org.slf4j.LoggerFactory;
  * @author Andy Trimble
  */
 public class GossipMessage {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GossipMessage.class);
 
     private String ip;
     private int gossipPort;

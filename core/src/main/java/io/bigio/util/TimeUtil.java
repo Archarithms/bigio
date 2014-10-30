@@ -40,6 +40,10 @@ import java.util.TimeZone;
 public class TimeUtil {
     private static final TimeZone TIME_ZONE = TimeZone.getTimeZone("GMT");
     private static final Calendar CALENDAR = Calendar.getInstance(TIME_ZONE);
+
+    private TimeUtil() {
+
+    }
         
     public static int getMillisecondsSinceMidnight() {
         long ct = System.currentTimeMillis();

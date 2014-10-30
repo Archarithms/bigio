@@ -293,7 +293,7 @@ public class MCDiscovery extends Thread {
             Member member = memberHolder.getMember(key);
 
             if(member == null) {
-                if(protocol.equalsIgnoreCase("udp")) {
+                if("udp".equalsIgnoreCase(protocol)) {
                     if(LOG.isTraceEnabled()) {
                         LOG.trace(new StringBuilder()
                                 .append("Discovered new UDP member: ")

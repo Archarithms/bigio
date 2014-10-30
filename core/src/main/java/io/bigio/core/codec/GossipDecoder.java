@@ -39,8 +39,6 @@ import org.msgpack.MessagePack;
 import org.msgpack.template.Template;
 import org.msgpack.template.Templates;
 import org.msgpack.unpacker.Unpacker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is a class for decoding gossip messages.
@@ -48,8 +46,6 @@ import org.slf4j.LoggerFactory;
  * @author Andy Trimble
  */
 public class GossipDecoder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GossipDecoder.class);
 
     private static final MessagePack msgPack = new MessagePack();
     
@@ -61,6 +57,10 @@ public class GossipDecoder {
             Templates.tList(Templates.tList(Templates.TInteger));
     private static final Template<List<Integer>> clockTemplate = 
             Templates.tList(Templates.TInteger);
+
+    private GossipDecoder() {
+
+    }
     
     /**
      * Decode a gossip message.

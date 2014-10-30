@@ -49,6 +49,10 @@ public class GossipEncoder {
     private static final Logger LOG = LoggerFactory.getLogger(GossipEncoder.class);
 
     private static final MessagePack msgPack = new MessagePack();
+
+    private GossipEncoder() {
+
+    }
     
     /**
      * Encode a gossip message.

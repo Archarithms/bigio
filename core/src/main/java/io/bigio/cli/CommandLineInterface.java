@@ -30,7 +30,6 @@ package io.bigio.cli;
 
 import io.bigio.CommandLine;
 import io.bigio.Component;
-import io.bigio.Initialize;
 import io.bigio.Inject;
 import io.bigio.Parameters;
 import io.bigio.Starter;
@@ -61,6 +60,7 @@ public class CommandLineInterface extends Thread {
     /**
      * Start the command line interface thread.
      */
+    @SuppressWarnings("CallToThreadStartDuringObjectConstruction")
     public CommandLineInterface() {
         start();
     }
@@ -100,17 +100,19 @@ public class CommandLineInterface extends Thread {
 
                 String[] args = line.split("\\s+");
                 
-                if (line.equals("gc")) {
-                    found = true;
-                    System.gc();
-                } else if (line.equals("help")) {
-                    found = true;
-                    for(CommandLine command : commands) {
-                        System.out.println("\n" + command.getCommand() + "\n\t" + command.help());
-                    }
-                    System.out.println("\ngc\n\tPerforms garbage collection.");
+                switch (line) {
+                    case "gc":
+                        found = true;
+                        System.gc();
+                        break;
+                    case "help":
+                        found = true;
+                        for(CommandLine command : commands) {
+                            System.out.println("\n" + command.getCommand() + "\n\t" + command.help());
+                        }   System.out.println("\ngc\n\tPerforms garbage collection.");
                     System.out.println("\nquit\n\tExits ths system.");
-                    System.out.println("\nexit\n\tExits ths system.");
+                        System.out.println("\nexit\n\tExits ths system.");
+                        break;
                 }
 
                 for(CommandLine command : commands) {
@@ -120,7 +122,7 @@ public class CommandLineInterface extends Thread {
                     }
                 }
 
-                if (line.equalsIgnoreCase("quit") || line.equalsIgnoreCase("exit")) {
+                if ("quit".equalsIgnoreCase(line) || "exit".equalsIgnoreCase(line)) {
                     found = true;
                     Starter.exit();
                 }

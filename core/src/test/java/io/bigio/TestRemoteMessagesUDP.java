@@ -70,13 +70,13 @@ public class TestRemoteMessagesUDP {
     public void testVolume() throws Exception {
         failed = false;
         
-        for(int i = 0; i < 1000; ++i) {
+        for(int i = 0; i < 500; ++i) {
             speaker1.send("VolumeTopic", new MyMessage(MESSAGE + i));
         }
 
         Thread.sleep(1000l);
 
-        assertTrue(volumeListener.counter == 1000);
+        assertTrue(volumeListener.counter == 500);
     }
 
     @Test

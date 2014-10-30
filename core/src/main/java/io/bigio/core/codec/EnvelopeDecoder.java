@@ -45,6 +45,10 @@ public class EnvelopeDecoder {
     
     private static final MessagePack msgPack = new MessagePack();
 
+    private EnvelopeDecoder() {
+
+    }
+
     /**
      * Decode a message envelope.
      * 

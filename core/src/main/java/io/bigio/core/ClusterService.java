@@ -50,6 +50,7 @@ import io.bigio.util.NetworkUtil;
 import io.bigio.util.TimeUtil;
 import io.bigio.util.TopicUtils;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -209,7 +210,7 @@ public class ClusterService {
         switch(delivery) {
             case ROUND_ROBIN:
 
-                if(registry.getRegisteredMembers(topic).size() > 0) {
+                if(!registry.getRegisteredMembers(topic).isEmpty()) {
 
                     int index = (roundRobinIndex.get(topic) + 1) % 
                             registry.getRegisteredMembers(topic).size();
@@ -231,7 +232,7 @@ public class ClusterService {
                 break;
             case RANDOM:
 
-                if(registry.getRegisteredMembers(topic).size() > 0) {
+                if(!registry.getRegisteredMembers(topic).isEmpty()) {
                     int index = (int)(Math.random() *
                             registry.getRegisteredMembers(topic).size());
 
@@ -318,8 +319,10 @@ public class ClusterService {
 
     /**
      * Initialize communication.
+     * 
+     * @throws java.net.SocketException in the even a free port cannot be found.
      */
-    public void initialize() {
+    public void initialize() throws SocketException {
 
         String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
         String gossipPort = Parameters.INSTANCE.getProperty(GOSSIP_PORT_PROPERTY);
@@ -356,7 +359,7 @@ public class ClusterService {
                     .toString());
         }
 
-        if(protocol.equalsIgnoreCase("udp")) {
+        if("udp".equalsIgnoreCase(protocol)) {
             LOG.info("Running over UDP");
             me = new MeMemberUDP(myAddress, gossipPortInt, dataPortInt, memberHolder, registry);
         } else {
@@ -429,7 +432,7 @@ public class ClusterService {
             Member m = memberHolder.getMember(key);
             if(m == null) {
                 String protocol = Parameters.INSTANCE.getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
-                if(protocol.equalsIgnoreCase("udp")) {
+                if("udp".equalsIgnoreCase(protocol)) {
                     if(LOG.isTraceEnabled()) {
                         LOG.trace(new StringBuilder()
                                 .append(MemberKey.getKey(me))

@@ -30,8 +30,6 @@ package io.bigio.core.member;
 
 import io.bigio.core.GossipMessage;
 import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A representation of a remote BigIO cluster member.
@@ -39,8 +37,6 @@ import org.slf4j.LoggerFactory;
  * @author Andy Trimble
  */
 public abstract class RemoteMember extends AbstractMember {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RemoteMember.class);
 
     public RemoteMember(MemberHolder memberHolder) {
         super(memberHolder);

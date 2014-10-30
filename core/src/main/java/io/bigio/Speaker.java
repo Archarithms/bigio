@@ -33,6 +33,8 @@ import io.bigio.cli.CommandLineInterface;
 import io.bigio.core.ClusterService;
 import io.bigio.core.member.Member;
 import io.bigio.util.TopicUtils;
+import java.io.IOException;
+import java.net.SocketException;
 import java.util.Collection;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -59,7 +61,11 @@ public class Speaker {
      */
     @Initialize
     public void init() {
-        cluster.initialize();
+        try {
+            cluster.initialize();
+        } catch(SocketException ex) {
+            LOG.error("Cannot find a free port.", ex);
+        }
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -100,9 +106,9 @@ public class Speaker {
      * @param <T> the type of message
      * @param topic the name of the topic
      * @param message the message to send
-     * @throws Exception in case of an error in the message pipeline
+     * @throws IOException in case of an error in the message pipeline
      */
-    public <T> void send(String topic, T message) throws Exception {
+    public <T> void send(String topic, T message) throws IOException {
         send(topic, TopicUtils.ALL_PARTITIONS, message);
     }
 
@@ -113,9 +119,9 @@ public class Speaker {
      * @param topic the name of the topic
      * @param message the message to send
      * @param offsetMilliseconds the offset in milliseconds of this message
-     * @throws Exception in case of an error in the message pipeline
+     * @throws IOException in case of an error in the message pipeline
      */
-    public <T> void send(String topic, T message, int offsetMilliseconds) throws Exception {
+    public <T> void send(String topic, T message, int offsetMilliseconds) throws IOException {
         send(topic, TopicUtils.ALL_PARTITIONS, message, offsetMilliseconds);
     }
 
@@ -127,9 +133,9 @@ public class Speaker {
      * @param topic the name of the topic
      * @param partition a partition
      * @param message the message to send
-     * @throws Exception in case of an error in the message pipeline
+     * @throws IOException in case of an error in the message pipeline
      */
-    public <T> void send(String topic, String partition, T message) throws Exception {
+    public <T> void send(String topic, String partition, T message) throws IOException {
         cluster.sendMessage(topic, partition, message);
     }
 
@@ -142,9 +148,9 @@ public class Speaker {
      * @param partition a partition
      * @param message the message to send
      * @param offsetMilliseconds the offset in milliseconds of this message
-     * @throws Exception in case of an error in the message pipeline
+     * @throws IOException in case of an error in the message pipeline
      */
-    public <T> void send(String topic, String partition, T message, int offsetMilliseconds) throws Exception {
+    public <T> void send(String topic, String partition, T message, int offsetMilliseconds) throws IOException {
         cluster.sendMessage(topic, partition, message, offsetMilliseconds);
     }
 

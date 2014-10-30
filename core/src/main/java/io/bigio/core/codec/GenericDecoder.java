@@ -29,12 +29,7 @@
 
 package io.bigio.core.codec;
 
-import io.bigio.agent.MessageTransformer;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +43,10 @@ import org.slf4j.LoggerFactory;
 public class GenericDecoder {
 
     private static final Logger LOG = LoggerFactory.getLogger(GenericDecoder.class);
+
+    private GenericDecoder() {
+        
+    }
 
     /**
      * Decode a message payload.

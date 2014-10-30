@@ -36,6 +36,10 @@ package io.bigio.util;
  */
 public class TopicUtils {
 
+    private TopicUtils() {
+        
+    }
+
     public static final String ALL_PARTITIONS = ".*";
     
     public static String getTopicString(String topic, String partition) {

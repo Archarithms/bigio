@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A class for containing all known BigIO cluster members.
@@ -45,8 +43,6 @@ import org.slf4j.LoggerFactory;
 @Component
 public class MemberHolder {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MemberHolder.class);
-    
     private final Map<String, Member> members = new TreeMap<>();
     private final Map<String, Member> activeMembers = new TreeMap<>();
     private final Map<String, Member> deadMembers = new TreeMap<>();

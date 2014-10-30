@@ -49,7 +49,7 @@ public class Starter {
 
     private static final Logger LOG = LoggerFactory.getLogger(Starter.class);
 
-    public Starter() {
+    private Starter() {
         if(MONITOR_THREAD_CONTENTION) {
             ManagementFactory.getThreadMXBean().setThreadContentionMonitoringEnabled(MONITOR_THREAD_CONTENTION);
         }
@@ -87,9 +87,8 @@ public class Starter {
      * The main method for BigIO.
      * 
      * @param args command line arguments
-     * @throws Exception in case of an error in the Starter.
      */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         Parameters.INSTANCE.currentOS(); // Just to load the properties
         Container.INSTANCE.scan();
         Starter starter = new Starter();

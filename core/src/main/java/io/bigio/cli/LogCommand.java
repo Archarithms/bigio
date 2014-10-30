@@ -104,21 +104,21 @@ public class LogCommand implements CommandLine {
 
         LOG.info("Setting log level to '" + level + "'");
 
-        if(level.equalsIgnoreCase("all")) {
+        if("all".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.ALL.levelStr);
-        } else if(level.equalsIgnoreCase("trace")) {
+        } else if("trace".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.TRACE.levelStr);
-        } else if(level.equalsIgnoreCase("debug")) {
+        } else if("debug".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.DEBUG.levelStr);
-        } else if(level.equalsIgnoreCase("info")) {
+        } else if("info".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.INFO.levelStr);
-        } else if(level.equalsIgnoreCase("warn")) {
+        } else if("warn".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.WARN.levelStr);
-        } else if(level.equalsIgnoreCase("error")) {
+        } else if("error".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.ERROR.levelStr);
-        } else if(level.equalsIgnoreCase("off")) {
+        } else if("off".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.OFF.levelStr);
-        } else if(level.equalsIgnoreCase("none")) {
+        } else if("none".equalsIgnoreCase(level)) {
             threshold.setLevel(Level.OFF.levelStr);
         }
     }

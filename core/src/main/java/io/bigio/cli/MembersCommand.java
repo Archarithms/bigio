@@ -34,8 +34,6 @@ import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.Speaker;
 import io.bigio.core.member.Member;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is the "members" CLI command. This command will print all discovered
@@ -46,8 +44,6 @@ import org.slf4j.LoggerFactory;
 @Component
 public class MembersCommand implements CommandLine {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MembersCommand.class);
-    
     @Inject
     private Speaker speaker;
 

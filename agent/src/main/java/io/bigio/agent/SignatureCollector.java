@@ -34,8 +34,6 @@ import java.util.Map;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import static org.objectweb.asm.Opcodes.ASM5;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An ASM class visitor to collect the signatures required for transformation.
@@ -46,8 +44,6 @@ import org.slf4j.LoggerFactory;
  * @author Andrew Trimble
  */
 public class SignatureCollector extends ClassVisitor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SignatureCollector.class);
 
     private final Map<String, String> signatures = new HashMap<>();
 

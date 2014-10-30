@@ -50,6 +50,10 @@ public class JATransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(JATransformer.class);
 
+    private JATransformer() {
+
+    }
+
     /**
      * Perform the transformation.
      * 
