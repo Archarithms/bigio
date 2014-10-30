@@ -166,8 +166,6 @@ public class MCDiscovery extends Thread {
             return;
         }
 
-        //InetSocketAddress addr = new InetSocketAddress(NetworkUtil.INSTANCE.getIp(), NetworkUtil.INSTANCE.getFreePort());
-
         try {
             if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
                 LOG.error("Cannot form cluster. Network interface is down.");

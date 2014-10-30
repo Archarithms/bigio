@@ -13,7 +13,6 @@ import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -29,7 +28,6 @@ public class TestUDPEncryption {
     private static final Logger LOG = LoggerFactory.getLogger(TestUDPEncryption.class);
 
     private static final MyMessageListener listener = new MyMessageListener();
-    private static final VolumeListener volumeListener = new VolumeListener();
 
     private static final String MESSAGE = "This is a test";
 
@@ -49,7 +47,6 @@ public class TestUDPEncryption {
         speaker2 = Starter.bootstrap();
 
         speaker2.addListener("MyUDPTopic", listener);
-        speaker2.addListener("VolumeTopic", volumeListener);
         
         Thread.sleep(1000l);
     }
@@ -63,19 +60,6 @@ public class TestUDPEncryption {
         
         Parameters.INSTANCE.setProperty(ClusterService.PROTOCOL_PROPERTY, "tcp");
         Parameters.INSTANCE.setProperty(MeMember.ENCRYPTION_PROPERTY, "false");
-    }
-
-    @Test
-    public void testVolume() throws Exception {
-        failed = false;
-        
-        for(int i = 0; i < 100; ++i) {
-            speaker1.send("VolumeTopic", new MyMessage(MESSAGE + i));
-        }
-
-        Thread.sleep(1000l);
-
-        assertTrue(volumeListener.counter == 100);
     }
 
     @Test
@@ -124,15 +108,6 @@ public class TestUDPEncryption {
             if (!success) {
                 failed = true;
             }
-        }
-    }
-
-    private static class VolumeListener implements MessageListener<MyMessage> {
-        public int counter = 0;
-
-        @Override
-        public void receive(MyMessage message) {
-            ++counter;
         }
     }
 

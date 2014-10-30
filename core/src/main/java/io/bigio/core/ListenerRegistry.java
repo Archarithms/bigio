@@ -131,7 +131,7 @@ public class ListenerRegistry {
                     listener.receive((T)m.getData().getMessage());
                 } catch(ClassCastException ex) {
                     LOG.error("Topic '" + topic + "' received incorrect message type : " + m.getData().getMessage().getClass().getName(), ex);
-                } catch(Throwable ex) {
+                } catch(Exception ex) {
                     LOG.error("Exception in Reactor.", ex);
                 }
             }
