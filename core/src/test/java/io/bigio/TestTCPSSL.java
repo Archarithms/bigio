@@ -12,7 +12,6 @@ import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,8 +27,6 @@ public class TestTCPSSL {
     private static final Logger LOG = LoggerFactory.getLogger(TestTCPSSL.class);
 
     private static final MyMessageListener listener = new MyMessageListener();
-    private static final VolumeListener volumeListener = new VolumeListener();
-    private static final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
     private static final String MESSAGE = "This is a test";
 
@@ -84,10 +81,6 @@ public class TestTCPSSL {
         speaker2 = Starter.bootstrap();
 
         speaker2.addListener("MyTCPTopic", listener);
-        speaker2.addListener("VolumeTopic", volumeListener);
-        speaker2.addListener("DelayedTCPTopic", delayedListener);
-        speaker2.addListener("AllTCPPartitionTopic", ".*", listener);
-        speaker2.addListener("SpecificTCPPartitionTopic", "MyTCPPartition", listener);
     }
 
     private void cleanup() {
@@ -134,30 +127,6 @@ public class TestTCPSSL {
         @Override
         public void receive(MyMessage message) {
             LOG.info("Got a message " + message.getMessage());
-
-            boolean success = queue.offer(message);
-
-            if (!success) {
-                failed = true;
-            }
-        }
-    }
-
-    private static class VolumeListener implements MessageListener<MyMessage> {
-
-        public int counter = 0;
-
-        @Override
-        public void receive(MyMessage message) {
-            ++counter;
-        }
-    }
-
-    private static class DelayedMessageListener implements MessageListener<MyMessage> {
-
-        @Override
-        public void receive(MyMessage message) {
-            LOG.info("Got a delayed message " + message.getMessage());
 
             boolean success = queue.offer(message);
 

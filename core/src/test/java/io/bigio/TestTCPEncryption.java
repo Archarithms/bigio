@@ -3,7 +3,6 @@
  */
 package io.bigio;
 
-import io.bigio.core.ClusterService;
 import io.bigio.core.member.MeMember;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -29,7 +28,6 @@ public class TestTCPEncryption {
 
     private static final MyMessageListener listener = new MyMessageListener();
     private static final VolumeListener volumeListener = new VolumeListener();
-    private static final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
     private static final String MESSAGE = "This is a test";
 
@@ -49,9 +47,6 @@ public class TestTCPEncryption {
 
         speaker2.addListener("MyTCPTopic", listener);
         speaker2.addListener("VolumeTopic", volumeListener);
-        speaker2.addListener("DelayedTCPTopic", delayedListener);
-        speaker2.addListener("AllTCPPartitionTopic", ".*", listener);
-        speaker2.addListener("SpecificTCPPartitionTopic", "MyTCPPartition", listener);
 
         Thread.sleep(1000l);
     }
@@ -116,109 +111,6 @@ public class TestTCPEncryption {
         queue.clear();
     }
 
-    @Test
-    public void testAllPartitions() throws Exception {
-        failed = false;
-
-        speaker1.send("AllTCPPartitionTopic", "MyTCPPartition", new MyMessage(MESSAGE + "1"));
-        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if (failed) {
-            fail();
-        }
-
-        speaker1.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("AllTCPPartitionTopic", "MyTCPPartition", new MyMessage(MESSAGE + "1"));
-        m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if (failed) {
-            fail();
-        }
-
-        speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        queue.clear();
-    }
-
-    @Test
-    public void testSpecificPartitions() throws Exception {
-        failed = false;
-
-        speaker1.send("SpecificTCPPartitionTopic", "MyTCPPartition", new MyMessage(MESSAGE + "1"));
-        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if (failed) {
-            fail();
-        }
-
-        speaker1.send("SpecificTCPPartitionTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker1.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker1.send("SpecificTCPPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("SpecificTCPPartitionTopic", "MyTCPPartition", new MyMessage(MESSAGE + "1"));
-        m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if (failed) {
-            fail();
-        }
-
-        speaker2.send("SpecificTCPPartitionTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("SpecificTCPPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        queue.clear();
-    }
-
-    @Test
-    public void testDelay() throws Exception {
-        failed = false;
-
-        speaker1.send("DelayedTCPTopic", new MyMessage(MESSAGE + "8"), 2000);
-        MyMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        failed = false;
-
-        m = queue.poll(2500l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "8");
-
-        if (failed) {
-            fail();
-        }
-
-        queue.clear();
-    }
-
     private static class MyMessageListener implements MessageListener<MyMessage> {
 
         @Override
@@ -240,20 +132,6 @@ public class TestTCPEncryption {
         @Override
         public void receive(MyMessage message) {
             ++counter;
-        }
-    }
-
-    private static class DelayedMessageListener implements MessageListener<MyMessage> {
-
-        @Override
-        public void receive(MyMessage message) {
-            LOG.info("Got a delayed message " + message.getMessage());
-
-            boolean success = queue.offer(message);
-
-            if (!success) {
-                failed = true;
-            }
         }
     }
 

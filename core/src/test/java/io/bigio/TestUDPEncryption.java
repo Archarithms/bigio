@@ -30,7 +30,6 @@ public class TestUDPEncryption {
 
     private static final MyMessageListener listener = new MyMessageListener();
     private static final VolumeListener volumeListener = new VolumeListener();
-    private static final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
     private static final String MESSAGE = "This is a test";
 
@@ -51,9 +50,6 @@ public class TestUDPEncryption {
 
         speaker2.addListener("MyUDPTopic", listener);
         speaker2.addListener("VolumeTopic", volumeListener);
-        speaker2.addListener("DelayedUDPTopic", delayedListener);
-        speaker2.addListener("AllUDPPartitionTopic", ".*", listener);
-        speaker2.addListener("SpecificUDPPartitionTopic", "MyUDPPartition", listener);
         
         Thread.sleep(1000l);
     }
@@ -117,109 +113,6 @@ public class TestUDPEncryption {
         queue.clear();
     }
 
-    @Test
-    public void testAllPartitions() throws Exception {
-        failed = false;
-        
-        speaker1.send("AllUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
-        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if(failed) {
-            fail();
-        }
-
-        speaker1.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("AllUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
-        m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if(failed) {
-            fail();
-        }
-
-        speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        queue.clear();
-    }
-
-    @Test
-    public void testSpecificPartitions() throws Exception {
-        failed = false;
-        
-        speaker1.send("SpecificUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
-        MyMessage m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if(failed) {
-            fail();
-        }
-
-        speaker1.send("SpecificUDPPartitionTopic",  new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker1.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker1.send("SpecificUDPPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("SpecificUDPPartitionTopic", "MyUDPPartition", new MyMessage(MESSAGE + "1"));
-        m = queue.poll(2000l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "1");
-
-        if(failed) {
-            fail();
-        }
-
-        speaker2.send("SpecificUDPPartitionTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("BadTopic", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        speaker2.send("SpecificUDPPartitionTopic", "BadPartition", new MyMessage(MESSAGE + "2"));
-        m = queue.poll(500l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        queue.clear();
-    }
-
-    @Test
-    public void testDelay() throws Exception {
-        failed = false;
-
-        speaker1.send("DelayedUDPTopic", new MyMessage(MESSAGE + "8"), 2000);
-        MyMessage m = queue.poll(1000l, TimeUnit.MILLISECONDS);
-        assertNull(m);
-
-        failed = false;
-
-        m = queue.poll(2500l, TimeUnit.MILLISECONDS);
-        assertNotNull(m);
-        assertEquals(m.getMessage(), MESSAGE + "8");
-
-        if(failed) {
-            fail();
-        }
-
-        queue.clear();
-    }
-
     private static class MyMessageListener implements MessageListener<MyMessage> {
 
         @Override
@@ -240,20 +133,6 @@ public class TestUDPEncryption {
         @Override
         public void receive(MyMessage message) {
             ++counter;
-        }
-    }
-
-    private static class DelayedMessageListener implements MessageListener<MyMessage> {
-
-        @Override
-        public void receive(MyMessage message) {
-            LOG.info("Got a delayed message " + message.getMessage());
-            
-            boolean success = queue.offer(message);
-
-            if (!success) {
-                failed = true;
-            }
         }
     }
 
