@@ -52,6 +52,9 @@ import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import java.io.File;
 import java.io.IOException;
 import java.net.SocketException;
 import java.security.InvalidAlgorithmParameterException;
@@ -73,6 +76,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +120,8 @@ public class RemoteMemberTCP extends RemoteMember {
     private SecretKey secretKey = null;
     private PublicKey key = null;
 
+    private SslContext sslContext;
+
     public RemoteMemberTCP(MemberHolder memberHolder) {
         super(memberHolder);
     }
@@ -132,6 +138,23 @@ public class RemoteMemberTCP extends RemoteMember {
                 RETRY_INTERVAL_PROPERTY, DEFAULT_RETRY_INTERVAL));
         timeout = Integer.parseInt(Parameters.INSTANCE.getProperty(
                 CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT));
+
+        if(useSSL) {
+            if(useSelfSigned) {
+                LOG.warn("Trusting all certificates. Only use self signed certificates for testing.");
+                try {
+                    sslContext = SslContext.newClientContext(InsecureTrustManagerFactory.INSTANCE);
+                } catch (SSLException ex) {
+                    LOG.error("SSL error.", ex);
+                }
+            } else {
+                try {
+                    sslContext = SslContext.newClientContext(new File(certChainFile));
+                } catch (SSLException ex) {
+                    LOG.error("SSL error.", ex);
+                }
+            }
+        }
 
         try {
             if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
@@ -314,6 +337,9 @@ public class RemoteMemberTCP extends RemoteMember {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
                 ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
+                if(useSSL) {
+                    ch.pipeline().addLast(sslContext.newHandler(ch.alloc(), ip, dataPort));
+                }
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new DataExceptionHandler());

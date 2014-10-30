@@ -52,12 +52,18 @@ import io.netty.handler.codec.bytes.ByteArrayDecoder;
 import io.netty.handler.codec.bytes.ByteArrayEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.util.ReferenceCountUtil;
+import java.io.File;
 import java.io.IOException;
 import java.net.SocketException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.event.Event;
@@ -84,6 +90,8 @@ public class MeMemberTCP extends MeMember {
     private EventLoopGroup dataWorkerGroup = null;
 
     private final ExecutorService serverExecutor = Executors.newFixedThreadPool(SERVER_THREAD_POOL_SIZE);
+
+    private SslContext sslContext;
 
     public MeMemberTCP(MemberHolder memberHolder, ListenerRegistry registry) {
         super(memberHolder, registry);
@@ -117,6 +125,33 @@ public class MeMemberTCP extends MeMember {
     @Override
     protected void initializeServers() {
         LOG.debug("Initializing gossip server on " + getIp() + ":" + getGossipPort());
+
+        if(useSSL) {
+            LOG.info("Using SSL/TLS.");
+            
+            if(useSelfSigned) {
+                LOG.warn("Using self signed certificate. Only use this for testing.");
+                SelfSignedCertificate ssc;
+                try {
+                    ssc = new SelfSignedCertificate();
+                    sslContext = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
+                } catch (CertificateException ex) {
+                    LOG.error("Certificate error.", ex);
+                } catch (SSLException ex) {
+                    LOG.error("SSL error.", ex);
+                }
+            } else {
+                try {
+                    if("".equals(keyPassword) || keyPassword == null) {
+                        sslContext = SslContext.newServerContext(SslProvider.JDK, new File(certChainFile), new File(keyFile));
+                    } else {
+                        sslContext = SslContext.newServerContext(SslProvider.JDK, new File(certChainFile), new File(keyFile), keyPassword);
+                    }
+                } catch (SSLException ex) {
+                    LOG.error("SSL error.", ex);
+                }
+            }
+        }
 
         try {
             if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
@@ -202,6 +237,9 @@ public class MeMemberTCP extends MeMember {
                             @Override
                             public void initChannel(SocketChannel ch) throws Exception {
                                 ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
+                                if(useSSL) {
+                                    ch.pipeline().addLast(sslContext.newHandler(ch.alloc()));
+                                }
                                 ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(32768, 0, 2, 0, 2));
                                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                                 ch.pipeline().addLast(new DataMessageHandler());

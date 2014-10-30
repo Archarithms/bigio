@@ -70,7 +70,7 @@ import reactor.event.Event;
 
 /**
  * A UDP implementation of the current BigIO cluster member.
- * 
+ *
  * @author Andy Trimble
  */
 public class MeMemberUDP extends MeMember {
@@ -83,7 +83,7 @@ public class MeMemberUDP extends MeMember {
     private static final int DATA_WORKER_THREADS = 4;
 
     private static final Logger LOG = LoggerFactory.getLogger(MeMemberUDP.class);
-                
+
     private EventLoopGroup gossipBossGroup = null;
     private EventLoopGroup gossipWorkerGroup = null;
     private EventLoopGroup dataBossGroup = null;
@@ -101,20 +101,20 @@ public class MeMemberUDP extends MeMember {
 
     @Override
     public void shutdown() {
-        
-        if(gossipBossGroup != null) {
+
+        if (gossipBossGroup != null) {
             gossipBossGroup.shutdownGracefully();
         }
 
-        if(gossipWorkerGroup != null) {
+        if (gossipWorkerGroup != null) {
             gossipWorkerGroup.shutdownGracefully();
         }
 
-        if(dataBossGroup != null) {
+        if (dataBossGroup != null) {
             dataBossGroup.shutdownGracefully();
         }
 
-        if(dataWorkerGroup != null) {
+        if (dataWorkerGroup != null) {
             dataWorkerGroup.shutdownGracefully();
         }
 
@@ -125,11 +125,11 @@ public class MeMemberUDP extends MeMember {
         LOG.debug("Initializing gossip server on " + getIp() + ":" + getGossipPort());
 
         try {
-            if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
+            if (NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
                 LOG.error("Cannot start networking. Interface is down.");
                 return;
             }
-        } catch(SocketException ex) {
+        } catch (SocketException ex) {
             LOG.error("Cannot start networking.", ex);
             return;
         }
@@ -157,7 +157,7 @@ public class MeMemberUDP extends MeMember {
                                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                                 ch.pipeline().addLast(new GossipMessageHandler());
-                                if(LOG.isTraceEnabled()) {
+                                if (LOG.isTraceEnabled()) {
                                     ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
                                 }
                             }
@@ -176,7 +176,7 @@ public class MeMemberUDP extends MeMember {
                 LOG.error("Gossip server interrupted.", ex);
             }
         }
-        
+
         @Override
         public void run() {
             try {
@@ -203,31 +203,31 @@ public class MeMemberUDP extends MeMember {
             try {
                 Bootstrap b = new Bootstrap();
                 b.group(dataWorkerGroup)
-                 .channelFactory(new ChannelFactory<Channel>() {
-                    @Override
-                    public Channel newChannel() {
-                        return new NioDatagramChannel(InternetProtocolFamily.IPv4);
-                    }
+                        .channelFactory(new ChannelFactory<Channel>() {
+                            @Override
+                            public Channel newChannel() {
+                                return new NioDatagramChannel(InternetProtocolFamily.IPv4);
+                            }
 
-                    @Override
-                    public String toString() {
-                        return NioDatagramChannel.class.getSimpleName() + ".class";
-                    }
-                }).handler(new ChannelInitializer<DatagramChannel>() {
-                    @Override
-                    public void initChannel(DatagramChannel ch) throws Exception {
-                        ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
-                        ch.pipeline().addLast(new DataMessageHandler());
-                        if(LOG.isTraceEnabled()) {
-                            ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
-                        }
-                    }
+                            @Override
+                            public String toString() {
+                                return NioDatagramChannel.class.getSimpleName() + ".class";
+                            }
+                        }).handler(new ChannelInitializer<DatagramChannel>() {
+                            @Override
+                            public void initChannel(DatagramChannel ch) throws Exception {
+                                ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
+                                ch.pipeline().addLast(new DataMessageHandler());
+                                if (LOG.isTraceEnabled()) {
+                                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                                }
+                            }
 
-                    @Override
-                    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                        LOG.error("Cannot initialize data server.", cause);
-                    }
-                });
+                            @Override
+                            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                                LOG.error("Cannot initialize data server.", cause);
+                            }
+                        });
 
                 // Bind and start to accept incoming connections.
                 f = b.bind(getIp(), getDataPort()).sync();
@@ -235,7 +235,7 @@ public class MeMemberUDP extends MeMember {
                 LOG.error("Message data interrupted.", ex);
             }
         }
-        
+
         @Override
         public void run() {
             try {
@@ -265,7 +265,7 @@ public class MeMemberUDP extends MeMember {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            if(msg instanceof byte[]) {
+            if (msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
                     GossipMessage message = GossipDecoder.decode(bytes);
@@ -290,7 +290,7 @@ public class MeMemberUDP extends MeMember {
 
     @Sharable
     private class DataMessageHandler extends MessageToMessageDecoder<DatagramPacket> {
-        
+
         @Override
         public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) {
             ByteBuf buff = packet.content();

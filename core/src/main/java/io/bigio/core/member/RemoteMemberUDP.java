@@ -84,7 +84,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A UDP implementation of a remote BigIO cluster member.
- * 
+ *
  * @author Andy Trimble
  */
 public class RemoteMemberUDP extends RemoteMember {
@@ -103,7 +103,7 @@ public class RemoteMemberUDP extends RemoteMember {
     private int maxRetry;
     private long retryInterval;
     private int timeout;
-    
+
     private final AtomicInteger gossipRetryCount = new AtomicInteger(0);
     private final AtomicInteger dataRetryCount = new AtomicInteger(0);
     private final ScheduledExecutorService retryExecutor = Executors.newScheduledThreadPool(CLIENT_THREAD_POOL_SIZE);
@@ -116,9 +116,9 @@ public class RemoteMemberUDP extends RemoteMember {
 
     private final RunningStatistics gossipSizeStat = new RunningStatistics();
     private final RunningStatistics dataSizeStat = new RunningStatistics();
-    
+
     private InetSocketAddress address;
-    
+
     private Cipher cipher = null;
     private Cipher symmetricCipher = null;
     private SecretKey secretKey = null;
@@ -142,11 +142,11 @@ public class RemoteMemberUDP extends RemoteMember {
                 CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT));
 
         try {
-            if(NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
+            if (NetworkUtil.getNetworkInterface() == null || !NetworkUtil.getNetworkInterface().isUp()) {
                 LOG.error("Cannot start networking. Interface is down.");
                 return;
             }
-        } catch(SocketException ex) {
+        } catch (SocketException ex) {
             LOG.error("Cannot start networking.", ex);
             return;
         }
@@ -166,7 +166,7 @@ public class RemoteMemberUDP extends RemoteMember {
             }
         });
 
-        if(publicKey != null) {
+        if (publicKey != null) {
             try {
                 this.cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
                 this.key = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKey));
@@ -182,24 +182,24 @@ public class RemoteMemberUDP extends RemoteMember {
                 LOG.error("Cannot construct cipher.", ex);
             } catch (InvalidKeySpecException ex) {
                 LOG.error("Invalid key specification.", ex);
-            } 
+            }
         }
     }
 
     @Override
     public void send(final Envelope message) throws IOException {
-        if(publicKey != null) {
+        if (publicKey != null) {
             try {
                 // encrypt data with symmetric key
-                byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
                 IvParameterSpec ivspec = new IvParameterSpec(iv);
-                synchronized(symmetricCipher) {
+                synchronized (symmetricCipher) {
                     symmetricCipher.init(Cipher.ENCRYPT_MODE, secretKey, ivspec);
                     message.setPayload(symmetricCipher.doFinal(message.getPayload()));
                 }
 
                 // encrypt key with asymmetric key
-                synchronized(cipher) {
+                synchronized (cipher) {
                     cipher.init(Cipher.ENCRYPT_MODE, key);
                     message.setKey(cipher.doFinal(secretKey.getEncoded()));
                 }
@@ -217,11 +217,11 @@ public class RemoteMemberUDP extends RemoteMember {
 
         byte[] bytes = EnvelopeEncoder.encode(message);
 
-        if(LOG.isTraceEnabled()) {
+        if (LOG.isTraceEnabled()) {
             dataSizeStat.push(bytes.length);
         }
-        
-        if(dataChannel != null) {
+
+        if (dataChannel != null) {
             dataChannel.writeAndFlush(new DatagramPacket(Unpooled.wrappedBuffer(bytes), address));
         }
     }
@@ -230,11 +230,11 @@ public class RemoteMemberUDP extends RemoteMember {
     public void gossip(final GossipMessage message) throws IOException {
         byte[] bytes = GossipEncoder.encode(message);
 
-        if(LOG.isTraceEnabled()) {
+        if (LOG.isTraceEnabled()) {
             gossipSizeStat.push(bytes.length);
         }
 
-        if(gossipChannel != null) {
+        if (gossipChannel != null) {
             gossipChannel.writeAndFlush(bytes);
         }
     }
@@ -245,15 +245,15 @@ public class RemoteMemberUDP extends RemoteMember {
             LOG.trace("Closing connections to " + getIp() + ":" + getGossipPort() + ":" + getDataPort());
         }
 
-        if(gossipWorkerGroup != null) {
+        if (gossipWorkerGroup != null) {
             gossipWorkerGroup.shutdownGracefully();
         }
-        
-        if(dataWorkerGroup != null) {
+
+        if (dataWorkerGroup != null) {
             dataWorkerGroup.shutdownGracefully();
         }
 
-        if(LOG.isTraceEnabled()) {
+        if (LOG.isTraceEnabled()) {
             LOG.trace("Mean sent gossip message size: " + gossipSizeStat.mean() + " over " + gossipSizeStat.numSamples() + " samples");
             LOG.trace("Mean sent data message size: " + dataSizeStat.mean() + " over " + dataSizeStat.numSamples() + " samples");
         }
@@ -267,7 +267,7 @@ public class RemoteMemberUDP extends RemoteMember {
         LOG.trace("Initializing gossip client");
 
         gossipWorkerGroup = new NioEventLoopGroup(GOSSIP_WORKER_THREADS);
-            
+
         Bootstrap b = new Bootstrap();
         b.group(gossipWorkerGroup);
         b.channel(NioSocketChannel.class);
@@ -280,7 +280,7 @@ public class RemoteMemberUDP extends RemoteMember {
                 ch.pipeline().addLast("encoder", new ByteArrayEncoder());
                 ch.pipeline().addLast("decoder", new ByteArrayDecoder());
                 ch.pipeline().addLast(new GossipExceptionHandler());
-                if(LOG.isTraceEnabled()) {
+                if (LOG.isTraceEnabled()) {
                     ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
                 }
             }
@@ -295,9 +295,9 @@ public class RemoteMemberUDP extends RemoteMember {
         // Start the client.
         ChannelFuture future = b.connect(getIp(), getGossipPort()).awaitUninterruptibly();
 
-        if(future.isCancelled()) {
+        if (future.isCancelled()) {
             gossipChannel = null;
-        } else if(!future.isSuccess()) {
+        } else if (!future.isSuccess()) {
             gossipChannel = null;
             retryGossipConnection();
         } else {
@@ -311,49 +311,49 @@ public class RemoteMemberUDP extends RemoteMember {
         LOG.trace("Initializing data client");
 
         dataWorkerGroup = new NioEventLoopGroup(DATA_WORKER_THREADS);
-            
+
         Bootstrap b = new Bootstrap();
         b.group(dataWorkerGroup)
-        .channelFactory(new ChannelFactory<Channel>() {
-            @Override
-            public Channel newChannel() {
-                return new NioDatagramChannel(InternetProtocolFamily.IPv4);
-            }
+                .channelFactory(new ChannelFactory<Channel>() {
+                    @Override
+                    public Channel newChannel() {
+                        return new NioDatagramChannel(InternetProtocolFamily.IPv4);
+                    }
 
-            @Override
-            public String toString() {
-                return NioDatagramChannel.class.getSimpleName() + ".class";
-            }
-        }).handler(new ChannelInitializer<DatagramChannel>() {
-            @Override
-            public void initChannel(DatagramChannel ch) throws Exception {
-                ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
-                ch.pipeline().addLast("encoder", new ByteArrayEncoder());
-                ch.pipeline().addLast("decoder", new ByteArrayDecoder());
-                ch.pipeline().addLast(new DataExceptionHandler());
-                if(LOG.isTraceEnabled()) {
-                    ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
-                }
-            }
+                    @Override
+                    public String toString() {
+                        return NioDatagramChannel.class.getSimpleName() + ".class";
+                    }
+                }).handler(new ChannelInitializer<DatagramChannel>() {
+                    @Override
+                    public void initChannel(DatagramChannel ch) throws Exception {
+                        ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
+                        ch.pipeline().addLast("encoder", new ByteArrayEncoder());
+                        ch.pipeline().addLast("decoder", new ByteArrayDecoder());
+                        ch.pipeline().addLast(new DataExceptionHandler());
+                        if (LOG.isTraceEnabled()) {
+                            ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
+                        }
+                    }
 
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                LOG.error("Cannot initialize data client.", cause);
-                ctx.close();
-            }
-        });
+                    @Override
+                    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                        LOG.error("Cannot initialize data client.", cause);
+                        ctx.close();
+                    }
+                });
 
         // Start the client.
         ChannelFuture future = b.connect(getIp(), getDataPort()).awaitUninterruptibly();
 
-        if(future.isCancelled()) {
+        if (future.isCancelled()) {
             dataChannel = null;
-        } else if(!future.isSuccess()) {
+        } else if (!future.isSuccess()) {
             dataChannel = null;
             retryDataConnection();
         } else {
-            dataChannel = (DatagramChannel)future.channel();
-            
+            dataChannel = (DatagramChannel) future.channel();
+
             try {
                 dataChannel.closeFuture().sync();
             } catch (InterruptedException ex) {
@@ -363,7 +363,7 @@ public class RemoteMemberUDP extends RemoteMember {
     }
 
     private void retryGossipConnection() {
-        if(gossipRetryCount.getAndIncrement() < maxRetry) {
+        if (gossipRetryCount.getAndIncrement() < maxRetry) {
             retryExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
@@ -376,7 +376,7 @@ public class RemoteMemberUDP extends RemoteMember {
     }
 
     private void retryDataConnection() {
-        if(dataRetryCount.getAndIncrement() < maxRetry) {
+        if (dataRetryCount.getAndIncrement() < maxRetry) {
             retryExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
@@ -407,7 +407,7 @@ public class RemoteMemberUDP extends RemoteMember {
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            
+
         }
 
         @Override

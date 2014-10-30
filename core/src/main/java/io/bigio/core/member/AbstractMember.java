@@ -29,6 +29,7 @@
 
 package io.bigio.core.member;
 
+import io.bigio.Parameters;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -44,17 +45,41 @@ public abstract class AbstractMember implements Member {
     private final Map<String, String> tags = new HashMap<>();
     private final AtomicInteger sequence = new AtomicInteger(0);
     private MemberStatus status = MemberStatus.Unknown;
-    private String ip;
-    private int dataPort;
-    private int gossipPort;
+    protected String ip;
+    protected int dataPort;
+    protected int gossipPort;
     protected MemberHolder memberHolder;
     protected byte[] publicKey = null;
     
     public abstract void initialize();
     public abstract void shutdown();
 
+    protected boolean useSSL;
+    protected boolean useSelfSigned;
+    protected String certChainFile;
+    protected String keyFile;
+    protected String keyPassword;
+
+    public static final String SSL_PROPERTY = "io.bigio.ssl";
+    private static final String DEFAULT_SSL = "false";
+    public static final String SSL_SELFSIGNED_PROPERTY = "io.bigio.ssl.selfSigned";
+    private static final String DEFAULT_SELFSIGNED = "true";
+    public static final String SSL_CERTCHAINFILE_PROPERTY = "io.bigio.ssl.certChainFile";
+    private static final String DEFAULT_CERTCHAINFILE = "conf/certChain.pem";
+    public static final String SSL_KEYFILE_PROPERTY = "io.bigio.ssl.keyFile";
+    private static final String DEFAULT_KEYFILE = "conf/keyfile.pem";
+    public static final String SSL_KEYPASSWORD_PROPERTY = "io.bigio.ssl.keyPassword";
+
     public AbstractMember(MemberHolder memberHolder) {
         this.memberHolder = memberHolder;
+
+        useSSL = Boolean.parseBoolean(
+                Parameters.INSTANCE.getProperty(SSL_PROPERTY, DEFAULT_SSL));
+        useSelfSigned = Boolean.parseBoolean(
+                Parameters.INSTANCE.getProperty(SSL_SELFSIGNED_PROPERTY, DEFAULT_SELFSIGNED));
+        certChainFile = Parameters.INSTANCE.getProperty(SSL_CERTCHAINFILE_PROPERTY, DEFAULT_CERTCHAINFILE);
+        keyFile = Parameters.INSTANCE.getProperty(SSL_KEYFILE_PROPERTY, DEFAULT_KEYFILE);
+        keyPassword = Parameters.INSTANCE.getProperty(SSL_KEYPASSWORD_PROPERTY);
     }
 
     public AbstractMember(String ip, int gossipPort, int dataPort, MemberHolder memberHolder) {
