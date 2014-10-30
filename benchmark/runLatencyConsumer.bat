@@ -1,1 +1,1 @@
-java -javaagent:target/bigio-agent-1.1-SNAPSHOT.jar -Dio.bigio.noJavassist=false -cp "config;target/*" io.bigio.test.latency.LatencyConsumer
+java -javaagent:target/bigio-agent-1.1-SNAPSHOT.jar -cp "config;config/consumer;target/*" io.bigio.benchmark.latency.LatencyConsumer

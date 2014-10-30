@@ -45,6 +45,7 @@ public class Envelope<T> {
     private String className;
     private byte[] payload;
 
+    private byte[] key;
     private boolean decoded = false;
     private boolean encrypted = false;
     private T message;
@@ -187,5 +188,19 @@ public class Envelope<T> {
      */
     public void setEncrypted(boolean encrypted) {
         this.encrypted = encrypted;
+    }
+
+    /**
+     * @return the key
+     */
+    public byte[] getKey() {
+        return key;
+    }
+
+    /**
+     * @param key the key to set
+     */
+    public void setKey(byte[] key) {
+        this.key = key;
     }
 }

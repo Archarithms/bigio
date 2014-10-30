@@ -36,6 +36,7 @@ import io.bigio.core.ListenerRegistry;
 import io.bigio.core.codec.EnvelopeDecoder;
 import io.bigio.core.codec.GenericDecoder;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -44,6 +45,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import org.msgpack.MessageTypeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +79,9 @@ public abstract class MeMember extends AbstractMember {
 
     protected ListenerRegistry registry;
 
-    private Cipher cipher = null;
+    private Cipher symmetricCipher = null;
+    private Cipher rsaCipher = null;
+    private KeyPair keyPair = null;
 
     public MeMember(MemberHolder memberHolder, ListenerRegistry registry) {
         super(memberHolder);
@@ -111,17 +117,15 @@ public abstract class MeMember extends AbstractMember {
             try {
                 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
                 keyGen.initialize(2048);
-                KeyPair keyPair = keyGen.generateKeyPair();
+                this.keyPair = keyGen.generateKeyPair();
                 this.publicKey = keyPair.getPublic().getEncoded();
-                this.cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-                cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+                this.symmetricCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                this.rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             } catch (NoSuchAlgorithmException ex) {
                 LOG.error("Could not find RSA algorithm.", ex);
             } catch (NoSuchPaddingException ex) {
                 LOG.error("Could not find padding.", ex);
-            } catch (InvalidKeyException ex) {
-                LOG.error("Invalid public key.", ex);
-            }
+            } 
         }
     }
 
@@ -129,12 +133,39 @@ public abstract class MeMember extends AbstractMember {
     public void send(Envelope envelope) throws IOException {
         if(!envelope.isDecoded()) {
             if(envelope.isEncrypted()) {
+                byte[] symKey;
+                SecretKey key = null;
                 try {
-                    envelope.setPayload(cipher.doFinal(envelope.getPayload()));
+                    // decrypt symmetric key
+                    synchronized(rsaCipher) {
+                        rsaCipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+                        symKey = rsaCipher.doFinal(envelope.getKey());
+                    }
+                    key = new SecretKeySpec(symKey, 0, symKey.length, "AES");
                 } catch (IllegalBlockSizeException ex) {
-                    LOG.error("Cannot decrypt message.", ex);
+                    LOG.error("Illegal block size in secret key.", ex);
                 } catch (BadPaddingException ex) {
-                    LOG.error("Cannog decrypt message.", ex);
+                    LOG.error("Bad padding in secret key.", ex);
+                } catch (InvalidKeyException ex) {
+                    LOG.error("Invalid public key.", ex);
+                }
+
+                try {
+                    // decrypt data with symmetric key
+                    byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                    IvParameterSpec ivspec = new IvParameterSpec(iv);
+                    synchronized(symmetricCipher) {
+                        symmetricCipher.init(Cipher.DECRYPT_MODE, key, ivspec);
+                        envelope.setPayload(symmetricCipher.doFinal(envelope.getPayload()));
+                    }
+                } catch (IllegalBlockSizeException ex) {
+                    LOG.error("Private key too big.", ex);
+                } catch (BadPaddingException ex) {
+                    LOG.error("Bad padding in payload.", ex);
+                } catch (InvalidKeyException ex) {
+                    LOG.error("Invalid symmetric key.", ex);
+                } catch (InvalidAlgorithmParameterException ex) {
+                    LOG.error("Invalid algorithm.", ex);
                 }
             }
 

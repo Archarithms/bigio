@@ -60,7 +60,7 @@ public class PingPong {
     private boolean running = true;
     private long time;
     private long messageCount = 0;
-    private final long throwAway = 2000000l;
+    private long throwAway = 2000000l;
     private final long maxMessages = 1000000000 + throwAway;
     private boolean warmedUp = false;
 
@@ -118,6 +118,8 @@ public class PingPong {
     };
 
     public PingPong() {
+        throwAway = Long.parseLong(System.getProperty("io.bigio.pingpong.throwaway", Long.toString(throwAway)));
+        LOG.info("Throwing away " + throwAway + " messages.");
         SimpleMessage sample = new SimpleMessage("m", 0, 0);
         try {
             byte[] payload = GenericEncoder.encode(sample);

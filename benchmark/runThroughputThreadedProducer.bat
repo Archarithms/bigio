@@ -1,1 +1,1 @@
-java -javaagent:target/bigio-agent-1.1-SNAPSHOT.jar -Dio.bigio.noJavassist=false -cp "config;target/*" io.bigio.test.throughput.ThroughputThreadedProducer
+java -javaagent:target/bigio-agent-1.1-SNAPSHOT.jar -cp "config;config/producer;target/*" io.bigio.benchmark.throughput.ThroughputThreadedProducer

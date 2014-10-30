@@ -1,1 +1,1 @@
-java -javaagent:target/bigio-agent-1.1-SNAPSHOT.jar -Dio.bigio.noJavassist=false -cp "config;target/*" io.bigio.test.throughput.ThroughputConsumer
+java -javaagent:target/bigio-agent-1.1-SNAPSHOT.jar -cp "config;config/consumer;target/*" io.bigio.benchmark.throughput.ThroughputConsumer

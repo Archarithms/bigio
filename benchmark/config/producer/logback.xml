@@ -9,7 +9,7 @@
     <logger name="io.netty.handler.logging.LoggingHandler" level="DEBUG"/>
 
     <!-- The log file -->
-    <property name="LOG_FILE" value="logs/bigio.log}"/>
+    <property name="LOG_FILE" value="logs/producer.log}"/>
 
     <!-- The log patterns -->
     <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %level [%t] %logger - %msg %n"/>

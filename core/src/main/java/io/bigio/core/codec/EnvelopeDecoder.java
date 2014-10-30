@@ -97,6 +97,9 @@ public class EnvelopeDecoder {
                 .append(unpacker.readInt());
         message.setSenderKey(keyBuilder.toString());
         message.setEncrypted(unpacker.readBoolean());
+        if(message.isEncrypted()) {
+            message.setKey(unpacker.readByteArray());
+        }
         message.setExecuteTime(unpacker.readInt());
         message.setMillisecondsSinceMidnight(unpacker.readInt());
         message.setTopic(unpacker.readString());

@@ -60,6 +60,7 @@ import io.netty.handler.logging.LoggingHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -74,7 +75,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +120,9 @@ public class RemoteMemberUDP extends RemoteMember {
     private InetSocketAddress address;
     
     private Cipher cipher = null;
+    private Cipher symmetricCipher = null;
+    private SecretKey secretKey = null;
+    private PublicKey key = null;
 
     public RemoteMemberUDP(MemberHolder memberHolder) {
         super(memberHolder);
@@ -161,18 +168,21 @@ public class RemoteMemberUDP extends RemoteMember {
 
         if(publicKey != null) {
             try {
-                this.cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-                PublicKey key = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKey));
-                cipher.init(Cipher.ENCRYPT_MODE, key);
+                this.cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+                this.key = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(publicKey));
+
+                // generate symmetric key
+                this.symmetricCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                KeyGenerator symmetricKeyGen = KeyGenerator.getInstance("AES");
+                symmetricKeyGen.init(128);
+                this.secretKey = symmetricKeyGen.generateKey();
             } catch (NoSuchAlgorithmException ex) {
                 LOG.error("Cannot find encryption algorithm.", ex);
             } catch (NoSuchPaddingException ex) {
                 LOG.error("Cannot construct cipher.", ex);
             } catch (InvalidKeySpecException ex) {
                 LOG.error("Invalid key specification.", ex);
-            } catch (InvalidKeyException ex) {
-                LOG.error("Invalid key.", ex);
-            }
+            } 
         }
     }
 
@@ -180,12 +190,28 @@ public class RemoteMemberUDP extends RemoteMember {
     public void send(final Envelope message) throws IOException {
         if(publicKey != null) {
             try {
-                message.setPayload(cipher.doFinal(message.getPayload()));
+                // encrypt data with symmetric key
+                byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                IvParameterSpec ivspec = new IvParameterSpec(iv);
+                synchronized(symmetricCipher) {
+                    symmetricCipher.init(Cipher.ENCRYPT_MODE, secretKey, ivspec);
+                    message.setPayload(symmetricCipher.doFinal(message.getPayload()));
+                }
+
+                // encrypt key with asymmetric key
+                synchronized(cipher) {
+                    cipher.init(Cipher.ENCRYPT_MODE, key);
+                    message.setKey(cipher.doFinal(secretKey.getEncoded()));
+                }
                 message.setEncrypted(true);
             } catch (IllegalBlockSizeException ex) {
-                LOG.error("Error encrypting message.", ex);
+                LOG.error("Wrong block size.", ex);
             } catch (BadPaddingException ex) {
-                LOG.error("Error encrypting message.", ex);
+                LOG.error("Bad padding.", ex);
+            } catch (InvalidKeyException ex) {
+                LOG.error("Invalid private key.", ex);
+            } catch (InvalidAlgorithmParameterException ex) {
+                LOG.error("Invalid algorithm parameter.", ex);
             }
         }
 

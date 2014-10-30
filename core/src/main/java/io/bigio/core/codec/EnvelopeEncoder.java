@@ -67,6 +67,9 @@ public class EnvelopeEncoder {
         packer.write(Integer.parseInt(keys[2]));
 
         packer.write(message.isEncrypted());
+        if(message.isEncrypted()) {
+            packer.write(message.getKey());
+        }
         packer.write(message.getExecuteTime());
         packer.write(message.getMillisecondsSinceMidnight());
         packer.write(message.getTopic());
