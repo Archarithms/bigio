@@ -37,9 +37,9 @@ import io.bigio.core.member.MemberKey;
 import io.bigio.util.TopicUtils;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -71,9 +71,9 @@ public class ListenerRegistry {
 
     private Member me;
 
-    private final Map<Member, Map<String, List<Registration>>> map = new HashMap<>();
+    private final Map<Member, Map<String, List<Registration>>> map = new ConcurrentHashMap<>();
 
-    private final Map<String, List<Interceptor>> interceptors = new HashMap<>();
+    private final Map<String, List<Interceptor>> interceptors = new ConcurrentHashMap<>();
 
     /**
      * Constructor.
@@ -93,7 +93,7 @@ public class ListenerRegistry {
      */
     public void addInterceptor(String topic, Interceptor interceptor) {
         if(interceptors.get(topic) == null) {
-            interceptors.put(topic, new ArrayList<Interceptor>());
+            interceptors.put(topic, new ArrayList<>());
         }
         interceptors.get(topic).add(interceptor);
     }
@@ -124,16 +124,13 @@ public class ListenerRegistry {
      * @param listener a listener.
      */
     public <T> void addLocalListener(final String topic, final String partition, final MessageListener<T> listener) {
-        Consumer<Event<Envelope>> consumer = new Consumer<Event<Envelope>>() {
-            @Override
-            public void accept(Event<Envelope> m) {
-                try {
-                    listener.receive((T)m.getData().getMessage());
-                } catch(ClassCastException ex) {
-                    LOG.error("Topic '" + topic + "' received incorrect message type : " + m.getData().getMessage().getClass().getName(), ex);
-                } catch(Exception ex) {
-                    LOG.error("Exception in Reactor.", ex);
-                }
+        Consumer<Event<Envelope>> consumer = (Event<Envelope> m) -> {
+            try {
+                listener.receive((T)m.getData().getMessage());
+            } catch(ClassCastException ex) {
+                LOG.error("Topic '" + topic + "' received incorrect message type : " + m.getData().getMessage().getClass().getName(), ex);
+            } catch(Exception ex) {
+                LOG.error("Exception in Reactor.", ex);
             }
         };
 
@@ -144,8 +141,9 @@ public class ListenerRegistry {
      * Remove all local listeners on a given topic.
      * 
      * @param topic a topic.
+     * @param partition
      */
-    public void removeAllLocalListeners(String topic) {
+    public void removeAllLocalListeners(String topic, String partition) {
         Map<String, List<Registration>> allRegs = map.get(me);
         
         if(allRegs != null) {
@@ -153,7 +151,7 @@ public class ListenerRegistry {
 
             if(regs != null) {
                 LOG.trace("Removing " + regs.size() + " registration");
-                reactor.getConsumerRegistry().unregister(topic);
+                reactor.getConsumerRegistry().unregister(Selectors.regex(TopicUtils.getTopicString(topic, partition)));
                 regs.clear();
             } else {
                 LOG.trace("No listeners registered for topic " + topic);
@@ -167,13 +165,11 @@ public class ListenerRegistry {
      * @param regs a set of registrations.
      */
     public void removeRegistrations(List<Registration> regs) {
-        for(Map<String, List<Registration>> allRegs : map.values()) {
-            if(allRegs != null) {
-                for(String key : allRegs.keySet()) {
-                    allRegs.get(key).removeAll(regs);
-                }
-            }
-        }
+        map.values().stream().filter((allRegs) -> (allRegs != null)).forEach((allRegs) -> {
+            allRegs.keySet().stream().forEach((key) -> {
+                allRegs.get(key).removeAll(regs);
+            });
+        });
     }
 
     /**
@@ -184,13 +180,11 @@ public class ListenerRegistry {
     public List<Registration> getAllRegistrations() {
         List<Registration> ret = new ArrayList<>();
         
-        for(Map<String, List<Registration>> allRegs : map.values()) {
-            if(allRegs != null) {
-                for(String key : allRegs.keySet()) {
-                    ret.addAll(allRegs.get(key));
-                }
-            }
-        }
+        map.values().stream().filter((allRegs) -> (allRegs != null)).forEach((allRegs) -> {
+            allRegs.keySet().stream().forEach((key) -> {
+                ret.addAll(allRegs.get(key));
+            });
+        });
 
         return ret;
     }
@@ -205,16 +199,14 @@ public class ListenerRegistry {
     public List<Member> getRegisteredMembers(String topic) {
         List<Member> ret = new ArrayList<>();
 
-        for(Member member : map.keySet()) {
+        map.keySet().stream().forEach((member) -> {
             Map<String, List<Registration>> allRegs = map.get(member);
-            if(allRegs != null) {
-                for(String key : allRegs.keySet()) {
-                    if(key.equals(topic)) {
-                        ret.add(member);
-                    }
-                }
+            if (allRegs != null) {
+                allRegs.keySet().stream().filter((key) -> (key.equals(topic))).forEach((_item) -> {
+                    ret.add(member);
+                });
             }
-        }
+        });
 
         return ret;
     }
@@ -229,11 +221,11 @@ public class ListenerRegistry {
     protected synchronized void registerMemberForTopic(String topic, String partition, Member member) {
 
         if(map.get(member) == null) {
-            map.put(member, new HashMap<String, List<Registration>>());
+            map.put(member, new ConcurrentHashMap<>());
         }
 
         if(map.get(member).get(topic) == null) {
-            map.get(member).put(topic, new ArrayList<Registration>());
+            map.get(member).put(topic, new ArrayList<>());
         }
 
         boolean found = false;
@@ -277,11 +269,8 @@ public class ListenerRegistry {
 
         if(envelope.getExecuteTime() > 0) {
             final Envelope env = envelope;
-            futureExecutor.schedule(new Runnable() {
-               @Override
-               public void run() {
-                   reactor.notify(TopicUtils.getNotifyTopicString(env.getTopic(), env.getPartition()), Event.wrap(env));
-               }
+            futureExecutor.schedule(() -> {
+                reactor.notify(TopicUtils.getNotifyTopicString(env.getTopic(), env.getPartition()), Event.wrap(env));
             }, envelope.getExecuteTime(), TimeUnit.MILLISECONDS);
         } else if(envelope.getExecuteTime() >= 0) {
             reactor.notify(TopicUtils.getNotifyTopicString(envelope.getTopic(), envelope.getPartition()), Event.wrap(envelope));

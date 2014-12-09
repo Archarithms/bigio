@@ -173,12 +173,14 @@ public class ClusterService {
     }
 
     /**
-     * Remove all listeners on a topic.
+     * This method is no longer supported. Remove all listeners on a topic.
      * 
      * @param topic a topic.
+     * @param partition
      */
-    public void removeAllListeners(String topic) {
-        registry.removeAllLocalListeners(topic);
+    public void removeAllListeners(String topic, String partition) {
+        throw new UnsupportedOperationException("Listener removal not supported at this time.");
+        //registry.removeAllLocalListeners(topic, partition);
     }
 
     /**
@@ -370,11 +372,8 @@ public class ClusterService {
         me.initialize();
         memberHolder.updateMemberStatus(me);
 
-        me.addGossipConsumer(new GossipListener() {
-            @Override
-            public void accept(GossipMessage message) {
-                handleGossipMessage(message);
-            }
+        me.addGossipConsumer((GossipMessage message) -> {
+            handleGossipMessage(message);
         });
 
         multicast.initialize(me);
@@ -410,9 +409,9 @@ public class ClusterService {
 
         multicast.shutdown();
 
-        for(Member member : memberHolder.getAllMembers()) {
+        memberHolder.getAllMembers().stream().forEach((member) -> {
             ((AbstractMember)member).shutdown();
-        }
+        });
 
         memberHolder.clear();
     }

@@ -40,7 +40,6 @@ import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +52,8 @@ import org.slf4j.LoggerFactory;
 public class MessageTransformer implements ClassFileTransformer {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTransformer.class);
+        
+    private final ClassPool pool = ClassPool.getDefault();
 
     public static void premain(String agentArgs, Instrumentation inst) {
         inst.addTransformer(new MessageTransformer(), false);
@@ -63,40 +64,35 @@ public class MessageTransformer implements ClassFileTransformer {
             Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
             byte[] b) throws IllegalClassFormatException {
 
-        ClassPool pool = ClassPool.getDefault();
-        CtClass clazz = null;
-
         try {
-            clazz = pool.makeClass(new ByteArrayInputStream(b));
+            ClassReader cr = new ClassReader(b);
+            ClassWriter cw = new ClassWriter(cr, 0);
+            AnnotationChecker annotChecker = new AnnotationChecker(cw);
+            cr.accept(annotChecker, 0);
 
-            if (clazz.hasAnnotation(Class.forName("io.bigio.Message"))) {
+            if (annotChecker.hasAnnotation()) {
                 LOG.trace("Creating serialization helper for class " + className);
-                ClassReader cr = new ClassReader(b);
-                ClassWriter cw = new ClassWriter(cr, 0);
-                ClassVisitor cv = new SignatureCollector(cw);
+                CtClass clazz = pool.makeClass(new ByteArrayInputStream(b));
+                cr = new ClassReader(b);
+                cw = new ClassWriter(cr, 0);
+                SignatureCollector cv = new SignatureCollector(cw);
                 cr.accept(cv, 0);
-                Map<String, String> signatures = ((SignatureCollector) cv).getSignatures();
+                Map<String, String> signatures = cv.getSignatures();
 
                 JATransformer.transform(clazz, signatures, pool);
+
+                try {
+                    return clazz.toBytecode();
+                } catch (IOException ex) {
+                    LOG.error("IOException.", ex);
+                } catch (CannotCompileException ex) {
+                    LOG.error("Cannot compile.", ex);
+                }
             }
-        } catch (IOException ex) {
+        } 
+        catch (IOException ex) {
             LOG.error("IO Error", ex);
             return null;
-        } catch (ClassNotFoundException ex) {
-            LOG.error("Cannot find message annotation.", ex);
-            return null;
-        } finally {
-            if (clazz != null) {
-                clazz.detach();
-            }
-        }
-
-        try {
-            return clazz.toBytecode();
-        } catch (IOException ex) {
-            LOG.error("IOException.", ex);
-        } catch (CannotCompileException ex) {
-            LOG.error("Cannot compile.", ex);
         }
 
         return null;

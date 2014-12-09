@@ -27,26 +27,34 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.core.codec;
+package io.bigio.agent;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import static org.objectweb.asm.Opcodes.ASM5;
 
 /**
- * An interface used by Javassist to indicate messages.
+ * An ASM class visitor to determine if a class has the Mesage annotation.
  * 
  * @author Andrew Trimble
  */
-public interface BigIOMessage {
-    /**
-     * decode this message.
-     * 
-     * @param bytes the serialized form.
-     */
-    public void bigiodecode(byte[] bytes);
+public class AnnotationChecker extends ClassVisitor {
 
-    /**
-     * Encode this message.
-     * 
-     * @return the serialized form.
-     * @throws Exception in case of a serialization error.
-     */
-    public byte[] bigioencode() throws Exception;
+    private boolean hasAnnotation = false;
+
+    public AnnotationChecker(ClassVisitor cv) {
+        super(ASM5, cv);
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+        if(desc.equals("Lio/bigio/Message;")) {
+            hasAnnotation = true;
+        }
+        return cv.visitAnnotation(desc, visible);
+    }
+
+    public boolean hasAnnotation() {
+        return hasAnnotation;
+    }
 }

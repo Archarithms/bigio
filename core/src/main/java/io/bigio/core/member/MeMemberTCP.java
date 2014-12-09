@@ -312,7 +312,7 @@ public class MeMemberTCP extends MeMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.error("Error in TCP Client", cause);
+            LOG.warn("Error in TCP Client", cause);
             ctx.close();
         }
     }
@@ -327,7 +327,7 @@ public class MeMemberTCP extends MeMember {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.error("Error in TCP Client", cause);
+            LOG.warn("Error in TCP Client", cause);
             ctx.close();
         }
     }

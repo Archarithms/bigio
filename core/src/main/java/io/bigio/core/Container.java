@@ -50,11 +50,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.PostConstruct;
 import org.reflections.Configuration;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
@@ -171,7 +171,11 @@ public enum Container {
         
         Configuration config = new ConfigurationBuilder()
                 .setUrls(urls)
-                .setScanners(new TypeAnnotationsScanner(), new FieldAnnotationsScanner(), new MethodAnnotationsScanner());
+                .setScanners(
+                        new TypeAnnotationsScanner(), 
+                        new FieldAnnotationsScanner(), 
+                        new MethodAnnotationsScanner(),
+                        new SubTypesScanner());
         reflections = new Reflections(config);
     }
 
@@ -179,31 +183,28 @@ public enum Container {
         components.addAll(reflections.getTypesAnnotatedWith(Component.class));
         injections.addAll(reflections.getFieldsAnnotatedWith(Inject.class));
 
-        for(Method init : reflections.getMethodsAnnotatedWith(PostConstruct.class)) {
+        reflections.getMethodsAnnotatedWith(Initialize.class).stream().forEach((init) -> {
             initializations.put(init.getDeclaringClass(), init);
-        }
-        for(Method init : reflections.getMethodsAnnotatedWith(Initialize.class)) {
-            initializations.put(init.getDeclaringClass(), init);
-        }
+        });
         
-        for(Field inject : injections) {
+        injections.stream().forEach((inject) -> {
             if(inject.getType().isAssignableFrom(List.class)) {
                 if(multipleDependencies.get(inject.getDeclaringClass()) == null) {
-                    multipleDependencies.put(inject.getDeclaringClass(), new ArrayList<Field>());
+                    multipleDependencies.put(inject.getDeclaringClass(), new ArrayList<>());
                 }
                 multipleDependencies.get(inject.getDeclaringClass()).add(inject);
             } else {
                 if(dependencies.get(inject.getDeclaringClass()) == null) {
-                    dependencies.put(inject.getDeclaringClass(), new ArrayList<Field>());
+                    dependencies.put(inject.getDeclaringClass(), new ArrayList<>());
                 }
                 dependencies.get(inject.getDeclaringClass()).add(inject);
             }
-        }
+        });
     }
 
     private void instantiateComponents() {
         if(toInstantiate.isEmpty()) {
-            for(Class<?> cl : components) {
+            components.stream().forEach((cl) -> {
                 try {
                     if(LOG.isTraceEnabled()) {
                         LOG.trace("Instantiating " + cl.getName());
@@ -225,25 +226,27 @@ public enum Container {
                 } catch (IllegalAccessException ex) {
                     LOG.error("Illegal access", ex);
                 }
-            }
+            });
         } else {
-            for(Class<?> cl : toInstantiate) {
+            toInstantiate.stream().map((cl) -> {
                 if(LOG.isTraceEnabled()) {
                     LOG.trace("Instantiating " + cl.getName());
                 }
+                return cl;
+            }).map((cl) -> {
                 instantiateTree(cl);
-                if(!dependencies.containsKey(cl)) {
-                    try {
-                        initializations.get(cl).invoke(instances.get(cl));
-                    } catch (IllegalAccessException ex) {
-                        LOG.error("Illegal access", ex);
-                    } catch (IllegalArgumentException ex) {
-                        LOG.error("Illegal argument", ex);
-                    } catch (InvocationTargetException ex) {
-                        LOG.error("Invocation Target Exception", ex);
-                    }
+                return cl;
+            }).filter((cl) -> (!dependencies.containsKey(cl))).forEach((cl) -> {
+                try {
+                    initializations.get(cl).invoke(instances.get(cl));
+                } catch (IllegalAccessException ex) {
+                    LOG.error("Illegal access", ex);
+                } catch (IllegalArgumentException ex) {
+                    LOG.error("Illegal argument", ex);
+                } catch (InvocationTargetException ex) {
+                    LOG.error("Invocation Target Exception", ex);
                 }
-            }
+            });
         }
     }
 
@@ -264,26 +267,19 @@ public enum Container {
         }
 
         if(dependencies.containsKey(clazz)) {
-            for(Field field : dependencies.get(clazz)) {
-                for(Class<?> cl : components) {
-                    if(field.getType().isAssignableFrom(cl)) {
-                        instantiateTree(cl);
-                    }
-                }
-            }
+            dependencies.get(clazz).stream().forEach((field) -> {
+                components.stream().filter((cl) -> (field.getType().isAssignableFrom(cl))).forEach((cl) -> {
+                    instantiateTree(cl);
+                });
+            });
         }
 
         if(multipleDependencies.containsKey(clazz)) {
-            for(Field field : multipleDependencies.get(clazz)) {
-                ParameterizedType listType = (ParameterizedType) field.getGenericType();
-                Class<?> listClass = (Class<?>) listType.getActualTypeArguments()[0];
-
-                for(Class<?> cl : components) {
-                    if(listClass.isAssignableFrom(cl) && toInstantiate.contains(cl)) {
-                        instantiateTree(cl);
-                    }
-                }
-            }
+            multipleDependencies.get(clazz).stream().map((field) -> (ParameterizedType) field.getGenericType()).map((listType) -> (Class<?>) listType.getActualTypeArguments()[0]).forEach((listClass) -> {
+                components.stream().filter((cl) -> (listClass.isAssignableFrom(cl) && toInstantiate.contains(cl))).forEach((cl) -> {
+                    instantiateTree(cl);
+                });
+            });
         }
     }
 
@@ -331,9 +327,9 @@ public enum Container {
     }
 
     private void inject() {
-        for(Class<?> parent : dependencies.keySet()) {
+        dependencies.keySet().stream().forEach((parent) -> {
             inject(parent);
-        }
+        });
 
         for(Class<?> parent : multipleDependencies.keySet()) {
             for(Field field : multipleDependencies.get(parent)) {

@@ -33,7 +33,6 @@ import io.bigio.CommandLine;
 import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.core.ListenerRegistry;
-import io.bigio.core.Registration;
 import io.bigio.core.member.Member;
 import io.bigio.core.member.MemberKey;
 import java.util.ArrayList;
@@ -73,19 +72,23 @@ public class ListenersCommand implements CommandLine {
         StringBuilder buff = new StringBuilder();
 
         Map<String, List<Member>> topics = new HashMap<>();
-        for(Registration reg : registry.getAllRegistrations()) {
+        registry.getAllRegistrations().stream().map((reg) -> {
             if(topics.get(reg.getTopic()) == null) {
-                topics.put(reg.getTopic(), new ArrayList<Member>());
+                topics.put(reg.getTopic(), new ArrayList<>());
             }
+            return reg;
+        }).forEach((reg) -> {
             topics.get(reg.getTopic()).add(reg.getMember());
-        }
+        });
 
-        for(String topic : topics.keySet()) {
+        topics.keySet().stream().map((topic) -> {
             buff.append("\n").append(topic).append(":").append("\n");
-            for(Member member : topics.get(topic)) {
+            return topic;
+        }).forEach((topic) -> {
+            topics.get(topic).stream().forEach((member) -> {
                 buff.append("    ").append(MemberKey.getKey(member)).append("\n");
-            }
-        }
+            });
+        });
 
         System.out.println(buff.toString());
     }

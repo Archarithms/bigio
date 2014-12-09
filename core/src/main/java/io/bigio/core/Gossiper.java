@@ -122,13 +122,13 @@ public class Gossiper {
                 }
             }
 
-            for(Registration registration: registry.getAllRegistrations()) {
+            registry.getAllRegistrations().stream().forEach((registration) -> {
                 String key = MemberKey.getKey(registration.getMember());
                 if(memberList.getListeners().get(key) == null) {
-                    memberList.getListeners().put(key, new ArrayList<String>());
+                    memberList.getListeners().put(key, new ArrayList<>());
                 }
                 memberList.getListeners().get(key).add(registration.getTopic());
-            }
+            });
 
             try {
                 ((RemoteMember)member).gossip(memberList);

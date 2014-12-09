@@ -33,7 +33,7 @@ import io.bigio.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A class for containing all known BigIO cluster members.
@@ -43,9 +43,9 @@ import java.util.TreeMap;
 @Component
 public class MemberHolder {
 
-    private final Map<String, Member> members = new TreeMap<>();
-    private final Map<String, Member> activeMembers = new TreeMap<>();
-    private final Map<String, Member> deadMembers = new TreeMap<>();
+    private final Map<String, Member> members = new ConcurrentHashMap<>();
+    private final Map<String, Member> activeMembers = new ConcurrentHashMap<>();
+    private final Map<String, Member> deadMembers = new ConcurrentHashMap<>();
 
     public void clear() {
         members.clear();

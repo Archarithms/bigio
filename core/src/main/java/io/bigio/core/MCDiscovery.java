@@ -176,8 +176,7 @@ public class MCDiscovery extends Thread {
             return;
         }
         
-        InetSocketAddress addr = new InetSocketAddress(NetworkUtil.getIp(), multicastPort);
-        group = new InetSocketAddress(multicastGroup, addr.getPort());
+        group = new InetSocketAddress(multicastGroup, multicastPort);
 
         workerGroup = new NioEventLoopGroup(THREADS, new DefaultThreadFactory("multicast-thread-pool", true));
 
@@ -203,7 +202,7 @@ public class MCDiscovery extends Thread {
 
                         ch.pipeline().addLast(handler);
                     }
-                }).localAddress(addr.getPort());
+                }).localAddress(multicastPort);
 
             b.option(ChannelOption.IP_MULTICAST_IF, NetworkUtil.getNetworkInterface());
             b.option(ChannelOption.SO_REUSEADDR, true);
@@ -260,7 +259,7 @@ public class MCDiscovery extends Thread {
 
         byte[] bytes = GossipEncoder.encode(message);
         ByteBuf buff = Unpooled.buffer(bytes.length);
-        buff.writeBytes(bytes);
+                            buff.writeBytes(bytes);
         
         try {
             channel.writeAndFlush(new DatagramPacket(buff, group)).sync();
@@ -268,7 +267,7 @@ public class MCDiscovery extends Thread {
             LOG.error("Interrupted waiting on sent message.", ex);
         }
     }
-
+        
     /**
      * @return the enabled
      */
@@ -284,64 +283,68 @@ public class MCDiscovery extends Thread {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext chc, DatagramPacket packet) throws Exception {
+        protected void channelRead0(ChannelHandlerContext chc, DatagramPacket packet) {
             ByteBuf buff = packet.content();
-            GossipMessage message = GossipDecoder.decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
 
-            String key = MemberKey.getKey(message);
+            try {
+                GossipMessage message = GossipDecoder.decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
 
-            Member member = memberHolder.getMember(key);
+                String key = MemberKey.getKey(message);
 
-            if(member == null) {
-                if("udp".equalsIgnoreCase(protocol)) {
-                    if(LOG.isTraceEnabled()) {
-                        LOG.trace(new StringBuilder()
-                                .append("Discovered new UDP member: ")
-                                .append(message.getIp())
-                                .append(":")
-                                .append(message.getGossipPort())
-                                .append(":").append(message.getDataPort()).toString());
+                Member member = memberHolder.getMember(key);
+
+                if(member == null) {
+                    if("udp".equalsIgnoreCase(protocol)) {
+                        if(LOG.isTraceEnabled()) {
+                            LOG.trace(new StringBuilder()
+                                    .append("Discovered new UDP member: ")
+                                    .append(message.getIp())
+                                    .append(":")
+                                    .append(message.getGossipPort())
+                                    .append(":").append(message.getDataPort()).toString());
+                        }
+                        member = new RemoteMemberUDP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
+                    } else {
+                        if(LOG.isTraceEnabled()) {
+                            LOG.trace(new StringBuilder()
+                                    .append("Discovered new TCP member: ")
+                                    .append(message.getIp())
+                                    .append(":")
+                                    .append(message.getGossipPort())
+                                    .append(":").append(message.getDataPort()).toString());
+                        }
+                        member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
                     }
-                    member = new RemoteMemberUDP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
+
+                    if(message.getPublicKey() != null) {
+                        member.setPublicKey(message.getPublicKey());
+                    }
+
+                    ((AbstractMember)member).initialize();
                 } else {
                     if(LOG.isTraceEnabled()) {
-                        LOG.trace(new StringBuilder()
-                                .append("Discovered new TCP member: ")
-                                .append(message.getIp())
-                                .append(":")
-                                .append(message.getGossipPort())
-                                .append(":").append(message.getDataPort()).toString());
-                    }
-                    member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
-                }
-                
-                if(message.getPublicKey() != null) {
-                    member.setPublicKey(message.getPublicKey());
+                            LOG.trace(new StringBuilder()
+                                    .append("Received known member: ")
+                                    .append(message.getIp())
+                                    .append(":")
+                                    .append(message.getGossipPort())
+                                    .append(":").append(message.getDataPort()).toString());
+                        }
                 }
 
-                ((AbstractMember)member).initialize();
-            } else {
-                if(LOG.isTraceEnabled()) {
-                        LOG.trace(new StringBuilder()
-                                .append("Received known member: ")
-                                .append(message.getIp())
-                                .append(":")
-                                .append(message.getGossipPort())
-                                .append(":").append(message.getDataPort()).toString());
-                    }
-            }
+                for(String k : message.getTags().keySet()) {
+                    member.getTags().put(k, message.getTags().get(k));
+                }
 
-            for(String k : message.getTags().keySet()) {
-                member.getTags().put(k, message.getTags().get(k));
+                memberHolder.updateMemberStatus(member);
+            } catch(IOException ex) {
+                LOG.error("Error receiving multicast discovery message.", ex);
             }
-
-            memberHolder.updateMemberStatus(member);
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             LOG.error("Exception in connection to Clustering Agent.", cause);
-            ctx.close();
         }
     }
 }

@@ -10,6 +10,10 @@ network happens via TCP or UDP connections. Even across the network, the
 framework can process around 300,000 messages per second (150,000 messages sent 
 and 150,000 messages received).
 
+One of the newest features is the ability to send and receive fully encrypted
+messages and/or run over TLS/SSL.  The ability to do secure messaging sets
+BigIO apart from other middleware such as DDS.
+
 To get started using BigIO, download the BigIO runtime, and deploy your jar
 to the 'components' directory. The API can be used by adding the following to
 your Maven pom.

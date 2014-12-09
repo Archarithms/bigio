@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The component that handles the CLI of BigIO.
- * 
+ *
  * @author Andy Trimble
  */
 @Component
@@ -99,7 +99,7 @@ public class CommandLineInterface extends Thread {
                 boolean found = false;
 
                 String[] args = line.split("\\s+");
-                
+
                 switch (line) {
                     case "gc":
                         found = true;
@@ -107,16 +107,17 @@ public class CommandLineInterface extends Thread {
                         break;
                     case "help":
                         found = true;
-                        for(CommandLine command : commands) {
+                        commands.stream().forEach((command) -> {
                             System.out.println("\n" + command.getCommand() + "\n\t" + command.help());
-                        }   System.out.println("\ngc\n\tPerforms garbage collection.");
-                    System.out.println("\nquit\n\tExits ths system.");
+                        });
+                        System.out.println("\ngc\n\tPerforms garbage collection.");
+                        System.out.println("\nquit\n\tExits ths system.");
                         System.out.println("\nexit\n\tExits ths system.");
                         break;
                 }
 
-                for(CommandLine command : commands) {
-                    if(args[0].equalsIgnoreCase(command.getCommand())) {
+                for (CommandLine command : commands) {
+                    if (args[0].equalsIgnoreCase(command.getCommand())) {
                         found = true;
                         command.execute(args);
                     }
@@ -127,7 +128,7 @@ public class CommandLineInterface extends Thread {
                     Starter.exit();
                 }
 
-                if(!found && !"".equals(args[0])) {
+                if (!found && !"".equals(args[0])) {
                     LOG.warn("Command not found '" + args[0] + "'");
                 }
             }

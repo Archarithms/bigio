@@ -113,21 +113,35 @@ public class MemCommand implements CommandLine {
         stats.append("        Committed: ").append(memBean.getNonHeapMemoryUsage().getCommitted() / 1024 / 1024).append(" MB\n");
 
         stats.append("\nMemory Pools:\n");
-        for(MemoryPoolMXBean bean : memPoolBeans) {
+        memPoolBeans.stream().map((bean) -> {
             stats.append("    ").append(bean.getName()).append("\n");
+            return bean;
+        }).map((bean) -> {
             stats.append("        Type: ").append(bean.getType()).append("\n");
+            return bean;
+        }).map((bean) -> {
             stats.append("        Initial: ").append(bean.getUsage().getInit() / 1024 / 1024).append(" MB\n");
+            return bean;
+        }).map((bean) -> {
             stats.append("        Max: ").append(bean.getUsage().getMax() / 1024 / 1024).append(" MB\n");
+            return bean;
+        }).map((bean) -> {
             stats.append("        Used: ").append(bean.getUsage().getUsed() / 1024).append(" MB\n");
+            return bean;
+        }).forEach((bean) -> {
             stats.append("        Committed: ").append(bean.getUsage().getCommitted() / 1024 / 1024).append(" MB\n");
-        }
+        });
 
         stats.append("\nGarbage Collection:\n");
-        for(GarbageCollectorMXBean bean : gcBeans) {
+        gcBeans.stream().map((bean) -> {
             stats.append("    Name: ").append(bean.getName()).append("\n");
+            return bean;
+        }).map((bean) -> {
             stats.append("        Count: ").append(bean.getCollectionCount()).append("\n");
+            return bean;
+        }).forEach((bean) -> {
             stats.append("        Time: ").append(bean.getCollectionTime()).append(" ms\n");
-        }
+        });
 
         System.out.println(stats.toString());
     }

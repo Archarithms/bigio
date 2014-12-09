@@ -110,12 +110,14 @@ public abstract class AbstractMember implements Member {
         builder.append(status);
 
         builder.append("\n    with properties");
-        for (String key : tags.keySet()) {
+        tags.keySet().stream().map((key) -> {
             builder.append("\n        ");
             builder.append(key);
+            return key;
+        }).forEach((key) -> {
             builder.append(" -> ");
             builder.append(tags.get(key));
-        }
+        });
 
         builder.append("\n");
 

@@ -27,26 +27,18 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-package io.bigio.core.codec;
+package io.bigio.benchmark.latency;
+
+import io.bigio.Parameters;
 
 /**
- * An interface used by Javassist to indicate messages.
+ * A bootstrap class for the latency consumer entity.
  * 
  * @author Andrew Trimble
  */
-public interface BigIOMessage {
-    /**
-     * decode this message.
-     * 
-     * @param bytes the serialized form.
-     */
-    public void bigiodecode(byte[] bytes);
-
-    /**
-     * Encode this message.
-     * 
-     * @return the serialized form.
-     * @throws Exception in case of a serialization error.
-     */
-    public byte[] bigioencode() throws Exception;
+public class LatencyVM {
+    public static void main(String[] args) {
+        Parameters.INSTANCE.setProperty("com.a2i.benchmark.role", "local");
+        new Latency().bootstrap().go();
+    }
 }

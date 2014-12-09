@@ -59,9 +59,9 @@ public class ComponentsCommand implements CommandLine {
      */
     @Override
     public void execute(String... args) {
-        for(Class<?> cl : Container.INSTANCE.getComponents()) {
+        Container.INSTANCE.getComponents().stream().forEach((cl) -> {
             System.out.println(cl.getName());
-        }
+        });
     }
 
     /**

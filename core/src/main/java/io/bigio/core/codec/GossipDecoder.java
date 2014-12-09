@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.msgpack.MessagePack;
+import org.msgpack.MessageTypeException;
 import org.msgpack.template.Template;
 import org.msgpack.template.Templates;
 import org.msgpack.unpacker.Unpacker;
@@ -107,52 +108,56 @@ public class GossipDecoder {
     private static GossipMessage decode(Unpacker unpacker) throws IOException {
         GossipMessage message = new GossipMessage();
 
-        StringBuilder ipBuilder = new StringBuilder();
-        ipBuilder.append(
-                unpacker.readInt())
-                .append(".")
-                .append(unpacker.readInt())
-                .append(".")
-                .append(unpacker.readInt())
-                .append(".")
-                .append(unpacker.readInt());
-        
-        message.setIp(ipBuilder.toString());
-        
-        message.setGossipPort(unpacker.readInt());
-        message.setDataPort(unpacker.readInt());
-        message.setMillisecondsSinceMidnight(unpacker.readInt());
-        boolean hasPublicKey = unpacker.readBoolean();
-        if(hasPublicKey) {
-            message.setPublicKey(unpacker.readByteArray());
-        }
-        message.getTags().putAll(unpacker.read(tagTemplate));
-        
-        List<List<Integer>> member = unpacker.read(memberTemplate);
-        for(List<Integer> m : member) {
-            ipBuilder = new StringBuilder();
+        try {
+            StringBuilder ipBuilder = new StringBuilder();
             ipBuilder.append(
-                    m.get(0))
+                    unpacker.readInt())
                     .append(".")
-                    .append(m.get(1))
+                    .append(unpacker.readInt())
                     .append(".")
-                    .append(m.get(2))
+                    .append(unpacker.readInt())
                     .append(".")
-                    .append(m.get(3))
-                    .append(":")
-                    .append(m.get(4))
-                    .append(":")
-                    .append(m.get(5));
-            message.getMembers().add(ipBuilder.toString());
-        }
+                    .append(unpacker.readInt());
 
-        message.getClock().addAll(unpacker.read(clockTemplate));
-        
-        Map<String, List<String>> tmpMap = unpacker.read(listenerTemplate);
-        for(String key : tmpMap.keySet()) {
-            List<String> tmpList = new ArrayList<>();
-            tmpList.addAll(tmpMap.get(key));
-            message.getListeners().put(key, tmpList);
+            message.setIp(ipBuilder.toString());
+
+            message.setGossipPort(unpacker.readInt());
+            message.setDataPort(unpacker.readInt());
+            message.setMillisecondsSinceMidnight(unpacker.readInt());
+            boolean hasPublicKey = unpacker.readBoolean();
+            if(hasPublicKey) {
+                message.setPublicKey(unpacker.readByteArray());
+            }
+            message.getTags().putAll(unpacker.read(tagTemplate));
+
+            List<List<Integer>> member = unpacker.read(memberTemplate);
+            for(List<Integer> m : member) {
+                ipBuilder = new StringBuilder();
+                ipBuilder.append(
+                        m.get(0))
+                        .append(".")
+                        .append(m.get(1))
+                        .append(".")
+                        .append(m.get(2))
+                        .append(".")
+                        .append(m.get(3))
+                        .append(":")
+                        .append(m.get(4))
+                        .append(":")
+                        .append(m.get(5));
+                message.getMembers().add(ipBuilder.toString());
+            }
+
+            message.getClock().addAll(unpacker.read(clockTemplate));
+
+            Map<String, List<String>> tmpMap = unpacker.read(listenerTemplate);
+            tmpMap.keySet().stream().forEach((key) -> {
+                List<String> tmpList = new ArrayList<>();
+                tmpList.addAll(tmpMap.get(key));
+                message.getListeners().put(key, tmpList);
+            });
+        } catch(MessageTypeException ex) {
+            throw new IOException(ex);
         }
 
         return message;

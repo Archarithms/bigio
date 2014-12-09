@@ -41,7 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -153,36 +152,34 @@ public enum Parameters {
         options.add(FileVisitOption.FOLLOW_LINKS);
 
         try {
-            if(!Files.isDirectory(configDir)) {
-                LOG.info("Cannot find default configuration directory. Using default configuration values.");
-                return;
-            }
+            if(Files.isDirectory(configDir)) {
+                Files.walkFileTree(configDir, options, MAX_DEPTH, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        if(file.getFileName().toString().endsWith("properties")) {
+                            LOG.debug("Loading configuration file '" + file.toString() + "'");
 
-            Files.walkFileTree(configDir, options, MAX_DEPTH, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if(file.getFileName().toString().endsWith("properties")) {
-                        LOG.debug("Loading configuration file '" + file.toString() + "'");
-
-                        try (BufferedReader in = Files.newBufferedReader(file, Charset.defaultCharset())) {
-                            properties.load(in);
+                            try (BufferedReader in = Files.newBufferedReader(file, Charset.defaultCharset())) {
+                                properties.load(in);
+                            }
                         }
+
+                        return FileVisitResult.CONTINUE;
                     }
-
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-
-            for(Entry<Object, Object> entry : properties.entrySet()) {
-                System.getProperties().setProperty(entry.getKey().toString(), entry.getValue().toString());
+                });
+            } else {
+                LOG.info("Cannot find default configuration directory. Using default configuration values.");
             }
-
-            for(Entry<Object, Object> entry : System.getProperties().entrySet()) {
-                properties.setProperty(entry.getKey().toString(), entry.getValue().toString());
-            }
-
         } catch(IOException ex) {
             LOG.error("Error while loading configuration.", ex);
         }
+
+        properties.entrySet().stream().forEach((entry) -> {
+            System.getProperties().setProperty(entry.getKey().toString(), entry.getValue().toString());
+        });
+
+        System.getProperties().entrySet().stream().forEach((entry) -> {
+            properties.setProperty(entry.getKey().toString(), entry.getValue().toString());
+        });
     }
 }

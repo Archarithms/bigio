@@ -153,17 +153,11 @@ public class RemoteMemberUDP extends RemoteMember {
 
         address = new InetSocketAddress(getIp(), getDataPort());
 
-        serverExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-                initializeGossipClient();
-            }
+        serverExecutor.submit(() -> {
+            initializeGossipClient();
         });
-        serverExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-                initializeDataClient();
-            }
+        serverExecutor.submit(() -> {
+            initializeDataClient();
         });
 
         if (publicKey != null) {
@@ -364,11 +358,8 @@ public class RemoteMemberUDP extends RemoteMember {
 
     private void retryGossipConnection() {
         if (gossipRetryCount.getAndIncrement() < maxRetry) {
-            retryExecutor.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    initializeGossipClient();
-                }
+            retryExecutor.schedule(() -> {
+                initializeGossipClient();
             }, retryInterval, TimeUnit.MILLISECONDS);
         } else {
             LOG.warn("Could not connect to gossip server after max retries.");
@@ -377,11 +368,8 @@ public class RemoteMemberUDP extends RemoteMember {
 
     private void retryDataConnection() {
         if (dataRetryCount.getAndIncrement() < maxRetry) {
-            retryExecutor.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    initializeDataClient();
-                }
+            retryExecutor.schedule(() -> {
+                initializeDataClient();
             }, retryInterval, TimeUnit.MILLISECONDS);
         } else {
             LOG.warn("Could not connect to data server after max retries.");

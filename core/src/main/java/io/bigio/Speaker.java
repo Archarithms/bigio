@@ -54,7 +54,7 @@ public class Speaker {
     private ClusterService cluster;
 
     @Inject
-    private CommandLineInterface cli = null;
+    private CommandLineInterface cli;
 
     /**
      * Initialize the framework.
@@ -183,7 +183,17 @@ public class Speaker {
      * @param topic the topic
      */
     public void removeAllListeners(String topic) {
-        cluster.removeAllListeners(topic);
+        cluster.removeAllListeners(topic, TopicUtils.ALL_PARTITIONS);
+    }
+
+    /**
+     * Remove all registered listeners from the topic and partition.
+     * 
+     * @param topic the topic
+     * @param partition
+     */
+    public void removeAllListeners(String topic, String partition) {
+        cluster.removeAllListeners(topic, partition);
     }
 
     /**

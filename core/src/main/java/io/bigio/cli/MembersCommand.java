@@ -65,9 +65,9 @@ public class MembersCommand implements CommandLine {
     @Override
     public void execute(String... args) {
         System.out.println();
-        for(Member member : speaker.listMembers()) {
+        speaker.listMembers().stream().forEach((member) -> {
             System.out.println(member.toString());
-        }
+        });
     }
 
     /**

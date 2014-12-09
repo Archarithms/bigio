@@ -56,7 +56,6 @@ import reactor.core.Reactor;
 import reactor.core.spec.Reactors;
 import reactor.event.Event;
 import reactor.event.selector.Selectors;
-import reactor.function.Consumer;
 
 /**
  * A representation of the current BigIO cluster member.
@@ -96,11 +95,8 @@ public abstract class MeMember extends AbstractMember {
     protected abstract void initializeServers();
 
     public void addGossipConsumer(final GossipListener consumer) {
-        reactor.on(Selectors.$(GOSSIP_TOPIC), new Consumer<Event<GossipMessage>>() {
-            @Override
-            public void accept(Event<GossipMessage> m) {
-                consumer.accept(m.getData());
-            }
+        reactor.on(Selectors.$(GOSSIP_TOPIC), (Event<GossipMessage> m) -> {
+            consumer.accept(m.getData());
         });
     }
 
@@ -188,16 +184,13 @@ public abstract class MeMember extends AbstractMember {
                 .dispatcher(Environment.RING_BUFFER)
                 .get();
 
-        decoderReactor.on(Selectors.$(DECODE_TOPIC), new Consumer<Event<byte[]>>() {
-            @Override
-            public void accept(Event<byte[]> m) {
-                try {
-                    Envelope message = EnvelopeDecoder.decode(m.getData());
-                    message.setDecoded(false);
-                    send(message);
-                } catch (IOException | MessageTypeException ex) {
-                    LOG.error("Error decoding message.", ex);
-                }
+        decoderReactor.on(Selectors.$(DECODE_TOPIC), (Event<byte[]> m) -> {
+            try {
+                Envelope message = EnvelopeDecoder.decode(m.getData());
+                message.setDecoded(false);
+                send(message);
+            } catch (IOException | MessageTypeException ex) {
+                LOG.error("Error decoding message.", ex);
             }
         });
     }

@@ -84,20 +84,22 @@ public class GossipMessage {
                 .append("DataPort: ").append(getDataPort()).append("\n")
                 .append("Time: ").append(getMillisecondsSinceMidnight()).append("\n")
                 .append("Tags: ").append("\n");
-        for(String key : getTags().keySet()) {
+        getTags().keySet().stream().forEach((key) -> {
             buff.append("    ").append(key).append(" -> ").append(getTags().get(key)).append("\n");
-        }
+        });
         buff.append("Members: ").append("\n");
         for(int i = 0; i < getMembers().size(); ++i) {
             buff.append("    ").append(getMembers().get(i)).append(" -- ").append(getClock().get(i)).append("\n");
         }
         buff.append("Listeners: ").append("\n");
-        for(String key : getListeners().keySet()) {
+        getListeners().keySet().stream().map((key) -> {
             buff.append("    ").append(key).append("\n");
-            for(String topic : getListeners().get(key)) {
+            return key;
+        }).forEach((key) -> {
+            getListeners().get(key).stream().forEach((topic) -> {
                 buff.append("        ").append(topic).append("\n");
-            }
-        }
+            });
+        });
         return buff.toString();
     }
 
