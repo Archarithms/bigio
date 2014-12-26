@@ -31,7 +31,6 @@
 var logger = require('winston');
 var net = require('net');
 var os = require('os');
-var sync = require('synchronize');
 var parameters = require('./../Parameters')
 var OperatingSystem = require('./OperatingSystem')
 
