@@ -34,8 +34,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.msgpack.MessagePack;
-import org.msgpack.packer.Packer;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessagePacker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,24 +84,50 @@ public class GossipEncoder {
             members.add(memberList);
         }
 
-        Packer packer = msgPack.createPacker(msgBuffer);
-        packer.write(Integer.parseInt(splitIp[0]));
-        packer.write(Integer.parseInt(splitIp[1]));
-        packer.write(Integer.parseInt(splitIp[2]));
-        packer.write(Integer.parseInt(splitIp[3]));
-        packer.write(message.getGossipPort());
-        packer.write(message.getDataPort());
-        packer.write(message.getMillisecondsSinceMidnight());
+        MessagePacker packer = msgPack.newPacker(msgBuffer);
+        packer.packInt(Integer.parseInt(splitIp[0]));
+        packer.packInt(Integer.parseInt(splitIp[1]));
+        packer.packInt(Integer.parseInt(splitIp[2]));
+        packer.packInt(Integer.parseInt(splitIp[3]));
+        packer.packInt(message.getGossipPort());
+        packer.packInt(message.getDataPort());
+        packer.packInt(message.getMillisecondsSinceMidnight());
         if(message.getPublicKey() != null) {
-            packer.write(true);
-            packer.write(message.getPublicKey());
+            packer.packBoolean(true);
+            packer.packArrayHeader(message.getPublicKey().length);
+            for(byte b : message.getPublicKey()) {
+                packer.packByte(b);
+            }
         } else {
-            packer.write(false);
+            packer.packBoolean(false);
         }
-        packer.write(message.getTags());
-        packer.write(members);
-        packer.write(message.getClock());
-        packer.write(message.getListeners());
+
+        packer.packMapHeader(message.getTags().size());
+        for(String key : message.getTags().keySet()) {
+            packer.packString(key);
+            packer.packString(message.getTags().get(key));
+        }
+        packer.packArrayHeader(members.size());
+        for(List<Integer> l : members) {
+            packer.packArrayHeader(l.size());
+            for(int i : l) {
+                packer.packInt(i);
+            }
+        }
+        packer.packArrayHeader(message.getClock().size());
+        for(Integer i : message.getClock()) {
+            packer.packInt(i);
+        }
+        packer.packMapHeader(message.getListeners().size());
+        for(String key : message.getListeners().keySet()) {
+            packer.packString(key);
+            packer.packArrayHeader(message.getListeners().get(key).size());
+            for(String l : message.getListeners().get(key)) {
+                packer.packString(l);
+            }
+        }
+
+        packer.close();
 
         out.write((short)msgBuffer.size() >>> 8);
         out.write((short)msgBuffer.size());

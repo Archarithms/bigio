@@ -34,7 +34,6 @@ public class MessageUtils {
         assertEquals(m1.getEnumValue(), m2.getEnumValue());
 
         assertTrue(Arrays.equals(m1.getBooleanArray(), m2.getBooleanArray()));
-        assertTrue(Arrays.equals(m1.getByteArray(), m2.getByteArray()));
         assertTrue(Arrays.equals(m1.getShortArray(), m2.getShortArray()));
         assertTrue(Arrays.equals(m1.getIntArray(), m2.getIntArray()));
         assertTrue(Arrays.equals(m1.getFloatArray(), m2.getFloatArray()));
@@ -249,7 +248,6 @@ public class MessageUtils {
         ret.setStringValue("Andy is the greatest");
         ret.setEcefValue(new ECEFPos(rand.nextDouble(), rand.nextDouble(), rand.nextDouble()));
         ret.setBooleanArray(new boolean[]{true, false});
-        ret.setByteArray(new byte[]{Byte.decode("0x12"), Byte.decode("0x13")});
         ret.setShortArray(new short[]{(short) rand.nextInt(), (short) rand.nextInt()});
         ret.setIntArray(new int[]{rand.nextInt(), rand.nextInt(), rand.nextInt()});
         ret.setFloatArray(new float[]{rand.nextFloat(), rand.nextFloat(), rand.nextFloat(), rand.nextFloat()});

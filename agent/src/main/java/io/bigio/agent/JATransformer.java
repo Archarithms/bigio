@@ -73,25 +73,37 @@ public class JATransformer {
 
         CtField msgPackField;
         CtMethod decodeValueMethod;
+        CtMethod decodeUnpackerMethod;
         CtMethod decodeBytesMethod;
         CtMethod encodeMethod;
         CtMethod encodeListMethod;
+        CtMethod encodeBooleanArrayMethod;
+        CtMethod encodeByteArrayMethod;
+        CtMethod encodeShortArrayMethod;
+        CtMethod encodeIntArrayMethod;
+        CtMethod encodeFloatArrayMethod;
+        CtMethod encodeLongArrayMethod;
+        CtMethod encodeDoubleArrayMethod;
+        CtMethod encodeStringArrayMethod;
         CtMethod encodeMapMethod;
 
         StringBuilder decodeBuff = new StringBuilder();
         decodeBuff.append("public void bigiodecode(byte[] bytes) {");
-        decodeBuff.append("org.msgpack.unpacker.Unpacker unpacker = msgPack.createBufferUnpacker(bytes);");
+        decodeBuff.append("org.msgpack.core.MessageUnpacker unpacker = msgPack.newUnpacker(bytes);");
         decodeBuff.append("try {");
 
         StringBuilder encodeBuff = new StringBuilder();
         encodeBuff.append("public byte[] bigioencode() throws Exception {");
         encodeBuff.append("java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();");
-        encodeBuff.append("org.msgpack.packer.Packer packer = msgPack.createPacker(out);");
+        encodeBuff.append("org.msgpack.core.MessagePacker packer = msgPack.newPacker(out);");
 
         for (CtField field : fields) {
             try {
                 if (field.getType().subclassOf(pool.get("java.util.List"))) {
                     String type = getType(signatures.get(field.getName()));
+
+                    encodeBuff.append("encodeList(packer, ").append(field.getName()).append(", ").append(type).append(".class);");
+                    
                     switch (type) {
                         case "java.lang.Boolean":
                         case "java.lang.Byte":
@@ -101,20 +113,19 @@ public class JATransformer {
                         case "java.lang.Long":
                         case "java.lang.Double":
                         case "java.lang.String":
-                            encodeBuff.append("try { packer.write(").append(field.getName()).append("); } catch(Exception ex) { ex.printStackTrace(); }");
                             decodeBuff.append(field.getName()).append(".clear();");
-                            decodeBuff.append(field.getName()).append(".addAll((java.util.List)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
+                            decodeBuff.append(field.getName()).append(".addAll((java.util.List)bigiodecode(unpacker, ").append(type).append(".class));");
                             break;
                         default:
-                            encodeBuff.append("java.util.List newList = new java.util.ArrayList();");
-                            encodeBuff.append("encodeList(newList, ").append(field.getName()).append(", ").append(type).append(".class);");
-                            encodeBuff.append("packer.write(newList);");
                             decodeBuff.append(field.getName()).append(".clear();");
-                            decodeBuff.append(field.getName()).append(".addAll((java.util.List)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
+                            decodeBuff.append(field.getName()).append(".addAll((java.util.List)bigiodecode(unpacker, ").append(type).append(".class));");
                             break;
                     }
                 } else if (field.getType().subclassOf(pool.get("java.util.Map"))) {
                     String type = getType(signatures.get(field.getName()));
+                    
+                    encodeBuff.append("encodeMap(packer, ").append(field.getName()).append(", ").append(type).append(".class);");
+
                     switch (type) {
                         case "java.lang.Boolean":
                         case "java.lang.Byte":
@@ -124,118 +135,114 @@ public class JATransformer {
                         case "java.lang.Long":
                         case "java.lang.Double":
                         case "java.lang.String":
-                            encodeBuff.append("try { packer.write(").append(field.getName()).append("); } catch(Exception ex) { ex.printStackTrace(); }");
                             decodeBuff.append(field.getName()).append(".clear();");
-                            decodeBuff.append(field.getName()).append(".putAll((java.util.Map)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
+                            decodeBuff.append(field.getName()).append(".putAll((java.util.Map)bigiodecode(unpacker, ").append(type).append(".class));");
                             break;
                         default:
-                            encodeBuff.append("java.util.Map newMap = new java.util.HashMap();");
-                            encodeBuff.append("encodeMap(newMap, ").append(field.getName()).append(", ").append(type).append(".class);");
-                            encodeBuff.append("packer.write(newMap);");
                             decodeBuff.append(field.getName()).append(".clear();");
-                            decodeBuff.append(field.getName()).append(".putAll((java.util.Map)bigiodecode(unpacker.readValue(), ").append(type).append(".class));");
+                            decodeBuff.append(field.getName()).append(".putAll((java.util.Map)bigiodecode(unpacker, ").append(type).append(".class));");
                             break;
                     }
                 } else if (field.getType().subclassOf(pool.get("java.lang.Enum"))) {
-                    encodeBuff.append("packer.write(").append(field.getName()).append(".ordinal());");
-                    decodeBuff.append(field.getName()).append("=").append("(").append(field.getType().getName()).append(")bigiodecode(unpacker.readValue(), ").append(field.getType().getName()).append(".class);");
+                    encodeBuff.append("packer.packInt(").append(field.getName()).append(".ordinal());");
+                    decodeBuff.append(field.getName()).append("=").append("(").append(field.getType().getName()).append(")bigiodecode(unpacker, ").append(field.getType().getName()).append(".class);");
                 } else if (field.getType().hasAnnotation(Class.forName("io.bigio.Message"))) {
                     encodeBuff.append("byte[] arr = (byte[])((io.bigio.core.codec.BigIOMessage)").append(field.getName()).append(").bigioencode();");
-                    encodeBuff.append("packer.write(arr);");
-                    decodeBuff.append(field.getName()).append("=").append("(").append(field.getType().getName()).append(")bigiodecode(unpacker.readValue(), ").append(field.getType().getName()).append(".class);");
+                    encodeBuff.append("encodeByteArray(packer, arr);");
+                    decodeBuff.append(field.getName()).append("=").append("(").append(field.getType().getName()).append(")bigiodecode(unpacker, ").append(field.getType().getName()).append(".class);");
                 } else {
                     switch (field.getType().getName()) {
                         case "java.lang.Boolean":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker.readValue(), Boolean.class);");
+                            encodeBuff.append("packer.packBoolean(").append(field.getName()).append(".booleanValue());");
+                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker, Boolean.class);");
                             break;
                         case "boolean":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("((Boolean)bigiodecode(unpacker.readValue(), Boolean.class)).booleanValue();");
+                            encodeBuff.append("packer.packBoolean(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("((Boolean)bigiodecode(unpacker, Boolean.class)).booleanValue();");
                             break;
                         case "java.lang.Byte":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker.readValue(), Byte.class);");
+                            encodeBuff.append("packer.packByte(").append(field.getName()).append(".byteValue());");
+                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker, Byte.class);");
                             break;
                         case "byte":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("((Byte)bigiodecode(unpacker.readValue(), Byte.class)).byteValue();");
+                            encodeBuff.append("packer.packByte(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("((Byte)bigiodecode(unpacker, Byte.class)).byteValue();");
                             break;
                         case "java.lang.Short":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker.readValue(), Short.class);");
+                            encodeBuff.append("packer.packShort(").append(field.getName()).append(".shortValue());");
+                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker, Short.class);");
                             break;
                         case "short":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("((Short)bigiodecode(unpacker.readValue(), Short.class)).shortValue();");
+                            encodeBuff.append("packer.packShort(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("((Short)bigiodecode(unpacker, Short.class)).shortValue();");
                             break;
                         case "java.lang.Integer":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker.readValue(), Integer.class);");
+                            encodeBuff.append("packer.packInt(").append(field.getName()).append(".intValue());");
+                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker, Integer.class);");
                             break;
                         case "int":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("((Integer)bigiodecode(unpacker.readValue(), Integer.class)).intValue();");
+                            encodeBuff.append("packer.packInt(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("((Integer)bigiodecode(unpacker, Integer.class)).intValue();");
                             break;
                         case "java.lang.Float":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker.readValue(), Float.class);");
+                            encodeBuff.append("packer.packFloat(").append(field.getName()).append(".floatValue());");
+                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker, Float.class);");
                             break;
                         case "float":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("((Float)bigiodecode(unpacker.readValue(), Float.class)).floatValue();");
+                            encodeBuff.append("packer.packFloat(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("((Float)bigiodecode(unpacker, Float.class)).floatValue();");
                             break;
                         case "java.lang.Long":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker.readValue(), Long.class);");
+                            encodeBuff.append("packer.packLong(").append(field.getName()).append(".longValue());");
+                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker, Long.class);");
                             break;
                         case "long":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("((Long)bigiodecode(unpacker.readValue(), Long.class)).longValue();");
+                            encodeBuff.append("packer.packLong(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("((Long)bigiodecode(unpacker, Long.class)).longValue();");
                             break;
                         case "java.lang.Double":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker.readValue(), Double.class);");
+                            encodeBuff.append("packer.packDouble(").append(field.getName()).append(".doubleValue());");
+                            decodeBuff.append(field.getName()).append("=").append("bigiodecode(unpacker, Double.class);");
                             break;
                         case "double":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("((Double)bigiodecode(unpacker.readValue(), Double.class)).doubleValue();");
+                            encodeBuff.append("packer.packDouble(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("((Double)bigiodecode(unpacker, Double.class)).doubleValue();");
                             break;
                         case "java.lang.String":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(String)bigiodecode(unpacker.readValue(), String.class);");
+                            encodeBuff.append("packer.packString(").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(String)bigiodecode(unpacker, String.class);");
                             break;
                         case "boolean[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(boolean[])unpacker.read(boolean[].class);");
+                            encodeBuff.append("encodeBooleanArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(boolean[])bigiodecode(unpacker, boolean[].class);");
                             break;
                         case "byte[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(byte[])unpacker.read(byte[].class);");
+                            encodeBuff.append("encodeByteArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(byte[])bigiodecode(unpacker, byte[].class);");
                             break;
                         case "short[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(short[])unpacker.read(short[].class);");
+                            encodeBuff.append("encodeShortArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(short[])bigiodecode(unpacker, short[].class);");
                             break;
                         case "int[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(int[])unpacker.read(int[].class);");
+                            encodeBuff.append("encodeIntArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(int[])bigiodecode(unpacker, int[].class);");
                             break;
                         case "float[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(float[])unpacker.read(float[].class);");
+                            encodeBuff.append("encodeFloatArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(float[])bigiodecode(unpacker, float[].class);");
                             break;
                         case "long[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(long[])unpacker.read(long[].class);");
+                            encodeBuff.append("encodeLongArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(long[])bigiodecode(unpacker, long[].class);");
                             break;
                         case "double[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(double[])unpacker.read(double[].class);");
+                            encodeBuff.append("encodeDoubleArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(double[])bigiodecode(unpacker, double[].class);");
                             break;
                         case "java.lang.String[]":
-                            encodeBuff.append("packer.write(").append(field.getName()).append(");");
-                            decodeBuff.append(field.getName()).append("=").append("(String[])unpacker.read(String[].class);");
+                            encodeBuff.append("encodeStringArray(packer, ").append(field.getName()).append(");");
+                            decodeBuff.append(field.getName()).append("=").append("(String[])bigiodecode(unpacker, String[].class);");
                             break;
                     }
                 }
@@ -248,11 +255,12 @@ public class JATransformer {
 
         decodeBuff.append("} catch (Exception ex) { ex.printStackTrace(); }");
         decodeBuff.append("}");
+        encodeBuff.append("packer.close();");
         encodeBuff.append("return out.toByteArray();}");
 
         try {
             // Add the MessagePack field
-            msgPackField = CtField.make("private static final transient org.msgpack.MessagePack msgPack = new org.msgpack.MessagePack();", clazz);
+            msgPackField = CtField.make("private static final transient org.msgpack.core.MessagePack msgPack = new org.msgpack.core.MessagePack();", clazz);
             clazz.addField(msgPackField);
 
             // Store initial modifiers before the trickery that follows
@@ -266,7 +274,7 @@ public class JATransformer {
                     CtClass.voidType, 
                     "encodeMap", 
                     new CtClass[] {
-                        pool.get("java.util.Map"), 
+                        pool.get("org.msgpack.core.MessagePacker"), 
                         pool.get("java.util.Map"), 
                         pool.get("java.lang.Class")
                     }, 
@@ -275,6 +283,24 @@ public class JATransformer {
                     }, 
                     clazz);
             clazz.addMethod(tmpMethod);
+
+            // Add the encode primitive array methods.
+            encodeBooleanArrayMethod = CtMethod.make(encodeBooleanArraySrc, clazz);
+            clazz.addMethod(encodeBooleanArrayMethod);
+            encodeByteArrayMethod = CtMethod.make(encodeByteArraySrc, clazz);
+            clazz.addMethod(encodeByteArrayMethod);
+            encodeShortArrayMethod = CtMethod.make(encodeShortArraySrc, clazz);
+            clazz.addMethod(encodeShortArrayMethod);
+            encodeIntArrayMethod = CtMethod.make(encodeIntArraySrc, clazz);
+            clazz.addMethod(encodeIntArrayMethod);
+            encodeFloatArrayMethod = CtMethod.make(encodeFloatArraySrc, clazz);
+            clazz.addMethod(encodeFloatArrayMethod);
+            encodeLongArrayMethod = CtMethod.make(encodeLongArraySrc, clazz);
+            clazz.addMethod(encodeLongArrayMethod);
+            encodeDoubleArrayMethod = CtMethod.make(encodeDoubleArraySrc, clazz);
+            clazz.addMethod(encodeDoubleArrayMethod);
+            encodeStringArrayMethod = CtMethod.make(encodeStringArraySrc, clazz);
+            clazz.addMethod(encodeStringArrayMethod);
 
             // Add the encodeList method.
             encodeListMethod = CtMethod.make(encodeListSrc, clazz);
@@ -288,10 +314,14 @@ public class JATransformer {
             // Add the encodeMap method.
             encodeMapMethod = CtMethod.make(encodeMapSrc, clazz);
             clazz.addMethod(encodeMapMethod);
-        
+
             // Add the decode method.
             decodeValueMethod = CtMethod.make(decodeValueSrc, clazz);
             clazz.addMethod(decodeValueMethod);
+
+            // Add the decode method.
+            decodeUnpackerMethod = CtMethod.make(decodeUnpackerSrc, clazz);
+            clazz.addMethod(decodeUnpackerMethod);
         
             // Add the high level encode and decode methods.
             decodeBytesMethod = CtMethod.make(decodeBuff.toString(), clazz);
@@ -307,135 +337,239 @@ public class JATransformer {
     }
 
     private static final String encodeListSrc = 
-            "private void encodeList(java.util.List out, java.util.List list, Class expectedType) { "
+            "private void encodeList(org.msgpack.core.MessagePacker packer, java.util.List list, Class expectedType) { "
+            + "    packer.packArrayHeader(list.size());"
             + "    for(int i = 0; i < list.size(); ++i) { "
             + "        Object t = list.get(i); "
             + "        if(t instanceof java.util.List) { "
-            + "            java.util.List newOut = new java.util.ArrayList(); "
-            + "            out.add(newOut); "
-            + "            encodeList(newOut, (java.util.List)t, expectedType); "
+            + "            encodeList(packer, (java.util.List)t, expectedType); "
             + "        } else if(t instanceof java.util.Map) { "
-            + "            java.util.Map newOut = new java.util.HashMap(); "
-            + "            out.add(newOut); "
-            + "            encodeMap(newOut, (java.util.Map)t, expectedType); "
+            + "            encodeMap(packer, (java.util.Map)t, expectedType); "
             + "        } else { "
             + "            if(t instanceof Boolean) { "
-            + "                out.add(t); "
+            + "                packer.packBoolean(((Boolean)t).booleanValue()); "
             + "            } else if(t instanceof Byte) { "
-            + "                out.add(t); "
+            + "                packer.packByte(((Byte)t).byteValue()); "
             + "            } else if(t instanceof Short) { "
-            + "                out.add(t); "
+            + "                packer.packShort(((Short)t).shortValue()); "
             + "            } else if(t instanceof Integer) { "
-            + "                out.add(t); "
+            + "                packer.packInt(((Integer)t).intValue()); "
             + "            } else if(t instanceof Float) { "
-            + "                out.add(t); "
+            + "                packer.packFloat(((Float)t).floatValue()); "
             + "            } else if(t instanceof Long) { "
-            + "                out.add(t); "
+            + "                packer.packLong(((Long)t).longValue()); "
             + "            } else if(t instanceof Double) { "
-            + "                out.add(t); "
+            + "                packer.packDouble(((Double)t).doubleValue()); "
             + "            } else if(t instanceof String) { "
-            + "                out.add(t); "
+            + "                packer.packString((String)t); "
             + "            } else if(t instanceof Enum) { "
-            + "                out.add(new Integer(((Enum)t).ordinal())); "
+            + "                packer.packInt(new Integer(((Enum)t).ordinal()).intValue()); "
             + "            } else { "
-            + "                out.add((byte[])((io.bigio.core.codec.BigIOMessage)t).bigioencode());"
+            + "                encodeByteArray(packer, (byte[])((io.bigio.core.codec.BigIOMessage)t).bigioencode());"
             + "            } "
             + "        } "
             + "    } "
             + "}";
 
+    private static final String encodeBooleanArraySrc = 
+            "private void encodeBooleanArray(org.msgpack.core.MessagePacker packer, boolean[] array) { "
+            + "    packer.packArrayHeader(array.length);"
+            + "    for(int i = 0; i < array.length; ++i) { "
+            + "        boolean b = array[i]; "
+            + "        packer.packBoolean(b);"
+            + "    } "
+            + "}";
+
+    private static final String encodeByteArraySrc = 
+            "private void encodeByteArray(org.msgpack.core.MessagePacker packer, byte[] array) { "
+            + "    packer.packBinaryHeader(array.length);"
+            + "    packer.writePayload(array);"
+            + "}";
+
+    private static final String encodeShortArraySrc = 
+            "private void encodeShortArray(org.msgpack.core.MessagePacker packer, short[] array) { "
+            + "    packer.packArrayHeader(array.length);"
+            + "    for(int i = 0; i < array.length; ++i) { "
+            + "        short s = array[i]; "
+            + "        packer.packShort(s);"
+            + "    } "
+            + "}";
+
+    private static final String encodeIntArraySrc = 
+            "private void encodeIntArray(org.msgpack.core.MessagePacker packer, int[] array) { "
+            + "    packer.packArrayHeader(array.length);"
+            + "    for(int i = 0; i < array.length; ++i) { "
+            + "        int s = array[i]; "
+            + "        packer.packInt(s);"
+            + "    } "
+            + "}";
+
+    private static final String encodeFloatArraySrc = 
+            "private void encodeFloatArray(org.msgpack.core.MessagePacker packer, float[] array) { "
+            + "    packer.packArrayHeader(array.length);"
+            + "    for(int i = 0; i < array.length; ++i) { "
+            + "        float f = array[i]; "
+            + "        packer.packFloat(f);"
+            + "    } "
+            + "}";
+
+    private static final String encodeLongArraySrc = 
+            "private void encodeLongArray(org.msgpack.core.MessagePacker packer, long[] array) { "
+            + "    packer.packArrayHeader(array.length);"
+            + "    for(int i = 0; i < array.length; ++i) { "
+            + "        long l = array[i]; "
+            + "        packer.packLong(l);"
+            + "    } "
+            + "}";
+
+    private static final String encodeDoubleArraySrc = 
+            "private void encodeDoubleArray(org.msgpack.core.MessagePacker packer, double[] array) { "
+            + "    packer.packArrayHeader(array.length);"
+            + "    for(int i = 0; i < array.length; ++i) { "
+            + "        double d = array[i]; "
+            + "        packer.packDouble(d);"
+            + "    } "
+            + "}";
+
+    private static final String encodeStringArraySrc = 
+            "private void encodeStringArray(org.msgpack.core.MessagePacker packer, String[] array) { "
+            + "    packer.packArrayHeader(array.length);"
+            + "    for(int i = 0; i < array.length; ++i) { "
+            + "        String s = array[i]; "
+            + "        packer.packString(s);"
+            + "    } "
+            + "}";
+
     private static final String encodeMapSrc = 
-            "private void encodeMap(java.util.Map out, java.util.Map map, Class expectedType) throws Exception { "
+            "private void encodeMap(org.msgpack.core.MessagePacker packer, java.util.Map map, Class expectedType) throws Exception { "
+            + "    packer.packMapHeader(map.keySet().size());"
             + "    java.util.Iterator it = map.keySet().iterator(); "
             + "    while(it.hasNext()) { "
             + "        Object k = it.next(); "
             + "        Object v = map.get(k); "
+            + "        packer.packString(k.toString());"
             + "        if(v instanceof java.util.List) { "
-            + "            java.util.List newOut = new java.util.ArrayList(); "
-            + "            out.put(k, newOut); "
-            + "            encodeList(newOut, (java.util.List)v, expectedType); "
+            + "            encodeList(packer, (java.util.List)v, expectedType); "
             + "        } else if(v instanceof java.util.Map) { "
-            + "            java.util.Map newOut = new java.util.HashMap(); "
-            + "            out.put(k, newOut); "
-            + "            encodeMap(newOut, (java.util.Map)v, expectedType); "
+            + "            encodeMap(packer, (java.util.Map)v, expectedType); "
             + "        } else { "
             + "            if(v instanceof Boolean) { "
-            + "                out.put(k, v); "
+            + "                packer.packBoolean(((Boolean)v).booleanValue());"
             + "            } else if(v instanceof Byte) { "
-            + "                out.put(k, v); "
+            + "                packer.packByte(((Byte)v).byteValue()); "
             + "            } else if(v instanceof Short) { "
-            + "                out.put(k, v); "
+            + "                packer.packShort(((Short)v).shortValue());"
             + "            } else if(v instanceof Integer) { "
-            + "                out.put(k, v); "
+            + "                packer.packInt(((Integer)v).intValue());"
             + "            } else if(v instanceof Float) { "
-            + "                out.put(k, v); "
+            + "                packer.packFloat(((Float)v).floatValue());"
             + "            } else if(v instanceof Long) { "
-            + "                out.put(k, v); "
+            + "                packer.packLong(((Long)v).longValue());"
             + "            } else if(v instanceof Double) { "
-            + "                out.put(k, v); "
+            + "                packer.packDouble(((Double)v).doubleValue());"
             + "            } else if(v instanceof Enum) { "
-            + "                out.put(k, new Integer(((Enum)v).ordinal())); "
+            + "                packer.packInt(new Integer(((Enum)v).ordinal()).intValue()); "
             + "            } else if(v instanceof String) { "
-            + "                out.put(k, v); "
+            + "                packer.packString((String)v); "
             + "            } else { "
-            + "                out.put(k, (byte[])((io.bigio.core.codec.BigIOMessage)v).bigioencode());"
+            + "                encodeByteArray(packer, (byte[])((io.bigio.core.codec.BigIOMessage)v).bigioencode());"
             + "            } "
             + "        } "
             + "    } "
             + "}";
 
     private static final String decodeValueSrc = 
-            "private Object bigiodecode(org.msgpack.type.Value value, Class expectedType) throws Exception {"
+            "private Object bigiodecode(org.msgpack.value.Value value, org.msgpack.value.ValueType type, Class expectedType) throws Exception {"
             + "    Object ret = null;"
-            + "    if(value.getType() == org.msgpack.type.ValueType.ARRAY) {"
-            + "        ret = new java.util.ArrayList();"
-            + "        org.msgpack.type.Value[] elements = value.asArrayValue().getElementArray();"
-            + "        for(int i = 0; i < elements.length; ++i) {"
-            + "            ((java.util.List)ret).add(bigiodecode(elements[i], expectedType));"
-            + "        }"
-            + "    } else if(value.getType() == org.msgpack.type.ValueType.BOOLEAN) {"
-            + "        ret = Boolean.valueOf(value.asBooleanValue().getBoolean());"
-            + "    } else if(value.getType() == org.msgpack.type.ValueType.FLOAT) {"
-            + "        if(expectedType == Float.class) {"
-            + "            ret = Float.valueOf(value.asFloatValue().getFloat());"
-            + "        } else if(expectedType == Double.class) {"
-            + "            ret = Double.valueOf(value.asFloatValue().getDouble());"
-            + "        }"
-            + "    } else if(value.getType() == org.msgpack.type.ValueType.INTEGER) {"
-            + "        if(expectedType == Integer.class) {"
-            + "            ret = Integer.valueOf(value.asIntegerValue().getInt());"
-            + "        } else if(expectedType == Long.class) {"
-            + "            ret = Long.valueOf(value.asIntegerValue().getLong());"
-            + "        } else if(expectedType == Byte.class) {"
-            + "            ret = Byte.valueOf(value.asIntegerValue().getByte());"
-            + "        } else if(expectedType == Short.class) {"
-            + "            ret = Short.valueOf(value.asIntegerValue().getShort());"
-            + "        } else if(expectedType.isEnum()) {"
-            + "            ret = expectedType.getEnumConstants()[value.asIntegerValue().getInt()];"
-            + "        }"
-            + "    } else if(value.getType() == org.msgpack.type.ValueType.MAP) {"
-            + "        ret = new java.util.HashMap();"
-            + "        java.util.Iterator iter = value.asMapValue().keySet().iterator();"
-            + "        while(iter.hasNext()) {"
-            + "            org.msgpack.type.Value k = (org.msgpack.type.Value)iter.next();"
-            + "            org.msgpack.type.Value v = value.asMapValue().get(k);"
-            + "            ((java.util.Map)ret).put(bigiodecode(k, String.class), bigiodecode(v, expectedType));"
-            + "        }"
-            + "    } else if(value.getType() == org.msgpack.type.ValueType.RAW) {"
-            + "        if(expectedType == String.class) {"
-            + "            ret = value.asRawValue().getString();"
-            + "        } else if(expectedType.isEnum()) {"
-            + "            ret = bigiodecode(msgPack.createBufferUnpacker(value.asRawValue().getByteArray()).readValue(), expectedType);"
-            + "        } else if(expectedType == byte[].class || expectedType == Byte[].class) {"
-            + "            ret = value.asRawValue().getByteArray();"
+            + "    if(type == org.msgpack.value.ValueType.ARRAY) {"
+            + "        org.msgpack.value.ArrayValue elements = value.asArrayValue();"
+            + "        if(expectedType.isArray()) {"
+            + "            if(expectedType.equals(boolean[].class)) {"
+            + "                ret = new boolean[elements.size()];"
+            + "                for(int i = 0; i < elements.size(); ++i) {"
+            + "                    ((boolean[])ret)[i] = elements.get(i).asBoolean().toBoolean();"
+            + "                }"
+            + "            } else if(expectedType.equals(short[].class)) {"
+            + "                ret = new short[elements.size()];"
+            + "                for(int i = 0; i < elements.size(); ++i) {"
+            + "                    ((short[])ret)[i] = elements.get(i).asInteger().toShort();"
+            + "                }"
+            + "            } else if(expectedType.equals(int[].class)) {"
+            + "                ret = new int[elements.size()];"
+            + "                for(int i = 0; i < elements.size(); ++i) {"
+            + "                    ((int[])ret)[i] = elements.get(i).asInteger().toInt();"
+            + "                }" 
+            + "            } else if(expectedType.equals(float[].class)) {" 
+            + "                ret = new float[elements.size()];" 
+            + "                for(int i = 0; i < elements.size(); ++i) {" 
+            + "                    ((float[])ret)[i] = elements.get(i).asFloat().toFloat();" 
+            + "                }"
+            + "            } else if(expectedType.equals(long[].class)) {" 
+            + "                ret = new long[elements.size()];" 
+            + "                for(int i = 0; i < elements.size(); ++i) {" 
+            + "                    ((long[])ret)[i] = elements.get(i).asInteger().toLong();" 
+            + "                }" 
+            + "            } else if(expectedType.equals(double[].class)) {" 
+            + "                ret = new double[elements.size()];" 
+            + "                for(int i = 0; i < elements.size(); ++i) {" 
+            + "                    ((double[])ret)[i] = elements.get(i).asFloat().toDouble();" 
+            + "                }" 
+            + "            } else if(expectedType.equals(String[].class)) {" 
+            + "                ret = new String[elements.size()];" 
+            + "                for(int i = 0; i < elements.size(); ++i) {" 
+            + "                    ((String[])ret)[i] = elements.get(i).asString().toString();" 
+            + "                }" 
+            + "            }"
             + "        } else {"
-            + "            ret = expectedType.newInstance();"
-            + "            ((io.bigio.core.codec.BigIOMessage)ret).bigiodecode(value.asRawValue().getByteArray());"
+            + "            ret = new java.util.ArrayList();"
+            + "            for(int i = 0; i < elements.size(); ++i) {"
+            + "                ((java.util.List)ret).add(bigiodecode(elements.get(i), elements.get(i).getValueType(), expectedType));"
+            + "            }"
             + "        }"
+            + "    } else if(type == org.msgpack.value.ValueType.BINARY) {"
+            + "        ret = expectedType.newInstance();"
+            + "        ((io.bigio.core.codec.BigIOMessage)ret).bigiodecode(value.asBinary().toByteArray());"
+            + "    } else if(type == org.msgpack.value.ValueType.BOOLEAN) {"
+            + "        ret = Boolean.valueOf(value.asBoolean().toBoolean());"
+            + "    } else if(type == org.msgpack.value.ValueType.FLOAT) {"
+            + "        if(expectedType == Float.class) {"
+            + "            ret = Float.valueOf(value.asFloat().toFloat());"
+            + "        } else if(expectedType == Double.class) {"
+            + "            ret = Double.valueOf(value.asFloat().toDouble());"
+            + "        }"
+            + "    } else if(type == org.msgpack.value.ValueType.INTEGER) {"
+            + "        if(expectedType == Integer.class) {"
+            + "            ret = Integer.valueOf(value.asInteger().toInt());"
+            + "        } else if(expectedType == Long.class) {"
+            + "            ret = Long.valueOf(value.asInteger().toLong());"
+            + "        } else if(expectedType == Byte.class) {"
+            + "            ret = Byte.valueOf(value.asInteger().toByte());"
+            + "        } else if(expectedType == Short.class) {"
+            + "            ret = Short.valueOf(value.asInteger().toShort());"
+            + "        } else if(expectedType.isEnum()) {"
+            + "            ret = expectedType.getEnumConstants()[value.asInteger().toInt()];"
+            + "        }"
+            + "    } else if(type == org.msgpack.value.ValueType.MAP) {"
+            + "        ret = new java.util.HashMap();"
+            + "        java.util.Iterator iter = value.asMapValue().toMap().keySet().iterator();"
+            + "        while(iter.hasNext()) {"
+            + "            org.msgpack.value.Value k = (org.msgpack.value.Value)iter.next();"
+            + "            org.msgpack.value.Value v = value.asMapValue().toMap().get(k);"
+            + "            ((java.util.Map)ret).put(bigiodecode(k, k.getValueType(), String.class), bigiodecode(v, v.getValueType(), expectedType));"
+            + "        }"
+            + "    } else if(type == org.msgpack.value.ValueType.STRING) {"
+            + "        ret = value.asString().toString();"
             + "    } else {"
             + "        throw new java.io.IOException(\"Cannot decode message\");"
             + "    }"
             + "    return ret;"
+            + "}";
+
+    private static final String decodeUnpackerSrc = 
+            "private Object bigiodecode(org.msgpack.core.MessageUnpacker unpacker, Class expectedType) throws Exception {"
+            + "    org.msgpack.value.holder.ValueHolder value = new org.msgpack.value.holder.ValueHolder();"
+            + "    org.msgpack.core.MessageFormat format = unpacker.unpackValue(value);"
+            + "    return bigiodecode(value.get().toValue(), format.getValueType(), expectedType);"
             + "}";
 
     /**
@@ -457,4 +591,96 @@ public class JATransformer {
 
         return type.substring(1, type.length() - 1).replace("/", ".");
     }
+
+//    private Object bigiodecode(org.msgpack.value.Value value, org.msgpack.value.ValueType type, Class expectedType) throws Exception {
+//        Object ret = null;
+//        if(type == org.msgpack.value.ValueType.ARRAY) {
+//            org.msgpack.value.ArrayValue elements = value.asArrayValue();
+//            if(expectedType.isArray()) {
+//                if(expectedType.equals(boolean[].class)) {
+//                    ret = new boolean[elements.size()];
+//                    for(int i = 0; i < elements.size(); ++i) {
+//                        ((boolean[])ret)[i] = elements.get(i).asBoolean().toBoolean();
+//                    }
+//                } else if(expectedType.equals(short[].class)) {
+//                    ret = new short[elements.size()];
+//                    for(int i = 0; i < elements.size(); ++i) {
+//                        ((short[])ret)[i] = elements.get(i).asInteger().toShort();
+//                    }
+//                } else if(expectedType.equals(int[].class)) {
+//                    ret = new int[elements.size()];
+//                    for(int i = 0; i < elements.size(); ++i) {
+//                        ((int[])ret)[i] = elements.get(i).asInteger().toInt();
+//                    }
+//                } else if(expectedType.equals(float[].class)) {
+//                    ret = new float[elements.size()];
+//                    for(int i = 0; i < elements.size(); ++i) {
+//                        ((float[])ret)[i] = elements.get(i).asFloat().toFloat();
+//                    }
+//                } else if(expectedType.equals(long[].class)) {
+//                    ret = new long[elements.size()];
+//                    for(int i = 0; i < elements.size(); ++i) {
+//                        ((long[])ret)[i] = elements.get(i).asInteger().toLong();
+//                    }
+//                } else if(expectedType.equals(double[].class)) {
+//                    ret = new double[elements.size()];
+//                    for(int i = 0; i < elements.size(); ++i) {
+//                        ((double[])ret)[i] = elements.get(i).asFloat().toDouble();
+//                    }
+//                } else if(expectedType.equals(String[].class)) {
+//                    ret = new String[elements.size()];
+//                    for(int i = 0; i < elements.size(); ++i) {
+//                        ((String[])ret)[i] = elements.get(i).asString().toString();
+//                    }
+//                }
+//            } else if(java.util.List.class.isAssignableFrom(expectedType)) {
+//                ret = new java.util.ArrayList();
+//                for(int i = 0; i < elements.size(); ++i) {
+//                    ((java.util.List)ret).add(bigiodecode(elements.get(i), elements.get(i).getValueType(), expectedType));
+//                }
+//            }
+//        } else if(type == org.msgpack.value.ValueType.BINARY) {
+//            ret = expectedType.newInstance();
+//            ((io.bigio.core.codec.BigIOMessage)ret).bigiodecode(value.asBinary().toByteArray());
+//        } else if(type == org.msgpack.value.ValueType.BOOLEAN) {
+//            ret = Boolean.valueOf(value.asBoolean().toBoolean());
+//        } else if(type == org.msgpack.value.ValueType.FLOAT) {
+//            if(expectedType == Float.class) {
+//                ret = Float.valueOf(value.asFloat().toFloat());
+//            } else if(expectedType == Double.class) {
+//                ret = Double.valueOf(value.asFloat().toDouble());
+//            }
+//        } else if(type == org.msgpack.value.ValueType.INTEGER) {
+//            if(expectedType == Integer.class) {
+//                ret = Integer.valueOf(value.asInteger().toInt());
+//            } else if(expectedType == Long.class) {
+//                ret = Long.valueOf(value.asInteger().toLong());
+//            } else if(expectedType == Byte.class) {
+//                ret = Byte.valueOf(value.asInteger().toByte());
+//            } else if(expectedType == Short.class) {
+//                ret = Short.valueOf(value.asInteger().toShort());
+//            } else if(expectedType.isEnum()) {
+//                ret = expectedType.getEnumConstants()[value.asInteger().toInt()];
+//            }
+//        } else if(type == org.msgpack.value.ValueType.MAP) {
+//            ret = new java.util.HashMap();
+//            java.util.Iterator iter = value.asMapValue().toMap().keySet().iterator();
+//            while(iter.hasNext()) {
+//                org.msgpack.value.Value k = (org.msgpack.value.Value)iter.next();
+//                org.msgpack.value.Value v = value.asMapValue().toMap().get(k);
+//                ((java.util.Map)ret).put(bigiodecode(k, k.getValueType(), String.class), bigiodecode(v, v.getValueType(), expectedType));
+//            }
+//        } else if(type == org.msgpack.value.ValueType.STRING) {
+//            ret = value.asString().toString();
+//        } else {
+//            throw new java.io.IOException("Cannot decode message");
+//        }
+//        return ret;
+//    }
+//
+//    private Object bigiodecode(org.msgpack.core.MessageUnpacker unpacker, Class expectedType) throws Exception {
+//        org.msgpack.value.holder.ValueHolder value = new org.msgpack.value.holder.ValueHolder();
+//        org.msgpack.core.MessageFormat format = unpacker.unpackValue(value);
+//        return bigiodecode(value.get().toValue(), format.getValueType(), expectedType);
+//    }
 }

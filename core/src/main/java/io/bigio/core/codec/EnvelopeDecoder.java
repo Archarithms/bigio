@@ -33,8 +33,8 @@ import io.bigio.core.Envelope;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import java.io.IOException;
-import org.msgpack.MessagePack;
-import org.msgpack.unpacker.Unpacker;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessageUnpacker;
 
 /**
  * This is a class for decoding envelope messages.
@@ -57,7 +57,7 @@ public class EnvelopeDecoder {
      * @throws IOException in case of a decode error.
      */
     public static Envelope decode(ByteBuf bytes) throws IOException {
-        Unpacker unpacker = msgPack.createUnpacker(new ByteBufInputStream(bytes));
+        MessageUnpacker unpacker = msgPack.newUnpacker(new ByteBufInputStream(bytes));
         Envelope message = decode(unpacker);
         return message;
     }
@@ -70,7 +70,7 @@ public class EnvelopeDecoder {
      * @throws IOException in case of a decode error.
      */
     public static Envelope decode(byte[] bytes) throws IOException {
-        Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
+        MessageUnpacker unpacker = msgPack.newUnpacker(bytes);
         Envelope message = decode(unpacker);
         return message;
     }
@@ -82,34 +82,45 @@ public class EnvelopeDecoder {
      * @return the decoded message.
      * @throws IOException in case of a decode error.
      */
-    private static Envelope decode(Unpacker unpacker) throws IOException {
+    private static Envelope decode(MessageUnpacker unpacker) throws IOException {
 
         Envelope message = new Envelope();
 
         StringBuilder keyBuilder = new StringBuilder();
         keyBuilder
-                .append(unpacker.readInt())
+                .append(unpacker.unpackInt())
                 .append(".")
-                .append(unpacker.readInt())
+                .append(unpacker.unpackInt())
                 .append(".")
-                .append(unpacker.readInt())
+                .append(unpacker.unpackInt())
                 .append(".")
-                .append(unpacker.readInt())
+                .append(unpacker.unpackInt())
                 .append(":")
-                .append(unpacker.readInt())
+                .append(unpacker.unpackInt())
                 .append(":")
-                .append(unpacker.readInt());
+                .append(unpacker.unpackInt());
         message.setSenderKey(keyBuilder.toString());
-        message.setEncrypted(unpacker.readBoolean());
+        message.setEncrypted(unpacker.unpackBoolean());
         if(message.isEncrypted()) {
-            message.setKey(unpacker.readByteArray());
+            int length = unpacker.unpackArrayHeader();
+            byte[] key = new byte[length];
+            for(int i = 0; i < length; ++i) {
+                key[i] = unpacker.unpackByte();
+            }
+            message.setKey(key);
         }
-        message.setExecuteTime(unpacker.readInt());
-        message.setMillisecondsSinceMidnight(unpacker.readInt());
-        message.setTopic(unpacker.readString());
-        message.setPartition(unpacker.readString());
-        message.setClassName(unpacker.readString());
-        message.setPayload(unpacker.readByteArray());
+        message.setExecuteTime(unpacker.unpackInt());
+        message.setMillisecondsSinceMidnight(unpacker.unpackInt());
+        message.setTopic(unpacker.unpackString());
+        message.setPartition(unpacker.unpackString());
+        message.setClassName(unpacker.unpackString());
+
+        int length = unpacker.unpackArrayHeader();
+        byte[] payload = new byte[length];
+        for(int i = 0; i < length; ++i) {
+            payload[i] = unpacker.unpackByte();
+        }
+        message.setPayload(payload);
 
         return message;
     }

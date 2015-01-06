@@ -34,7 +34,7 @@
     <dependencies>
         <dependency>
             <groupId>org.msgpack</groupId>
-            <artifactId>msgpack</artifactId>
+            <artifactId>msgpack-core</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

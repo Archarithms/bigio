@@ -34,12 +34,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import org.msgpack.MessagePack;
-import org.msgpack.MessageTypeException;
-import org.msgpack.template.Template;
-import org.msgpack.template.Templates;
-import org.msgpack.unpacker.Unpacker;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessageTypeException;
+import org.msgpack.core.MessageUnpacker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is a class for decoding gossip messages.
@@ -48,17 +47,9 @@ import org.msgpack.unpacker.Unpacker;
  */
 public class GossipDecoder {
 
+    private static final Logger LOG = LoggerFactory.getLogger(GossipDecoder.class);
     private static final MessagePack msgPack = new MessagePack();
     
-    private static final Template<Map<String, String>> tagTemplate = 
-            Templates.tMap(Templates.TString, Templates.TString);
-    private static final Template<Map<String, List<String>>> listenerTemplate = 
-            Templates.tMap(Templates.TString, Templates.tList(Templates.TString));
-    private static final Template<List<List<Integer>>> memberTemplate = 
-            Templates.tList(Templates.tList(Templates.TInteger));
-    private static final Template<List<Integer>> clockTemplate = 
-            Templates.tList(Templates.TInteger);
-
     private GossipDecoder() {
 
     }
@@ -75,10 +66,11 @@ public class GossipDecoder {
         // Discard the message length.
         // This method is only used by the Multicast discovery mechanism.
         // The TCP mechanism already has the size bytes stripped off.
-        bytes.get();
-        bytes.get();
+        byte[] buff = new byte[bytes.capacity() - 2];
+        bytes.get(); bytes.get();
+        bytes.get(buff, 0, buff.length);
 
-        Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
+        MessageUnpacker unpacker = msgPack.newUnpacker(buff);
 
         return decode(unpacker);
 
@@ -93,7 +85,7 @@ public class GossipDecoder {
      */
     public static GossipMessage decode(byte[] bytes) throws IOException {
 
-        Unpacker unpacker = msgPack.createBufferUnpacker(bytes);
+        MessageUnpacker unpacker = msgPack.newUnpacker(bytes);
         
         return decode(unpacker);
     }
@@ -105,59 +97,71 @@ public class GossipDecoder {
      * @return the decoded message.
      * @throws IOException in case of an error in decoding.
      */
-    private static GossipMessage decode(Unpacker unpacker) throws IOException {
+    private static GossipMessage decode(MessageUnpacker unpacker) throws IOException, MessageTypeException {
         GossipMessage message = new GossipMessage();
 
-        try {
-            StringBuilder ipBuilder = new StringBuilder();
-            ipBuilder.append(
-                    unpacker.readInt())
-                    .append(".")
-                    .append(unpacker.readInt())
-                    .append(".")
-                    .append(unpacker.readInt())
-                    .append(".")
-                    .append(unpacker.readInt());
+        StringBuilder ipBuilder = new StringBuilder();
+        ipBuilder
+                .append(unpacker.unpackInt())
+                .append(".")
+                .append(unpacker.unpackInt())
+                .append(".")
+                .append(unpacker.unpackInt())
+                .append(".")
+                .append(unpacker.unpackInt());
 
-            message.setIp(ipBuilder.toString());
+        message.setIp(ipBuilder.toString());
 
-            message.setGossipPort(unpacker.readInt());
-            message.setDataPort(unpacker.readInt());
-            message.setMillisecondsSinceMidnight(unpacker.readInt());
-            boolean hasPublicKey = unpacker.readBoolean();
-            if(hasPublicKey) {
-                message.setPublicKey(unpacker.readByteArray());
+        message.setGossipPort(unpacker.unpackInt());
+        message.setDataPort(unpacker.unpackInt());
+        message.setMillisecondsSinceMidnight(unpacker.unpackInt());
+        boolean hasPublicKey = unpacker.unpackBoolean();
+        if(hasPublicKey) {
+            int length = unpacker.unpackArrayHeader();
+            byte[] key = new byte[length];
+            for(int i = 0; i < length; ++i) {
+                key[i] = unpacker.unpackByte();
             }
-            message.getTags().putAll(unpacker.read(tagTemplate));
+            message.setPublicKey(key);
+        }
 
-            List<List<Integer>> member = unpacker.read(memberTemplate);
-            for(List<Integer> m : member) {
-                ipBuilder = new StringBuilder();
-                ipBuilder.append(
-                        m.get(0))
-                        .append(".")
-                        .append(m.get(1))
-                        .append(".")
-                        .append(m.get(2))
-                        .append(".")
-                        .append(m.get(3))
-                        .append(":")
-                        .append(m.get(4))
-                        .append(":")
-                        .append(m.get(5));
-                message.getMembers().add(ipBuilder.toString());
+        int items = unpacker.unpackMapHeader();
+        for(int i = 0; i < items; ++i) {
+            message.getTags().put(unpacker.unpackString(), unpacker.unpackString());
+        }
+
+        int num = unpacker.unpackArrayHeader();
+        for(int i = 0; i < num; ++i) {
+            unpacker.unpackArrayHeader();
+            ipBuilder = new StringBuilder();
+            ipBuilder.append(unpacker.unpackInt())
+                     .append(".")
+                     .append(unpacker.unpackInt())
+                     .append(".")
+                     .append(unpacker.unpackInt())
+                     .append(".")
+                     .append(unpacker.unpackInt())
+                     .append(":")
+                     .append(unpacker.unpackInt())
+                     .append(":")
+                     .append(unpacker.unpackInt());
+            message.getMembers().add(ipBuilder.toString());
+        }
+
+        num = unpacker.unpackArrayHeader();
+        for(int i = 0; i < num; ++i) {
+            message.getClock().add(unpacker.unpackInt());
+        }
+
+        items = unpacker.unpackMapHeader();
+        for(int i = 0; i < items; ++i) {
+            String key = unpacker.unpackString();
+            num = unpacker.unpackArrayHeader();
+            List<String> tmpList = new ArrayList<>();
+            for(int j = 0; j < num; ++j) {
+                tmpList.add(unpacker.unpackString());
             }
-
-            message.getClock().addAll(unpacker.read(clockTemplate));
-
-            Map<String, List<String>> tmpMap = unpacker.read(listenerTemplate);
-            tmpMap.keySet().stream().forEach((key) -> {
-                List<String> tmpList = new ArrayList<>();
-                tmpList.addAll(tmpMap.get(key));
-                message.getListeners().put(key, tmpList);
-            });
-        } catch(MessageTypeException ex) {
-            throw new IOException(ex);
+            message.getListeners().put(key, tmpList);
         }
 
         return message;

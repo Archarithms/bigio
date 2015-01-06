@@ -37,7 +37,6 @@ public class RepMessage implements Serializable {
     private TestEnum enumValue;
 
     private boolean[] booleanArray;
-    private byte[] byteArray;
     private short[] shortArray;
     private int[] intArray;
     private float[] floatArray;
@@ -227,20 +226,6 @@ public class RepMessage implements Serializable {
      */
     public void setBooleanArray(boolean[] booleanArray) {
         this.booleanArray = booleanArray;
-    }
-
-    /**
-     * @return the byteArray
-     */
-    public byte[] getByteArray() {
-        return byteArray;
-    }
-
-    /**
-     * @param byteArray the byteArray to set
-     */
-    public void setByteArray(byte[] byteArray) {
-        this.byteArray = byteArray;
     }
 
     /**

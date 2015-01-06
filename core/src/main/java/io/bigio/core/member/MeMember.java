@@ -48,7 +48,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.msgpack.MessageTypeException;
+import org.msgpack.core.MessageTypeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Environment;
