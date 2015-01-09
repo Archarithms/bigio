@@ -35,15 +35,15 @@ The Javadocs can be viewed [here](http://bigio.io/javadoc/)
 
 ### What's New
 
-# 1.1
+##### 1.1
 - Encrypted messaging
 - SSL/TLS messaging
 - Java 8 support
 - Faster message serialization
 - Assorted bug fixes
 
-# 1.0.2
+##### 1.0.2
 - Ability to suppress message forwarding
 
-# 1.0.1
+##### 1.0.1
 - Bug fixes
