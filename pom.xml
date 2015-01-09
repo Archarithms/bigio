@@ -31,7 +31,7 @@
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
         
-        <netty.version>4.0.24.Final</netty.version>
+        <netty.version>4.0.25.Final</netty.version>
         <asm.version>5.0.3</asm.version>
         <logback.version>1.1.2</logback.version>
     </properties>

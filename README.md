@@ -22,13 +22,28 @@ your Maven pom.
 <dependency>
     <groupId>io.bigio</groupId>
     <artifactId>bigio-core</artifactId>
-    <version>1.0.2</version>
+    <version>1.1</version>
 </dependency>
 ```
 
-A zipped runtime package can be downloaded [here](http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.0.2/bigio-runtime-1.0.2.zip)
+A zipped runtime package can be downloaded [here](http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.1/bigio-runtime-1.1.zip)
 
 For more information, please see the [wiki](https://github.com/Archarithms/bigio/wiki)
 or our [website](http://bigio.io)
 
 The Javadocs can be viewed [here](http://bigio.io/javadoc/)
+
+### What's New
+
+# 1.1
+- Encrypted messaging
+- SSL/TLS messaging
+- Java 8 support
+- Faster message serialization
+- Assorted bug fixes
+
+# 1.0.2
+- Ability to suppress message forwarding
+
+# 1.0.1
+- Bug fixes
