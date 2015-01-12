@@ -48,7 +48,7 @@ module.exports = {
     decode: function(bytes) {
         var message = new Object();
 
-        var unpacked = msgpack.decode(bops.subarray(bytes, 2));
+        var unpacked = msgpack.decode(bops.subarray(bytes, 2), false);
 
         var index = 0;
 

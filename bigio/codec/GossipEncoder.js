@@ -105,8 +105,7 @@ module.exports = {
         var buff = msgpack.encode(toPack);
         var newBuff = bops.create(buff.length + 2);
         bops.copy(buff, newBuff, 2, 0, buff.length);
-        bops.writeUInt8(newBuff, buff.length >>> 8, 0);
-        bops.writeUInt8(newBuff, buff.length, 1);
+        bops.writeUInt16BE(newBuff, buff.length, 0);
 
         return newBuff;
     }

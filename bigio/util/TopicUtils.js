@@ -45,14 +45,19 @@ module.exports = {
     },
 
     getTopic: function(topicPartition) {
-        return topicPartition.split("\\(")[0];
+        if(String(topicPartition).indexOf('(') > -1) {
+            return topicPartition.split("\\(")[0];
+        }
+        return topicPartition;
     },
 
     getPartition: function(topicPartition) {
-        var spl = topicPartition.split("\\(");
-        if(spl.length > 1) {
-            return spl[1];
-        } 
+        if(String(topicPartition).indexOf('(') > -1) {
+            var spl = topicPartition.split("\\(");
+            if (spl.length > 1) {
+                return spl[1];
+            }
+        }
 
         return this.ALL_PARTITIONS;
     }

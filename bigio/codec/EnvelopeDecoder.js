@@ -28,6 +28,7 @@
  */
 
 var logger = require('winston');
+var bops = require('bops');
 var msgpack = require('./msgpack');
 var Envelope = require('../Envelope');
 
@@ -50,8 +51,6 @@ module.exports = {
 
         var unpacked = msgpack.decode(bytes.slice(2, bytes.length), false);
 
-        logger.info(unpacked);
-
         var index = 0;
 
         var ip = unpacked[index++] + '.' + unpacked[index++] + '.' + unpacked[index++] + '.' + unpacked[index++];
@@ -73,7 +72,11 @@ module.exports = {
         message.topic = unpacked[index++];
         message.partition = unpacked[index++];
         message.className = unpacked[index++];
-        message.payload = unpacked[index];
+        //var payload = unpacked[index];
+        var payload = bops.from(unpacked[index], encoding="utf8");
+
+        logger.info('Decoding payload');
+        message.payload = msgpack.decode(payload, true);
 
         logger.info("Sender key: " + message.senderKey);
         logger.info("Encrypted: " + message.isEncrypted);

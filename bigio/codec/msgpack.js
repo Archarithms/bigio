@@ -2,7 +2,13 @@
  * Created by atrimble on 11/14/2014.
  */
 
-var logger = require('winston');
+var winston = require('winston');
+var logger = new (winston.Logger)({
+    transports: [
+        new (winston.transports.Console)({ level: 'info' })
+        //new (winston.transports.File)({ filename: 'msgpack.log' })
+    ]
+});
 
 exports.encode = function (value, debug) {
     var size = 0;
@@ -46,11 +52,11 @@ function Decoder(buffer, offset) {
     this.buffer = buffer;
 };
 
-Decoder.prototype.map = function (length) {
+Decoder.prototype.map = function (length, debug) {
     var value = {};
     for (var i = 0; i < length; i++) {
-        var key = this.parse();
-        value[key] = this.parse();
+        var key = this.parse(debug);
+        value[key] = this.parse(debug);
     }
     return value;
 };
@@ -67,42 +73,58 @@ Decoder.prototype.raw = function (length) {
     return value;
 };
 
-Decoder.prototype.array = function (length) {
+Decoder.prototype.array = function (length, debug) {
     var value = new Array(length);
     for (var i = 0; i < length; i++) {
-        value[i] = this.parse();
+        value[i] = this.parse(debug);
     }
     return value;
 };
 
-Decoder.prototype.parse = function () {
+Decoder.prototype.parse = function (debug) {
     var type = this.buffer[this.offset];
     var value, length;
-    // FixRaw
+    // Fixed string
     if ((type & 0xe0) === 0xa0) {
         length = type & 0x1f;
+        if(debug) {
+            logger.info('Parsing fixed string of length ' + length + ' type code: ' + type.toString(16));
+        }
         this.offset++;
-        return this.raw(length);
+        var raw = this.buf(length);
+        return raw;
     }
     // FixMap
     if ((type & 0xf0) === 0x80) {
+        if(debug) {
+            logger.info('Parsing fixed map');
+        }
         length = type & 0x0f;
         this.offset++;
-        return this.map(length);
+        return this.map(length, debug);
     }
     // FixArray
     if ((type & 0xf0) === 0x90) {
+        if(debug) {
+            logger.info('Parsing fixed array');
+        }
         length = type & 0x0f;
         this.offset++;
-        return this.array(length);
+        return this.array(length, debug);
     }
     // Positive FixNum
     if ((type & 0x80) === 0x00) {
+        if(debug) {
+            logger.info('Positive fixed num');
+        }
         this.offset++;
         return type;
     }
     // Negative Fixnum
     if ((type & 0xe0) === 0xe0) {
+        if(debug) {
+            logger.info('Negative fixed num');
+        }
         value = this.buffer.readInt8(this.offset);
         this.offset++;
         return value;
@@ -110,118 +132,198 @@ Decoder.prototype.parse = function () {
     switch (type) {
         // raw 16
         case 0xda:
+            if(debug) {
+                logger.info('Raw 16');
+            }
             length = this.buffer.readUInt16BE(this.offset + 1);
             this.offset += 3;
             return this.raw(length);
         // raw 32
         case 0xdb:
+            if(debug) {
+                logger.info('Raw 32');
+            }
             length = this.buffer.readUInt32BE(this.offset + 1);
             this.offset += 5;
             return this.raw(length);
         // nil
         case 0xc0:
+            if(debug) {
+                logger.info('nil');
+            }
             this.offset++;
             return null;
         // false
         case 0xc2:
+            if(debug) {
+                logger.info('False');
+            }
             this.offset++;
             return false;
         // true
         case 0xc3:
+            if(debug) {
+                logger.info('True');
+            }
             this.offset++;
             return true;
         // binary 8
         case 0xc4:
+            if(debug) {
+                logger.info('Binary 8');
+            }
             length = this.buffer.readUInt8(this.offset + 1);
             this.offset += 2;
             return this.buf(length);
         // binary 16
         case 0xc5:
+            if(debug) {
+                logger.info('Binary 16');
+            }
             length = this.buffer.readUInt16BE(this.offset + 1);
             this.offset += 3;
             return this.buf(length);
         // binary 32
         case 0xc6:
+            if(debug) {
+                logger.info('Binary 32');
+            }
             length = this.buffer.readUInt32BE(this.offset + 1);
             this.offset += 5;
             return this.buf(length);
         // uint8
         case 0xcc:
+            if(debug) {
+                logger.info('Uint 8');
+            }
             value = this.buffer[this.offset + 1];
             this.offset += 2;
             return value;
         // uint 16
         case 0xcd:
+            if(debug) {
+                logger.info('Uint 16');
+            }
             value = this.buffer.readUInt16BE(this.offset + 1);
             this.offset += 3;
             return value;
         // uint 32
         case 0xce:
+            if(debug) {
+                logger.info('Uint 32');
+            }
             value = this.buffer.readUInt32BE(this.offset + 1);
             this.offset += 5;
             return value;
         // uint64
         case 0xcf:
+            if(debug) {
+                logger.info('Uint 64');
+            }
             value = this.buffer.readUInt32BE(this.offset + 1) << 8 + this.buffer.readUInt32BE(this.offset + 1 + 4);
             this.offset += 9;
             return value;
         // int 8
         case 0xd0:
+            if(debug) {
+                logger.info('Int 8');
+            }
             value = this.buffer.readInt8(this.offset + 1);
             this.offset += 2;
             return value;
         // int 16
         case 0xd1:
+            if(debug) {
+                logger.info('Int 16');
+            }
             value = this.buffer.readInt16BE(this.offset + 1);
             this.offset += 3;
             return value;
         // int 32
         case 0xd2:
+            if(debug) {
+                logger.info('Int 32');
+            }
             value = this.buffer.readInt32BE(this.offset + 1);
             this.offset += 5;
             return value;
         // int 64
         case 0xd3:
+            if(debug) {
+                logger.info('Int 64');
+            }
             value = this.buffer.readInt32BE(this.offset + 1) << 8 + this.buffer.readInt32BE(this.offset + 1 + 4);
             this.offset += 9;
             return value;
         // map 16
         case 0xde:
+            if(debug) {
+                logger.info('Map 16');
+            }
             length = this.buffer.readUInt16BE(this.offset + 1);
             this.offset += 3;
             return this.map(length);
         // map 32
         case 0xdf:
+            if(debug) {
+                logger.info('Map 32');
+            }
             length = this.buffer.readUInt32BE(this.offset + 1);
             this.offset += 5;
             return this.map(length);
         // array 16
         case 0xdc:
+            if(debug) {
+                logger.info('Array 16');
+            }
             length = this.buffer.readUInt16BE(this.offset + 1);
             this.offset += 3;
             return this.array(length);
         // array 32
         case 0xdd:
+            if(debug) {
+                logger.info('Array 32');
+            }
             length = this.buffer.readUInt32BE(this.offset + 1);
             this.offset += 5;
             return this.array(length);
-        // buffer 16
-        case 0xd8:
-            length = this.buffer.readUInt16BE(this.offset + 1);
+        // String 8
+        case 0xd9:
+            if(debug) {
+                logger.info('String 8');
+            }
+            length = this.buffer.readInt8(this.offset + 1);
+            this.offset += 2;
+            return this.buf(length);
+        // String 16
+        case 0xda:
+            if(debug) {
+                logger.info('String 16');
+            }
+            length = this.buffer.readInt16BE(this.offset + 1);
             this.offset += 3;
             return this.buf(length);
-        // buffer 32
-        case 0xd9:
+        // String 32
+        case 0xdb:
+            if(debug) {
+                logger.info('String 32');
+            }
             length = this.buffer.readUInt32BE(this.offset + 1);
             this.offset += 5;
             return this.buf(length);
         // float
         case 0xca:
+            if(debug) {
+                logger.info('Float');
+            }
             value = this.buffer.readFloatBE(this.offset + 1);
             this.offset += 5;
             return value;
         // double
         case 0xcb:
+            if(debug) {
+                logger.info('Double');
+            }
             value = this.buffer.readDoubleBE(this.offset + 1);
             this.offset += 9;
             return value;
@@ -236,11 +338,11 @@ function decode(buffer, debug) {
     }
     var decoder = new Decoder(buffer);
     var ret = [];
-    while (decoder.offset !== buffer.length) {
+    while (buffer !== undefined && decoder.offset < buffer.length) {
         if (debug) {
             logger.info("Pushing value at " + decoder.offset);
         }
-        ret.push(decoder.parse());
+        ret.push(decoder.parse(debug));
         if (debug) {
             logger.info("Return value: " + ret);
         }
