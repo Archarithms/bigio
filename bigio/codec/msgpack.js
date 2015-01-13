@@ -125,9 +125,9 @@ Decoder.prototype.parse = function (debug) {
         if(debug) {
             logger.info('Negative fixed num');
         }
-        value = this.buffer.readInt8(this.offset);
+        //value = this.buffer.readInt8(this.offset);
         this.offset++;
-        return value;
+        return type;
     }
     switch (type) {
         // raw 16
@@ -174,7 +174,7 @@ Decoder.prototype.parse = function (debug) {
             }
             length = this.buffer.readUInt8(this.offset + 1);
             this.offset += 2;
-            return this.buf(length);
+            return decode(this.buf(length), debug);
         // binary 16
         case 0xc5:
             if(debug) {
@@ -182,7 +182,7 @@ Decoder.prototype.parse = function (debug) {
             }
             length = this.buffer.readUInt16BE(this.offset + 1);
             this.offset += 3;
-            return this.buf(length);
+            return decode(this.buf(length), debug);
         // binary 32
         case 0xc6:
             if(debug) {
@@ -190,7 +190,7 @@ Decoder.prototype.parse = function (debug) {
             }
             length = this.buffer.readUInt32BE(this.offset + 1);
             this.offset += 5;
-            return this.buf(length);
+            return decode(this.buf(length), debug);
         // uint8
         case 0xcc:
             if(debug) {
@@ -339,17 +339,14 @@ function decode(buffer, debug) {
     var decoder = new Decoder(buffer);
     var ret = [];
     while (buffer !== undefined && decoder.offset < buffer.length) {
-        if (debug) {
-            logger.info("Pushing value at " + decoder.offset);
-        }
         ret.push(decoder.parse(debug));
-        if (debug) {
+        /* if (debug) {
             logger.info("Return value: " + ret);
-        }
+        } */
     }
-    if (debug) {
+    /* if (debug) {
         logger.info("Decoded: " + ret);
-    }
+    } */
     return ret;
 };
 

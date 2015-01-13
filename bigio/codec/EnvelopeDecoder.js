@@ -72,18 +72,19 @@ module.exports = {
         message.topic = unpacked[index++];
         message.partition = unpacked[index++];
         message.className = unpacked[index++];
-        //var payload = unpacked[index];
-        var payload = bops.from(unpacked[index], encoding="utf8");
+        message.payload = bops.from(unpacked[index], encoding="utf8");
 
-        logger.info('Decoding payload');
-        message.payload = msgpack.decode(payload, true);
+        //logger.info('Decoding payload');
+        //message.payload = msgpack.decode(payload, false);
+        //message.payload = payload;
 
-        logger.info("Sender key: " + message.senderKey);
+        /* logger.info("Sender key: " + message.senderKey);
         logger.info("Encrypted: " + message.isEncrypted);
         logger.info("Execution Time: " + message.executeTime);
         logger.info("MS Since Midnight: " + message.millisecondsSinceMidnight);
         logger.info("Topic: " + message.topic);
         logger.info("Partition: " + message.partition);
+        */
 
         return message;
     }

@@ -323,6 +323,7 @@ MeMember.prototype.send = function(envelope) {
 
         // decode message
         envelope.message = GenericDecoder.decode(envelope.payload);
+        //envelope.message = envelope.payload;
         envelope.decoded = true;
     }
 
