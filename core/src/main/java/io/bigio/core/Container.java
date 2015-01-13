@@ -238,7 +238,9 @@ public enum Container {
                 return cl;
             }).filter((cl) -> (!dependencies.containsKey(cl))).forEach((cl) -> {
                 try {
-                    initializations.get(cl).invoke(instances.get(cl));
+                    if(initializations.containsKey(cl)) {
+                        initializations.get(cl).invoke(instances.get(cl));
+                    }
                 } catch (IllegalAccessException ex) {
                     LOG.error("Illegal access", ex);
                 } catch (IllegalArgumentException ex) {
