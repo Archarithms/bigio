@@ -84,7 +84,7 @@ module.exports = {
         ListenerRegistry.removeAllLocalListeners(topic);
     },
 
-    sendMessage: function (topic, partition, message, offsetMilliseconds) {
+    sendMessage: function (topic, partition, message, className, offsetMilliseconds) {
         var envelope = new Envelope();
         envelope.decoded = false;
         if(offsetMilliseconds !== undefined) {
@@ -96,7 +96,7 @@ module.exports = {
         envelope.senderKey = me.ip + ":" + me.gossipPort + ":" + me.dataPort;
         envelope.topic = topic;
         envelope.partition = partition;
-        envelope.className = '';
+        envelope.className = className;
 
         var delivery = deliveries[topic];
         if (delivery == undefined) {

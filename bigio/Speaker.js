@@ -49,8 +49,8 @@ module.exports = {
         cluster.shutdown();
     },
 
-    send: function (topic, partition, message, offsetMilliseconds) {
-        cluster.sendMessage(topic, partition, message, offsetMilliseconds);
+    send: function (topic, partition, message, className, offsetMilliseconds) {
+        cluster.sendMessage(topic, partition, message, className, offsetMilliseconds);
     },
 
     addListener: function (topic, partition, listener) {
