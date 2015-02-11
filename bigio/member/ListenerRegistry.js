@@ -189,13 +189,17 @@ module.exports = {
 
         var found = false;
         for(var reg in map[memberKey][topic]) {
-            if(topic == reg.topic && partition == reg.partition && member == reg.member) {
+            var thatMember = map[memberKey][topic][reg].member;
+            var thatMemberKey = thatMember.ip + ':' + thatMember.gossipPort + ':' + thatMember.dataPort;
+
+            if(String(topic) === String(map[memberKey][topic][reg].topic) && String(partition) === String(map[memberKey][topic][reg].partition) && memberKey == thatMemberKey) {
                 found = true;
                 break;
             }
         }
 
         if(!found) {
+            logger.info("Creating new reg");
             var reg = new Object();
             reg.member = member;
             reg.topic = topic;

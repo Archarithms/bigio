@@ -27,9 +27,13 @@ exports.encode = function (value, debug) {
     var offset = 0;
     for(var key in value) {
         if(debug) {
-            logger.info('Encoding ' + key + ' --> ' + value[key]);
+            if(Buffer.isBuffer(value[key])) {
+                logger.info('Encoding ' + key + ' --> ' + value[key].toString('hex'));
+            } else {
+                logger.info('Encoding ' + key + ' --> ' + value[key]);
+            }
         }
-        offset += encode(value[key], buffer, offset);
+        offset += encode(value[key], buffer, offset, debug);
         if(debug) {
             logger.info('Offset: ' + offset);
             logger.info('buffer: ' + buffer.length);
@@ -356,7 +360,7 @@ function encodeableKeys (value) {
     });
 };
 
-function encode(value, buffer, offset) {
+function encode(value, buffer, offset, debug) {
     var type = typeof value;
     var length, size;
 
@@ -395,7 +399,47 @@ function encode(value, buffer, offset) {
 
     if (Buffer.isBuffer(value)) {
         length = value.length;
-        // buffer 8
+
+        var size = 0;
+        if (length < 0x10) {
+            buffer[offset] = length | 0x90;
+            size = 1;
+        }
+        else if (length < 0x10000) {
+            buffer[offset] = 0xdc;
+            buffer.writeUInt16BE(length, offset + 1);
+            size = 3;
+        }
+        else if (length < 0x100000000) {
+            buffer[offset] = 0xdd;
+            buffer.writeUInt32BE(length, offset + 1);
+            size = 5;
+        }
+
+        for (var i = 0; i < value.length; i++) {
+            var b = value[i];
+
+            if(debug) {
+                logger.info(b.toString(16));
+            }
+
+            if (b <= 0x80) {
+                buffer.writeUInt8(b, offset + size);
+                size += 1;
+            } else if (b < 0x100) {
+                buffer.writeUInt8(0xd0, offset + size);
+                buffer.writeUInt8(b, offset + size + 1);
+                size += 2;
+            }
+        }
+
+        if(debug) {
+            logger.info(buffer.toString('hex', offset, offset + size));
+        }
+
+        return size;
+
+        /* // buffer 8
         if (length < 0x100) {
             buffer[offset] = 0xc4;
             buffer.writeUInt8(length, offset + 1);
@@ -415,7 +459,7 @@ function encode(value, buffer, offset) {
             buffer.writeUInt32BE(length, offset + 1);
             value.copy(buffer, offset + 5, 0, length);
             return 5 + length;
-        }
+        } */
     }
 
     if (type === "number") {
@@ -521,7 +565,7 @@ function encode(value, buffer, offset) {
 
     // Custom toJSON function.
     if (typeof value.toJSON === 'function') {
-        return encode(value.toJSON(), buffer, offset);
+        return encode(value.toJSON(), buffer, offset, debug);
     }
 
     // Container Types
@@ -554,13 +598,13 @@ function encode(value, buffer, offset) {
 
         if (isArray) {
             for (var i = 0; i < length; i++) {
-                size += encode(value[i], buffer, offset + size);
+                size += encode(value[i], buffer, offset + size, debug);
             }
         } else {
             for (var i = 0; i < length; i++) {
                 var key = keys[i];
-                size += encode(key, buffer, offset + size);
-                size += encode(value[key], buffer, offset + size);
+                size += encode(key, buffer, offset + size, debug);
+                size += encode(value[key], buffer, offset + size, debug);
             }
         }
 
@@ -595,7 +639,31 @@ function sizeof(value) {
     }
 
     if (Buffer.isBuffer(value)) {
-        length = value.length;
+
+        var size = 0;
+        if (value.length < 0x10) {
+            size = 1;
+        }
+        else if (value.length < 0x10000) {
+            size = 3;
+        }
+        else if (value.length < 0x100000000) {
+            size = 5;
+        }
+
+        for (var i = 0; i < value.length; i++) {
+            var b = value[i];
+
+            if (b <= 0x80) {
+                size += 1;
+            } else if (b < 0x100) {
+                size += 2;
+            }
+        }
+
+        return size;
+
+        /* length = value.length;
         // buffer 8
         if (length < 0x100) {
             return 2 + length;
@@ -607,7 +675,7 @@ function sizeof(value) {
         // buffer 32
         if (length < 0x100000000) {
             return 5 + length;
-        }
+        } */
     }
 
     if (type === "number") {

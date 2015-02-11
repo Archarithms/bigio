@@ -30,6 +30,7 @@
 var logger = require('winston');
 var msgpack = require('./msgpack');
 var GenericEncoder = require('./GenericEncoder');
+var bops = require('bops');
 
 /**
  * This is a class for encoding envelope messages.
@@ -52,12 +53,12 @@ module.exports = {
 
         if(message.isEncrypted) {
             var toPack = [
-                ip[0],
-                ip[1],
-                ip[2],
-                ip[3],
-                keys[1],
-                keys[2],
+                parseInt(ip[0]),
+                parseInt(ip[1]),
+                parseInt(ip[2]),
+                parseInt(ip[3]),
+                parseInt(keys[1]),
+                parseInt(keys[2]),
                 true,
                 message.key,
                 message.executeTime,
@@ -69,12 +70,12 @@ module.exports = {
             ];
         } else {
             var toPack = [
-                ip[0],
-                ip[1],
-                ip[2],
-                ip[3],
-                keys[1],
-                keys[2],
+                parseInt(ip[0]),
+                parseInt(ip[1]),
+                parseInt(ip[2]),
+                parseInt(ip[3]),
+                parseInt(keys[1]),
+                parseInt(keys[2]),
                 false,
                 message.executeTime,
                 message.millisecondsSinceMidnight,
@@ -85,6 +86,11 @@ module.exports = {
             ];
         }
 
-        return msgpack.encode(toPack);
+        var buff = msgpack.encode(toPack, false);
+        var newBuff = bops.create(buff.length + 2);
+        bops.copy(buff, newBuff, 2, 0, buff.length);
+        bops.writeUInt16BE(newBuff, buff.length, 0);
+
+        return newBuff;
     }
 };

@@ -143,17 +143,17 @@ module.exports = {
             }
         } else if(delivery == DeliveryType.BROADCAST) {
             var members = ListenerRegistry.getRegisteredMembers(topic);
+
+            if (me.equals(member)) {
+                envelope.payload = message;
+                envelope.decoded = true;
+            } else {
+                envelope.payload = GenericEncoder.encode(message);
+                envelope.decoded = false;
+            }
+
             for (var key in members) {
                 var member = members[key].member;
-
-                if (me.equals(member)) {
-                    envelope.payload = message;
-                    envelope.decoded = true;
-                } else {
-                    envelope.payload = GenericEncoder.encode(message);
-                    envelope.decoded = false;
-                }
-
                 member.send(envelope);
             }
         }
