@@ -157,6 +157,7 @@ var announce = function() {
     me.sequence += 1;
     message.clock.push(me.sequence);
     message.publicKey = me.publicKey;
+    message.eventListeners = {};
 
     var bytes = new Buffer(GossipEncoder.encode(message));
     server.send(bytes, 0, bytes.length, multicastPort, multicastGroup, function() {

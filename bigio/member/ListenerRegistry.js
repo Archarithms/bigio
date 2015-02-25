@@ -199,11 +199,10 @@ module.exports = {
         }
 
         if(!found) {
-            logger.info("Creating new reg");
             var reg = new Object();
             reg.member = member;
-            reg.topic = topic;
-            reg.partition = partition;
+            reg.topic = String(topic);
+            reg.partition = String(partition);
             map[memberKey][topic].push(reg);
         }
     },

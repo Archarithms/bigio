@@ -123,6 +123,8 @@ module.exports = {
                     memberList.eventListeners[key].push(regs[indx].topic);
                 }
 
+                logger.info(memberList.eventListeners);
+
                 member.gossip(memberList);
             }
         }, gossipInterval);
