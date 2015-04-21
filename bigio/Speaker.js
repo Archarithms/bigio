@@ -49,12 +49,20 @@ module.exports = {
         cluster.shutdown();
     },
 
-    send: function (topic, partition, message, className, offsetMilliseconds) {
-        cluster.sendMessage(topic, partition, message, className, offsetMilliseconds);
+    send: function (obj) {
+        cluster.sendMessage(
+            obj['topic'],
+            'partition' in obj ? obj['partition'] : '',
+            obj['message'],
+            'javaclass' in obj ? obj['javaclass'] : '',
+            'offset' in obj ? obj['offset'] : '');
     },
 
-    addListener: function (topic, partition, listener) {
-        cluster.addListener(topic, partition, listener);
+    addListener: function (obj) {
+        cluster.addListener(
+            obj['topic'],
+            'partition' in obj ? obj['partition'] : '',
+            obj['listener']);
     },
 
     removeAllListeners: function (topic) {
@@ -79,9 +87,5 @@ module.exports = {
 
     setDeliveryType: function (topic, type) {
         cluster.setDeliveryType(topic, type);
-    },
-
-    getClusterService: function () {
-        return cluster;
     }
-}
+};

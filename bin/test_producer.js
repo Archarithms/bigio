@@ -6,12 +6,18 @@ var speaker = require('../bigio/Speaker');
 var logger = require('winston');
 
 var message = {
-    content: 'Hello World!'
+    content: 'Hello World!',
+    other: {
+        _d: "test"
+    }
 };
 
 speaker.initialize(function() {
     setTimeout(function() {
         logger.info('Sending test message.');
-        speaker.send('JSTestTopic', '.*', message, 0);
+        speaker.send({
+            topic: 'JSTestTopic',
+            message: message
+        });
     }, 2000);
 });

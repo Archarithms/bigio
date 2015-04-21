@@ -85,7 +85,7 @@ module.exports = {
     },
 
     sendMessage: function (topic, partition, message, className, offsetMilliseconds) {
-        var envelope = new Envelope();
+        var envelope = {};
         envelope.decoded = false;
         if(offsetMilliseconds !== undefined) {
             envelope.executeTime = offsetMilliseconds;
