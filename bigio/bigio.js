@@ -28,7 +28,7 @@
  */
 
 var logger = require('winston')
-var cluster = require('./Cluster')
+var cluster = require('./cluster')
 
 module.exports = {
 

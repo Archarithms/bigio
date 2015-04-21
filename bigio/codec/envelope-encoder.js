@@ -29,7 +29,6 @@
 
 var logger = require('winston');
 var msgpack = require('./msgpack');
-var GenericEncoder = require('./GenericEncoder');
 var bops = require('bops');
 
 /**

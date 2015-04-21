@@ -34,14 +34,14 @@ var logger = new (winston.Logger)({
         //new (winston.transports.File)({ filename: 'somefile.log' })
     ]
 });
-var Parameters = require('./Parameters');
-var GossipMessage = require('./GossipMessage');
-var GossipEncoder = require('./codec/GossipEncoder');
-var GossipDecoder = require('./codec/GossipDecoder');
-var MemberHolder = require('./member/MemberHolder');
-var MemberStatus = require('./member/MemberStatus');
-var RemoteMember = require('./member/RemoteMember');
-var TimeUtil = require('./util/TimeUtil');
+var parameters = require('./parameters');
+var GossipMessage = require('./gossip-message');
+var GossipEncoder = require('./codec/gossip-encoder');
+var GossipDecoder = require('./codec/gossip-decoder');
+var MemberHolder = require('./member/member-holder');
+var MemberStatus = require('./member/member-status');
+var RemoteMember = require('./member/remote-member');
+var TimeUtil = require('./util/time-util');
 var dgram = require('dgram');
 
 var MULTICAST_ENABLED_PROPERTY = "io.bigio.multicast.enabled";
@@ -53,11 +53,11 @@ var PROTOCOL_PROPERTY = "io.bigio.protocol";
 var DEFAULT_PROTOCOL = "tcp";
 var NETWORK_INTERFACE_PROPERTY = "io.bigio.network";
 
-var enabled = Parameters.getInstance().getProperty(MULTICAST_ENABLED_PROPERTY, "true");
-var multicastGroup = Parameters.getInstance().getProperty(MULTICAST_GROUP_PROPERTY, DEFAULT_MULTICAST_GROUP);
-var multicastPort = Parameters.getInstance().getProperty(MULTICAST_PORT_PROPERTY, DEFAULT_MULTICAST_PORT);
-var protocol = Parameters.getInstance().getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
-var nic = Parameters.getInstance().getProperty(NETWORK_INTERFACE_PROPERTY);
+var enabled = parameters.getInstance().getProperty(MULTICAST_ENABLED_PROPERTY, "true");
+var multicastGroup = parameters.getInstance().getProperty(MULTICAST_GROUP_PROPERTY, DEFAULT_MULTICAST_GROUP);
+var multicastPort = parameters.getInstance().getProperty(MULTICAST_PORT_PROPERTY, DEFAULT_MULTICAST_PORT);
+var protocol = parameters.getInstance().getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
+var nic = parameters.getInstance().getProperty(NETWORK_INTERFACE_PROPERTY);
 
 var me;
 var server;

@@ -31,8 +31,8 @@
 var logger = require('winston');
 var net = require('net');
 var os = require('os');
-var parameters = require('./../Parameters')
-var OperatingSystem = require('./OperatingSystem')
+var parameters = require('./../parameters')
+var OperatingSystem = require('./operating-system')
 
 var NETWORK_INTERFACE_PROPERTY = "io.bigio.network";
     

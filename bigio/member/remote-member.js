@@ -35,11 +35,11 @@ var logger = new (winston.Logger)({
     ]
 });
 
-var MemberHolder = require('./MemberHolder');
-var MemberStatus = require('./MemberStatus');
-var Parameters = require('../Parameters');
-var GossipEncoder = require('../codec/GossipEncoder');
-var EnvelopeEncoder = require('../codec/EnvelopeEncoder');
+var MemberHolder = require('./member-holder');
+var MemberStatus = require('./member-status');
+var parameters = require('../parameters');
+var GossipEncoder = require('../codec/gossip-encoder');
+var EnvelopeEncoder = require('../codec/envelope-encoder');
 
 /**
  * A TCP implementation of a remote BigIO cluster member.
@@ -70,9 +70,9 @@ var RemoteMember = function(ip, gossipPort, dataPort, useTCP) {
     var DEFAULT_KEYFILE = "conf/keyfile.pem";
     var SSL_KEYPASSWORD_PROPERTY = "io.bigio.ssl.keyPassword";
 
-    var maxRetry = Parameters.getInstance().getProperty(MAX_RETRY_COUNT_PROPERTY, DEFAULT_MAX_RETRY_COUNT);
-    var retryInterval = Parameters.getInstance().getProperty(RETRY_INTERVAL_PROPERTY, DEFAULT_RETRY_INTERVAL);
-    var timeout = Parameters.getInstance().getProperty(CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT);
+    var maxRetry = parameters.getInstance().getProperty(MAX_RETRY_COUNT_PROPERTY, DEFAULT_MAX_RETRY_COUNT);
+    var retryInterval = parameters.getInstance().getProperty(RETRY_INTERVAL_PROPERTY, DEFAULT_RETRY_INTERVAL);
+    var timeout = parameters.getInstance().getProperty(CONNECTION_TIMEOUT_PROPERTY, DEFAULT_CONNECTION_TIMEOUT);
 
     var cipher = undefined;
     var symmetricCipher = undefined;
@@ -82,11 +82,11 @@ var RemoteMember = function(ip, gossipPort, dataPort, useTCP) {
     var gossipSocket;
     var dataSocket;
 
-    var useSSL = Parameters.getInstance().getProperty(SSL_PROPERTY, DEFAULT_SSL);
-    var useSelfSigned = Parameters.getInstance().getProperty(SSL_SELFSIGNED_PROPERTY, DEFAULT_SELFSIGNED);
-    var certChainFile = Parameters.getInstance().getProperty(SSL_CERTCHAINFILE_PROPERTY, DEFAULT_CERTCHAINFILE);
-    var keyFile = Parameters.getInstance().getProperty(SSL_KEYFILE_PROPERTY, DEFAULT_KEYFILE);
-    var keyPassword = Parameters.getInstance().getProperty(SSL_KEYPASSWORD_PROPERTY);
+    var useSSL = parameters.getInstance().getProperty(SSL_PROPERTY, DEFAULT_SSL);
+    var useSelfSigned = parameters.getInstance().getProperty(SSL_SELFSIGNED_PROPERTY, DEFAULT_SELFSIGNED);
+    var certChainFile = parameters.getInstance().getProperty(SSL_CERTCHAINFILE_PROPERTY, DEFAULT_CERTCHAINFILE);
+    var keyFile = parameters.getInstance().getProperty(SSL_KEYFILE_PROPERTY, DEFAULT_KEYFILE);
+    var keyPassword = parameters.getInstance().getProperty(SSL_KEYPASSWORD_PROPERTY);
 
     var gossipConnected = false;
     var dataConnected = false;

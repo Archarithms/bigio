@@ -30,7 +30,6 @@
 var logger = require('winston');
 var bops = require('bops');
 var msgpack = require('./msgpack');
-var Envelope = require('../Envelope');
 
 /**
  * This is a class for decoding gossip messages.

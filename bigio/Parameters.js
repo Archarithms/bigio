@@ -36,7 +36,7 @@ var fileSystem;
 var configDir;
 var os;
 var operatingSystem = require('os');
-var OperatingSystem = require('./util/OperatingSystem')
+var OperatingSystem = require('./util/operating-system')
 
 var properties = {};
 

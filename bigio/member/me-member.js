@@ -35,12 +35,12 @@ var logger = new (winston.Logger)({
     ]
 });
 var events = require('events');
-var MemberStatus = require('./MemberStatus');
-var Parameters = require('../Parameters');
-var ListenerRegistry = require('./ListenerRegistry');
-var GossipDecoder = require('../codec/GossipDecoder');
-var GenericDecoder = require('../codec/GenericDecoder');
-var EnvelopeDecoder = require('../codec/EnvelopeDecoder');
+var MemberStatus = require('./member-status');
+var parameters = require('../parameters');
+var ListenerRegistry = require('./listener-registry');
+var EnvelopeDecoder = require('../codec/envelope-decoder');
+var GossipDecoder = require('../codec/gossip-decoder');
+var GenericDecoder = require('../codec/generic-decoder');
 
 var gossipReactor = new events.EventEmitter();
 
@@ -71,12 +71,12 @@ var MeMember = function(ip, gossipPort, dataPort, useTCP) {
     var rsaCipher = undefined;
     var keyPair = undefined;
 
-    var useEncryption = Parameters.getInstance().getProperty(ENCRYPTION_PROPERTY, DEFAULT_ENCRYPTION);
-    var useSSL = Parameters.getInstance().getProperty(SSL_PROPERTY, DEFAULT_SSL);
-    var useSelfSigned = Parameters.getInstance().getProperty(SSL_SELFSIGNED_PROPERTY, DEFAULT_SELFSIGNED);
-    var certChainFile = Parameters.getInstance().getProperty(SSL_CERTCHAINFILE_PROPERTY, DEFAULT_CERTCHAINFILE);
-    var keyFile = Parameters.getInstance().getProperty(SSL_KEYFILE_PROPERTY, DEFAULT_KEYFILE);
-    var keyPassword = Parameters.getInstance().getProperty(SSL_KEYPASSWORD_PROPERTY);
+    var useEncryption = parameters.getInstance().getProperty(ENCRYPTION_PROPERTY, DEFAULT_ENCRYPTION);
+    var useSSL = parameters.getInstance().getProperty(SSL_PROPERTY, DEFAULT_SSL);
+    var useSelfSigned = parameters.getInstance().getProperty(SSL_SELFSIGNED_PROPERTY, DEFAULT_SELFSIGNED);
+    var certChainFile = parameters.getInstance().getProperty(SSL_CERTCHAINFILE_PROPERTY, DEFAULT_CERTCHAINFILE);
+    var keyFile = parameters.getInstance().getProperty(SSL_KEYFILE_PROPERTY, DEFAULT_KEYFILE);
+    var keyPassword = parameters.getInstance().getProperty(SSL_KEYPASSWORD_PROPERTY);
 
     var gossipServer;
     var dataServer;
@@ -257,7 +257,7 @@ MeMember.prototype.initialize = function() {
 
         });
         this.dataServer.on('message', function (data, rinfo) {
-            var message = EnvelopeDecoder.decode(data);
+            var message = envelopedecoder.decode(data);
             message.decoded = false;
             self.send(message);
         });

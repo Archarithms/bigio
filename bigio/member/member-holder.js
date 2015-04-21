@@ -35,7 +35,7 @@ var logger = new (winston.Logger)({
     ]
 });
 
-var MemberStatus = require('./MemberStatus');
+var MemberStatus = require('./member-status');
 
 module.exports = {
 

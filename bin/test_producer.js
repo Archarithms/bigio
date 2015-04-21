@@ -2,7 +2,7 @@
  * Created by atrimble on 11/18/2014.
  */
 
-var speaker = require('../bigio/Speaker');
+var bigio = require('../bigio/bigio');
 var logger = require('winston');
 
 var message = {
@@ -12,10 +12,10 @@ var message = {
     }
 };
 
-speaker.initialize(function() {
+bigio.initialize(function() {
     setTimeout(function() {
         logger.info('Sending test message.');
-        speaker.send({
+        bigio.send({
             topic: 'JSTestTopic',
             message: message
         });

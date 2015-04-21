@@ -36,7 +36,7 @@ var logger = new (winston.Logger)({
 });
 var events = require('events');
 
-var TopicUtils = require('../util/TopicUtils');
+var topicutils = require('../util/topic-utils');
 
 var me;
 var map = {};
@@ -89,7 +89,7 @@ module.exports = {
      * @param listener a listener.
      */
     addLocalListener: function(topic, partition, listener) {
-        reactor.addListener(TopicUtils.getTopicString(topic, partition), listener);
+        reactor.addListener(topicutils.getTopicString(topic, partition), listener);
     },
 
     /**
@@ -222,10 +222,10 @@ module.exports = {
 
         if(envelope.executeTime > 0) {
             reactor.setTimeout(function() {
-                reactor.emit(TopicUtils.getTopicString(envelope.topic, envelope.partition), envelope.message);
+                reactor.emit(topicutils.getTopicString(envelope.topic, envelope.partition), envelope.message);
             }, envelope.executeTime);
         } else if(envelope.executeTime >= 0) {
-            reactor.emit(TopicUtils.getTopicString(envelope.topic, envelope.partition), envelope.message);
+            reactor.emit(topicutils.getTopicString(envelope.topic, envelope.partition), envelope.message);
         }
     }
 };

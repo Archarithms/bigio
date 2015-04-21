@@ -47,20 +47,20 @@ var roundRobinIndex = {}; // type Map<String, Integer>
 
 var shuttingDown = false;
 
-var Parameters = require('./Parameters');
-var DeliveryType = require('./DeliveryType');
-var NetworkUtil = require('./util/NetworkUtil');
-var TimeUtil = require('./util/TimeUtil');
-var TopicUtils = require('./util/TopicUtils');
-var MeMember = require('./member/MeMember');
-var RemoteMember = require('./member/RemoteMember');
-var MemberStatus = require('./member/MemberStatus');
-var MemberHolder = require('./member/MemberHolder');
-var MCDiscovery = require('./MCDiscovery');
-var ListenerRegistry = require('./member/ListenerRegistry');
-var Gossiper = require('./Gossiper');
-var Envelope = require('./Envelope');
-var GenericEncoder = require('./codec/GenericEncoder');
+var parameters = require('./parameters');
+var DeliveryType = require('./delivery-type');
+var NetworkUtil = require('./util/network-util');
+var TimeUtil = require('./util/time-util');
+var TopicUtils = require('./util/topic-utils');
+var MeMember = require('./member/me-member');
+var RemoteMember = require('./member/remote-member');
+var MemberStatus = require('./member/member-status');
+var MemberHolder = require('./member/member-holder');
+var MCDiscovery = require('./mcdiscovery');
+var ListenerRegistry = require('./member/listener-registry');
+var gossiper = require('./gossiper');
+var Envelope = require('./envelope');
+var GenericEncoder = require('./codec/generic-encoder');
 
 module.exports = {
 
@@ -176,9 +176,9 @@ module.exports = {
     },
 
     initialize: function (cb) {
-        var protocol = Parameters.getInstance().getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
-        var gossipPort = Parameters.getInstance().getProperty(GOSSIP_PORT_PROPERTY);
-        var dataPort = Parameters.getInstance().getProperty(DATA_PORT_PROPERTY);
+        var protocol = parameters.getInstance().getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
+        var gossipPort = parameters.getInstance().getProperty(GOSSIP_PORT_PROPERTY);
+        var dataPort = parameters.getInstance().getProperty(DATA_PORT_PROPERTY);
         var address;
 
 
@@ -207,7 +207,7 @@ module.exports = {
     shutdown: function (cb) {
         shuttingDown = true;
 
-        Gossiper.shutdown(function() {
+        gossiper.shutdown(function() {
             MCDiscovery.shutdown(function() {
                 for (var member in MemberHolder.members) {
                     MemberHolder.members[member].shutdown();
@@ -235,7 +235,7 @@ var handleGossipMessage = function(message) {
         var m = MemberHolder.members[key];
 
         if(m == undefined) {
-            var protocol = Parameters.getInstance().getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
+            var protocol = parameters.getInstance().getProperty(PROTOCOL_PROPERTY, DEFAULT_PROTOCOL);
             if("udp" == protocol) {
                 logger.debug("Discovered new UDP member through gossip: " + message.ip + ":" + message.gossipPort + ":" + message.dataPort);
                 m = new RemoteMember(message.ip, message.gossipPort, message.dataPort, false);
@@ -331,7 +331,7 @@ var connect = function(protocol, address, gossipPort, dataPort, cb) {
     MCDiscovery.initialize(me, function() {
         ListenerRegistry.initialize(me);
 
-        Gossiper.initialize(me);
+        gossiper.initialize(me);
 
         cb();
     });
