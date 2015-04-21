@@ -1,7 +1,8 @@
 {
   "name": "bigio",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": false,
+  "main": "./bigio/bigio",
   "dependencies": {
     "debug": "~2.0.0",
     "winston": "~0.8.3",
