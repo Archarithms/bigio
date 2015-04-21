@@ -46,7 +46,7 @@ module.exports = {
      * @throws IOException in case of an error in decoding.
      */
     decode: function(bytes) {
-        var message = new Object();
+        var message = {};
 
         var unpacked = msgpack.decode(bops.subarray(bytes, 2), false);
 

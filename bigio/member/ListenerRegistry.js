@@ -199,7 +199,7 @@ module.exports = {
         }
 
         if(!found) {
-            var reg = new Object();
+            var reg = {};
             reg.member = member;
             reg.topic = String(topic);
             reg.partition = String(partition);
