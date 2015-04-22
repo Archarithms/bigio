@@ -1,4 +1,5 @@
-Fast, distributed messaging in Java.
+Checkout the [NodeJS](https://github.com/Archarithms/bigio-node) version of BigIO.
+Checkout the [Python](https://github.com/Archarithms/bigio-python) version of BigIO.
 
 ### BigIO
 
