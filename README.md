@@ -1,5 +1,4 @@
-Checkout the [NodeJS](https://github.com/Archarithms/bigio-node) version of BigIO.
-Checkout the [Python](https://github.com/Archarithms/bigio-python) version of BigIO.
+Checkout the [NodeJS](https://github.com/Archarithms/bigio-node) or the [Python](https://github.com/Archarithms/bigio-python) versions of BigIO.
 
 ### BigIO
 
