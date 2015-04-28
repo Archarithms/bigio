@@ -33,6 +33,7 @@ import io.bigio.core.Envelope;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import java.io.IOException;
+import org.msgpack.core.MessageFormat;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
 
@@ -115,12 +116,21 @@ public class EnvelopeDecoder {
         message.setPartition(unpacker.unpackString());
         message.setClassName(unpacker.unpackString());
 
-        int length = unpacker.unpackArrayHeader();
-        byte[] payload = new byte[length];
-        for(int i = 0; i < length; ++i) {
-            payload[i] = unpacker.unpackByte();
+        if(unpacker.getNextFormat() == MessageFormat.BIN16 || 
+                unpacker.getNextFormat() == MessageFormat.BIN32 || 
+                unpacker.getNextFormat() == MessageFormat.BIN8) {
+            int length = unpacker.unpackBinaryHeader();
+            byte[] payload = new byte[length];
+            unpacker.readPayload(payload);
+            message.setPayload(payload);
+        } else {
+            int length = unpacker.unpackArrayHeader();
+            byte[] payload = new byte[length];
+            for(int i = 0; i < length; ++i) {
+                payload[i] = unpacker.unpackByte();
+            }
+            message.setPayload(payload);
         }
-        message.setPayload(payload);
 
         return message;
     }
