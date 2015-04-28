@@ -56,7 +56,7 @@ public class Producer {
                 while(true) {
                     try {
                         Thread.sleep(1000l);
-                        
+                        LOG.info("Sending message.");
                         HelloWorldMessage message = new HelloWorldMessage();
                         message.setMessage("Hello World!");
                         speaker.send("HelloWorld", message);
