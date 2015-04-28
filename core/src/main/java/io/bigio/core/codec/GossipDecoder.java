@@ -61,7 +61,7 @@ public class GossipDecoder {
      * @return the decoded message.
      * @throws IOException in case of an error in decoding.
      */
-    public static GossipMessage decode(ByteBuffer bytes) throws IOException {
+    public static GossipMessage decode(ByteBuffer bytes) throws IOException, MessageTypeException {
 
         // Discard the message length.
         // This method is only used by the Multicast discovery mechanism.
@@ -83,7 +83,7 @@ public class GossipDecoder {
      * @return the decoded message.
      * @throws IOException in case of an error in decoding.
      */
-    public static GossipMessage decode(byte[] bytes) throws IOException {
+    public static GossipMessage decode(byte[] bytes) throws IOException, MessageTypeException {
 
         MessageUnpacker unpacker = msgPack.newUnpacker(bytes);
         

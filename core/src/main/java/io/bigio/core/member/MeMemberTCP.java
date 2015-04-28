@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.net.ssl.SSLException;
+import org.msgpack.core.MessageTypeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.event.Event;
@@ -299,8 +300,8 @@ public class MeMemberTCP extends MeMember {
                 try {
                     GossipMessage message = GossipDecoder.decode(bytes);
                     reactor.notify(GOSSIP_TOPIC, Event.wrap(message));
-                } catch (IOException ex) {
-                    LOG.error("Error decoding message.", ex);
+                } catch (IOException | MessageTypeException ex) {
+                    LOG.debug("Error decoding message.", ex);
                 } finally {
                     ReferenceCountUtil.release(msg);
                 }

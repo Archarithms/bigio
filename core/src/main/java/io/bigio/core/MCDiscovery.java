@@ -63,6 +63,7 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import org.msgpack.core.MessageTypeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -337,8 +338,8 @@ public class MCDiscovery extends Thread {
                 }
 
                 memberHolder.updateMemberStatus(member);
-            } catch(IOException ex) {
-                LOG.error("Error receiving multicast discovery message.", ex);
+            } catch(IOException | MessageTypeException ex) {
+                LOG.debug("Error receiving multicast discovery message.", ex);
             }
         }
 
