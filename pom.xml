@@ -5,7 +5,7 @@
     <groupId>io.bigio</groupId>
     <artifactId>bigio</artifactId>
     <packaging>pom</packaging>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <name>BigIO</name>
     <description>BigIO Parent Module</description>
     <url>http://bigio.io</url>
