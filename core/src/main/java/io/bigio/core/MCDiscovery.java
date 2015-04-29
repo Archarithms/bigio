@@ -42,28 +42,16 @@ import io.bigio.core.member.RemoteMemberTCP;
 import io.bigio.core.member.RemoteMemberUDP;
 import io.bigio.util.NetworkUtil;
 import io.bigio.util.TimeUtil;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ChannelFactory;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.DatagramChannel;
-import io.netty.channel.socket.DatagramPacket;
-import io.netty.channel.socket.InternetProtocolFamily;
-import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.concurrent.DefaultThreadFactory;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.SocketException;
-import org.msgpack.core.MessageTypeException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,19 +73,19 @@ public class MCDiscovery extends Thread {
     private static final String MULTICAST_PORT_PROPERTY = "io.bigio.multicast.port";
     private static final String DEFAULT_MULTICAST_GROUP = "239.0.0.1";
     private static final String DEFAULT_MULTICAST_PORT = "8989";
-    private static final int THREADS = 2;
-
-    private EventLoopGroup workerGroup;
-    private final MessageHandler handler = new MessageHandler();
 
     private final boolean enabled;
     private final String multicastGroup;
     private final int multicastPort;
 
-    private DatagramChannel channel;
-    private InetSocketAddress group;
     private Member me;
     private String protocol;
+    private MulticastSocket socket;
+    private InetAddress group;
+
+    private final ExecutorService threadPool = Executors.newSingleThreadExecutor();
+
+    private boolean running = true;
 
     /**
      * Constructor.
@@ -127,7 +115,11 @@ public class MCDiscovery extends Thread {
 
         protocol = Parameters.INSTANCE.getProperty(ClusterService.PROTOCOL_PROPERTY, ClusterService.DEFAULT_PROTOCOL);
 
-        setupNetworking();
+        try {
+            setupNetworking();
+        } catch(IOException ex) {
+            LOG.error("IOException.", ex);
+        }
 
         if(isEnabled()) {
             start();
@@ -138,20 +130,15 @@ public class MCDiscovery extends Thread {
      * Shutdown the discovery service.
      */
     public void shutdown() {
-        if(isEnabled() && workerGroup != null) {
-            workerGroup.shutdownGracefully();
-            try {
-                join();
-            } catch (InterruptedException ex) {
-                LOG.warn("Interrupted while shutting down multicast agent.", ex);
-            }
-        }
+        this.running = false;
+        socket.close();
     }
 
     /**
      * Setup the multicast facilities.
+     * @throws java.io.IOException
      */
-    public void setupNetworking() {
+    public void setupNetworking() throws IOException {
         if(NetworkUtil.getNetworkInterface() == null) {
             LOG.error("Cannot form cluster. No Network interface can be found.");
             return;
@@ -177,59 +164,26 @@ public class MCDiscovery extends Thread {
             return;
         }
         
-        group = new InetSocketAddress(multicastGroup, multicastPort);
+        socket = new MulticastSocket(multicastPort);
+        socket.setReuseAddress(true);
+        group = InetAddress.getByName(multicastGroup);
+        socket.joinGroup(group);
 
-        workerGroup = new NioEventLoopGroup(THREADS, new DefaultThreadFactory("multicast-thread-pool", true));
-
+        LOG.info("Announcing");
         try {
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup)
-                .channelFactory(new ChannelFactory<Channel>() {
-                    @Override
-                    public Channel newChannel() {
-                        return new NioDatagramChannel(InternetProtocolFamily.IPv4);
-                    }
+            GossipMessage message = new GossipMessage(
+                    me.getIp(),
+                    me.getGossipPort(),
+                    me.getDataPort());
+            message.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
+            message.getTags().putAll(me.getTags());
+            message.getMembers().add(MemberKey.getKey(me));
+            message.getClock().add(me.getSequence().incrementAndGet());
+            message.setPublicKey(me.getPublicKey());
 
-                    @Override
-                    public String toString() {
-                        return NioDatagramChannel.class.getSimpleName() + ".class";
-                    }
-                }).handler(new ChannelInitializer<DatagramChannel>() {
-                    @Override
-                    public void initChannel(DatagramChannel ch) throws Exception {
-                        if(LOG.isTraceEnabled()) {
-                            ch.pipeline().addLast(new LoggingHandler(LogLevel.TRACE));
-                        }
-
-                        ch.pipeline().addLast(handler);
-                    }
-                }).localAddress(multicastPort);
-
-            b.option(ChannelOption.IP_MULTICAST_IF, NetworkUtil.getNetworkInterface());
-            b.option(ChannelOption.SO_REUSEADDR, true);
-
-            channel = (DatagramChannel)b.bind().sync().channel();
-            channel.joinGroup(group, NetworkUtil.getNetworkInterface()).sync();
-
-            LOG.info("Announcing");
-            try {
-                GossipMessage message = new GossipMessage(
-                        me.getIp(),
-                        me.getGossipPort(),
-                        me.getDataPort());
-                message.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
-                message.getTags().putAll(me.getTags());
-                message.getMembers().add(MemberKey.getKey(me));
-                message.getClock().add(me.getSequence().incrementAndGet());
-                message.setPublicKey(me.getPublicKey());
-
-                sendMessage(message);
-            } catch (IOException ex) {
-                LOG.error("Cannot serialize message.", ex);
-            }
-
-        } catch(InterruptedException ex) {
-
+            sendMessage(message);
+        } catch (IOException ex) {
+            LOG.error("Cannot serialize message.", ex);
         }
     }
 
@@ -238,16 +192,84 @@ public class MCDiscovery extends Thread {
      */
     @Override
     public void run() {
-        try {
-            // Wait until the connection is closed.
-            if(channel != null) {
-                channel.closeFuture().sync();
+        byte[] buf = new byte[512];
+
+        while(running) {
+            DatagramPacket packet;
+            packet = new DatagramPacket(buf, buf.length);
+            packet.getLength();
+            try {
+                socket.receive(packet);
+                threadPool.invokeAll(Collections.singletonList(Executors.callable(() -> {
+                    try {
+                        processMessage(Arrays.copyOf(packet.getData(), packet.getLength()));
+                    } catch (IOException ex) {
+                        LOG.error("IOException.", ex);
+                    }
+                })));
+            } catch(SocketException ex) {
+                running = false;
+                return;
+            } catch(IOException ex) {
+                LOG.error("IOException.", ex);
+            } catch(InterruptedException ex) {
+                LOG.warn("Multicast thread interrupted.", ex);
             }
-        } catch(InterruptedException ex) {
-            LOG.error("Error in RPC call.", ex);
+        }
+    }
+
+    private void processMessage(byte[] bytes) throws IOException {
+        ByteBuffer buff = ByteBuffer.wrap(bytes, 0, bytes.length);
+        GossipMessage message = GossipDecoder.decode(buff);
+
+        String key = MemberKey.getKey(message);
+
+        Member member = memberHolder.getMember(key);
+        
+        if(member == null) {
+            if("udp".equalsIgnoreCase(protocol)) {
+                if(LOG.isTraceEnabled()) {
+                    LOG.trace(new StringBuilder()
+                            .append("Discovered new UDP member: ")
+                            .append(message.getIp())
+                            .append(":")
+                            .append(message.getGossipPort())
+                            .append(":").append(message.getDataPort()).toString());
+                }
+                member = new RemoteMemberUDP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
+            } else {
+                if(LOG.isTraceEnabled()) {
+                    LOG.trace(new StringBuilder()
+                    .append("Discovered new TCP member: ")
+                    .append(message.getIp())
+                    .append(":")
+                    .append(message.getGossipPort())
+                    .append(":").append(message.getDataPort()).toString());
+                }
+                member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
+            }
+
+            if(message.getPublicKey() != null) {
+                member.setPublicKey(message.getPublicKey());
+            }
+
+            ((AbstractMember)member).initialize();
+        } else {
+            if(LOG.isTraceEnabled()) {
+                            LOG.trace(new StringBuilder()
+                            .append("Received known member: ")
+                            .append(message.getIp())
+                            .append(":")
+                            .append(message.getGossipPort())
+                            .append(":").append(message.getDataPort()).toString());
+                }
         }
 
-        LOG.info("Connection to Clustering agent closed.");
+        for(String k : message.getTags().keySet()) {
+            member.getTags().put(k, message.getTags().get(k));
+        }
+
+        memberHolder.updateMemberStatus(member);
     }
 
     /**
@@ -259,14 +281,9 @@ public class MCDiscovery extends Thread {
     public void sendMessage(GossipMessage message) throws IOException {
 
         byte[] bytes = GossipEncoder.encode(message);
-        ByteBuf buff = Unpooled.buffer(bytes.length);
-                            buff.writeBytes(bytes);
-        
-        try {
-            channel.writeAndFlush(new DatagramPacket(buff, group)).sync();
-        } catch (InterruptedException ex) {
-            LOG.error("Interrupted waiting on sent message.", ex);
-        }
+
+        DatagramPacket packet = new DatagramPacket(bytes, bytes.length, group, multicastPort);
+        socket.send(packet);
     }
         
     /**
@@ -274,78 +291,5 @@ public class MCDiscovery extends Thread {
      */
     public boolean isEnabled() {
         return enabled;
-    }
-
-    private class MessageHandler extends SimpleChannelInboundHandler<DatagramPacket> {
-
-        @Override
-        public void channelActive(ChannelHandlerContext ctx) {
-            
-        }
-
-        @Override
-        protected void channelRead0(ChannelHandlerContext chc, DatagramPacket packet) {
-            ByteBuf buff = packet.content();
-
-            try {
-                GossipMessage message = GossipDecoder.decode(buff.nioBuffer(buff.readerIndex(), buff.readableBytes()));
-
-                String key = MemberKey.getKey(message);
-
-                Member member = memberHolder.getMember(key);
-
-                if(member == null) {
-                    if("udp".equalsIgnoreCase(protocol)) {
-                        if(LOG.isTraceEnabled()) {
-                            LOG.trace(new StringBuilder()
-                                    .append("Discovered new UDP member: ")
-                                    .append(message.getIp())
-                                    .append(":")
-                                    .append(message.getGossipPort())
-                                    .append(":").append(message.getDataPort()).toString());
-                        }
-                        member = new RemoteMemberUDP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
-                    } else {
-                        if(LOG.isTraceEnabled()) {
-                            LOG.trace(new StringBuilder()
-                                    .append("Discovered new TCP member: ")
-                                    .append(message.getIp())
-                                    .append(":")
-                                    .append(message.getGossipPort())
-                                    .append(":").append(message.getDataPort()).toString());
-                        }
-                        member = new RemoteMemberTCP(message.getIp(), message.getGossipPort(), message.getDataPort(), memberHolder);
-                    }
-
-                    if(message.getPublicKey() != null) {
-                        member.setPublicKey(message.getPublicKey());
-                    }
-
-                    ((AbstractMember)member).initialize();
-                } else {
-                    if(LOG.isTraceEnabled()) {
-                            LOG.trace(new StringBuilder()
-                                    .append("Received known member: ")
-                                    .append(message.getIp())
-                                    .append(":")
-                                    .append(message.getGossipPort())
-                                    .append(":").append(message.getDataPort()).toString());
-                        }
-                }
-
-                for(String k : message.getTags().keySet()) {
-                    member.getTags().put(k, message.getTags().get(k));
-                }
-
-                memberHolder.updateMemberStatus(member);
-            } catch(IOException | MessageTypeException ex) {
-                LOG.debug("Error receiving multicast discovery message.", ex);
-            }
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            LOG.error("Exception in connection to Clustering Agent.", cause);
-        }
     }
 }
