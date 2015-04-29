@@ -90,7 +90,9 @@ public class JATransformer {
         StringBuilder decodeBuff = new StringBuilder();
         decodeBuff.append("public void bigiodecode(byte[] bytes) {");
         decodeBuff.append("org.msgpack.core.MessageUnpacker unpacker = msgPack.newUnpacker(bytes);");
-        decodeBuff.append("try {");
+        if(fields.length > 0) {
+            decodeBuff.append("try {");
+        }
 
         StringBuilder encodeBuff = new StringBuilder();
         encodeBuff.append("public byte[] bigioencode() throws Exception {");
@@ -253,7 +255,9 @@ public class JATransformer {
             }
         }
 
-        decodeBuff.append("} catch (Exception ex) { ex.printStackTrace(); }");
+        if(fields.length > 0) {
+            decodeBuff.append("} catch (Exception ex) { ex.printStackTrace(); }");
+        }
         decodeBuff.append("}");
         encodeBuff.append("packer.close();");
         encodeBuff.append("return out.toByteArray();}");

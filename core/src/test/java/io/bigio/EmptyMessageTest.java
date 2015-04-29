@@ -50,7 +50,7 @@ public class EmptyMessageTest {
         Thread.sleep(1000l);
     }
 
-//    @Test
+    @Test
     public void testMessage() throws Exception {
         failed = false;
 
