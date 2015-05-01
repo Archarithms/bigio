@@ -75,7 +75,7 @@ public class MCDiscovery extends Thread {
     private static final String MULTICAST_TTL_PROPERTY = "io.bigio.multicast.ttl";
     private static final String DEFAULT_MULTICAST_GROUP = "239.0.0.1";
     private static final String DEFAULT_MULTICAST_PORT = "8989";
-    private static final String DEFAULT_MULTICAST_TTL = "2";
+    private static final String DEFAULT_MULTICAST_TTL = "1";
 
     private final boolean enabled;
     private final String multicastGroup;
