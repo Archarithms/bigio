@@ -109,7 +109,7 @@ public abstract class MeMember extends AbstractMember {
                 Parameters.INSTANCE.getProperty(ENCRYPTION_PROPERTY, DEFAULT_ENCRYPTION));
 
         if(encryption) {
-            LOG.info("Requiring encrypted message traffic.");
+            LOG.debug("Requiring encrypted message traffic.");
             try {
                 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
                 keyGen.initialize(2048);
