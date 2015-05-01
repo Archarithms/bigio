@@ -363,7 +363,7 @@ public class RemoteMemberTCP extends RemoteMember {
             try {
                 dataChannel.closeFuture().sync();
             } catch (InterruptedException ex) {
-                LOG.warn("Interrupted waiting for client to shutdown.", ex);
+                LOG.debug("Interrupted waiting for client to shutdown.", ex);
             }
         }
     }
@@ -374,7 +374,7 @@ public class RemoteMemberTCP extends RemoteMember {
                 initializeGossipClient();
             }, retryInterval, TimeUnit.MILLISECONDS);
         } else {
-            LOG.warn("Could not connect to gossip server after max retries.");
+            LOG.debug("Could not connect to gossip server after max retries.");
         }
     }
 
@@ -384,7 +384,7 @@ public class RemoteMemberTCP extends RemoteMember {
                 initializeDataClient();
             }, retryInterval, TimeUnit.MILLISECONDS);
         } else {
-            LOG.warn("Could not connect to data server after max retries.");
+            LOG.debug("Could not connect to data server after max retries.");
         }
     }
 
