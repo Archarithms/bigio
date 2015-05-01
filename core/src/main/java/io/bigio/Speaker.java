@@ -73,8 +73,6 @@ public class Speaker {
                 shutdown();
             }
         });
-
-        LOG.info("The speaker has arrived");
     }
 
     /**

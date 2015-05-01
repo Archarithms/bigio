@@ -362,10 +362,10 @@ public class ClusterService {
         }
 
         if("udp".equalsIgnoreCase(protocol)) {
-            LOG.info("Running over UDP");
+            LOG.debug("Running over UDP");
             me = new MeMemberUDP(myAddress, gossipPortInt, dataPortInt, memberHolder, registry);
         } else {
-            LOG.info("Running over TCP");
+            LOG.debug("Running over TCP");
             me = new MeMemberTCP(myAddress, gossipPortInt, dataPortInt, memberHolder, registry);
         }
         me.setStatus(MemberStatus.Alive);

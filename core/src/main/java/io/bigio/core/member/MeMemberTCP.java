@@ -128,7 +128,7 @@ public class MeMemberTCP extends MeMember {
         LOG.debug("Initializing gossip server on " + getIp() + ":" + getGossipPort());
 
         if(useSSL) {
-            LOG.info("Using SSL/TLS.");
+            LOG.debug("Using SSL/TLS.");
             
             if(useSelfSigned) {
                 LOG.warn("Using self signed certificate. Only use this for testing.");

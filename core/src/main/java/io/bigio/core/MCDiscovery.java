@@ -187,9 +187,6 @@ public class MCDiscovery extends Thread {
                 break;
         }
         
-        
-
-        LOG.info("Announcing");
         try {
             GossipMessage message = new GossipMessage(
                     me.getIp(),
