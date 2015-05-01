@@ -22,7 +22,7 @@ your Maven pom.
 <dependency>
     <groupId>io.bigio</groupId>
     <artifactId>bigio-core</artifactId>
-    <version>1.1.2</version>
+    <version>1.1.3</version>
 </dependency>
 ```
 
@@ -34,6 +34,10 @@ or our [website](http://bigio.io)
 The Javadocs can be viewed [here](http://bigio.io/javadoc/)
 
 ### What's New
+
+##### 1.1.3
+- Fixed a Mac specific discovery bug
+- Removed logging for a cleaner interface
 
 ##### 1.1.2
 - Interoperability with the NodeJS BigIO
