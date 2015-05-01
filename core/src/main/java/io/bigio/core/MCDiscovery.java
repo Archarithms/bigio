@@ -45,6 +45,7 @@ import io.bigio.util.TimeUtil;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
@@ -71,12 +72,15 @@ public class MCDiscovery extends Thread {
     private static final String MULTICAST_ENABLED_PROPERTY = "io.bigio.multicast.enabled";
     private static final String MULTICAST_GROUP_PROPERTY = "io.bigio.multicast.group";
     private static final String MULTICAST_PORT_PROPERTY = "io.bigio.multicast.port";
+    private static final String MULTICAST_TTL_PROPERTY = "io.bigio.multicast.ttl";
     private static final String DEFAULT_MULTICAST_GROUP = "239.0.0.1";
     private static final String DEFAULT_MULTICAST_PORT = "8989";
+    private static final String DEFAULT_MULTICAST_TTL = "2";
 
     private final boolean enabled;
     private final String multicastGroup;
     private final int multicastPort;
+    private final int multicastTtl;
 
     private Member me;
     private String protocol;
@@ -94,6 +98,7 @@ public class MCDiscovery extends Thread {
         enabled = Boolean.parseBoolean(Parameters.INSTANCE.getProperty(MULTICAST_ENABLED_PROPERTY, "true"));
         multicastGroup = Parameters.INSTANCE.getProperty(MULTICAST_GROUP_PROPERTY, DEFAULT_MULTICAST_GROUP);
         multicastPort = Integer.parseInt(Parameters.INSTANCE.getProperty(MULTICAST_PORT_PROPERTY, DEFAULT_MULTICAST_PORT));
+        multicastTtl = Integer.parseInt(Parameters.INSTANCE.getProperty(MULTICAST_TTL_PROPERTY, DEFAULT_MULTICAST_TTL));
     }
 
     /**
@@ -166,8 +171,9 @@ public class MCDiscovery extends Thread {
         
         socket = new MulticastSocket(multicastPort);
         socket.setReuseAddress(true);
+	socket.setTimeToLive(multicastTtl);
         group = InetAddress.getByName(multicastGroup);
-        socket.joinGroup(group);
+        socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkUtil.getNetworkInterface());
 
         LOG.info("Announcing");
         try {
