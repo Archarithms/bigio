@@ -176,14 +176,12 @@ public class MCDiscovery extends Thread {
         switch(Parameters.INSTANCE.currentOS()) {
             case MAC_64:
             case MAC_32:
-                socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkUtil.getNetworkInterface());
-                break;
             case WIN_64:
             case WIN_32:
             case LINUX_64:
             case LINUX_32:
             default:
-                socket.joinGroup(group);
+                socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkUtil.getNetworkInterface());
                 break;
         }
         

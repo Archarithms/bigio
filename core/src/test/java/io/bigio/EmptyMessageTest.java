@@ -39,7 +39,7 @@ public class EmptyMessageTest {
 
         speaker2.addListener("EmptyTopic", listener);
 
-        Thread.sleep(1000l);
+        Thread.sleep(2000l);
     }
 
     @AfterClass

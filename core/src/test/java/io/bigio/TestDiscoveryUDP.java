@@ -43,7 +43,7 @@ public class TestDiscoveryUDP {
         speaker2.addListener("MyTopic", listener);
         speaker2.addListener("DelayedTopic", delayedListener);
         
-        Thread.sleep(1000l);
+        Thread.sleep(2000l);
     }
 
     @AfterClass
@@ -68,6 +68,10 @@ public class TestDiscoveryUDP {
         assertTrue(members1.contains(speaker2.getMe()));
 
         List<Member> regs = speaker1.getClusterService().getRegistry().getRegisteredMembers("MyTopic");
+        /* System.out.println("Members in speaker 1");
+        for(Member m : regs) {
+            System.out.println(m.toString());
+        } */
         assertTrue(regs.contains(speaker2.getMe()));
         assertFalse(regs.contains(speaker1.getMe()));
 
