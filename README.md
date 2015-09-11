@@ -5,14 +5,8 @@ versions of BigIO coming soon.
 
 Note: The API has changed with version 1.2 and is not backwards compatible. io.bigio.Speaker
 has been renamed to io.bigio.BigIO and the boostrap method has been moved into this class.
-All instances of 
-```Java
-Speaker speaker = Starter.boostrap();
-```
-need to be replaced with
-```Java
-BigIO bigio = BigIO.bootstrap();
-```
+All instances of `Speaker speaker = Starter.boostrap();` need to be replaced with 
+`BigIO bigio = BigIO.bootstrap();`
 
 ### BigIO
 
