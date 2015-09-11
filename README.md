@@ -3,6 +3,17 @@ Checkout the [NodeJS](https://github.com/Archarithms/bigio-node) version of BigI
 [Python](https://github.com/Archarithms/bigio-python) and [Go](https://github.com/Archarithms/bigio-go) 
 versions of BigIO coming soon.
 
+Note: The API has changed with version 1.2 and is not backwards compatible. io.bigio.Speaker
+has been renamed to io.bigio.BigIO and the boostrap method has been moved into this class.
+All instances of 
+```Java
+Speaker speaker = Starter.boostrap();
+```
+need to be replaced with
+```Java
+BigIO bigio = BigIO.bootstrap();
+```
+
 ### BigIO
 
 BigIO is a fast, distributed messaging framework written entirely in Java. The 
@@ -25,11 +36,11 @@ your Maven pom.
 <dependency>
     <groupId>io.bigio</groupId>
     <artifactId>bigio-core</artifactId>
-    <version>1.1.3</version>
+    <version>1.2</version>
 </dependency>
 ```
 
-A zipped runtime package can be downloaded [here](http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.1.2/bigio-runtime-1.1.2.zip)
+A zipped runtime package can be downloaded [here](http://search.maven.org/remotecontent?filepath=io/bigio/bigio-runtime/1.2/bigio-runtime-1.2.zip)
 
 For more information, please see the [wiki](https://github.com/Archarithms/bigio/wiki)
 or our [website](http://bigio.io)
@@ -37,6 +48,12 @@ or our [website](http://bigio.io)
 The Javadocs can be viewed [here](http://bigio.io/javadoc/)
 
 ### What's New
+
+##### 1.2
+- New multicast discovery implementation using NIO
+- API enhancements - better naming
+- Several discovery bugs fixed
+- Improved memory usage
 
 ##### 1.1.3
 - Fixed a Mac specific discovery bug
