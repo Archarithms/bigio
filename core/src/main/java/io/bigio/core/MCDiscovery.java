@@ -43,14 +43,14 @@ import io.bigio.core.member.RemoteMemberUDP;
 import io.bigio.util.NetworkUtil;
 import io.bigio.util.TimeUtil;
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.net.StandardProtocolFamily;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collections;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.slf4j.Logger;
@@ -84,7 +84,8 @@ public class MCDiscovery extends Thread {
 
     private Member me;
     private String protocol;
-    private MulticastSocket socket;
+    private DatagramChannel listener;
+    private DatagramChannel sender;
     private InetAddress group;
 
     private final ExecutorService threadPool = Executors.newSingleThreadExecutor();
@@ -136,7 +137,12 @@ public class MCDiscovery extends Thread {
      */
     public void shutdown() {
         this.running = false;
-        socket.close();
+        try {
+            listener.close();
+            sender.close();
+        } catch(IOException ex) {
+            LOG.error("IOException.", ex);
+        }
     }
 
     /**
@@ -169,9 +175,16 @@ public class MCDiscovery extends Thread {
             return;
         }
         
-        socket = new MulticastSocket(multicastPort);
-        socket.setReuseAddress(true);
-        socket.setTimeToLive(multicastTtl);
+        listener = DatagramChannel.open(StandardProtocolFamily.INET)
+                .setOption(StandardSocketOptions.SO_REUSEADDR, true)
+                .setOption(StandardSocketOptions.IP_MULTICAST_TTL, multicastTtl)
+                .bind(new InetSocketAddress(multicastPort))
+                .setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkUtil.getNetworkInterface());
+        sender = DatagramChannel.open(StandardProtocolFamily.INET)
+                .setOption(StandardSocketOptions.SO_REUSEADDR, true)
+                .setOption(StandardSocketOptions.IP_MULTICAST_TTL, multicastTtl)
+                .bind(new InetSocketAddress(multicastPort))
+                .setOption(StandardSocketOptions.IP_MULTICAST_IF, NetworkUtil.getNetworkInterface());
         group = InetAddress.getByName(multicastGroup);
         switch(Parameters.INSTANCE.currentOS()) {
             case MAC_64:
@@ -181,10 +194,10 @@ public class MCDiscovery extends Thread {
             case LINUX_64:
             case LINUX_32:
             default:
-                socket.joinGroup(new InetSocketAddress(group, multicastPort), NetworkUtil.getNetworkInterface());
+                listener.join(group, NetworkUtil.getNetworkInterface());
                 break;
         }
-        
+
         try {
             GossipMessage message = new GossipMessage(
                     me.getIp(),
@@ -207,35 +220,29 @@ public class MCDiscovery extends Thread {
      */
     @Override
     public void run() {
-        byte[] buf = new byte[512];
+        ByteBuffer packet = ByteBuffer.allocate(512);
 
         while(running) {
-            DatagramPacket packet;
-            packet = new DatagramPacket(buf, buf.length);
-            packet.getLength();
             try {
-                socket.receive(packet);
-                threadPool.invokeAll(Collections.singletonList(Executors.callable(() -> {
-                    try {
-                        processMessage(Arrays.copyOf(packet.getData(), packet.getLength()));
-                    } catch (IOException ex) {
-                        LOG.error("IOException.", ex);
-                    }
-                })));
-            } catch(SocketException ex) {
+                listener.receive(packet);
+                packet.rewind();
+                processMessage(packet);
+                packet.clear();
+            } catch(AsynchronousCloseException ex) {
                 running = false;
                 return;
             } catch(IOException ex) {
                 LOG.error("IOException.", ex);
-            } catch(InterruptedException ex) {
-                LOG.warn("Multicast thread interrupted.", ex);
             }
         }
     }
 
-    private void processMessage(byte[] bytes) throws IOException {
-        ByteBuffer buff = ByteBuffer.wrap(bytes, 0, bytes.length);
-        GossipMessage message = GossipDecoder.decode(buff);
+    private void processMessage(ByteBuffer buff) throws IOException {
+        int length = (buff.get() & 0xFF) << 8 | (buff.get() & 0xFF);
+        byte[] arr = new byte[length];
+        buff.get(arr, 0, length);
+
+        GossipMessage message = GossipDecoder.decode(arr);
 
         String key = MemberKey.getKey(message);
 
@@ -297,8 +304,18 @@ public class MCDiscovery extends Thread {
 
         byte[] bytes = GossipEncoder.encode(message);
 
-        DatagramPacket packet = new DatagramPacket(bytes, bytes.length, group, multicastPort);
-        socket.send(packet);
+        ByteBuffer buff = ByteBuffer.allocate(bytes.length);
+        buff.clear();
+        buff.put(bytes);
+        buff.rewind();
+
+        StringBuilder builder = new StringBuilder();
+        while(buff.hasRemaining()) {
+            builder.append(String.format("%02X ", buff.get()));
+        }
+        buff.rewind();
+
+        sender.send(buff, new InetSocketAddress(group, multicastPort));
     }
         
     /**

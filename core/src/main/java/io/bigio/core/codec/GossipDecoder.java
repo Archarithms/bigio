@@ -61,28 +61,6 @@ public class GossipDecoder {
      * @return the decoded message.
      * @throws IOException in case of an error in decoding.
      */
-    public static GossipMessage decode(ByteBuffer bytes) throws IOException, MessageTypeException {
-
-        // Discard the message length.
-        // This method is only used by the Multicast discovery mechanism.
-        // The TCP mechanism already has the size bytes stripped off.
-        byte[] buff = new byte[bytes.capacity() - 2];
-        bytes.get(); bytes.get();
-        bytes.get(buff, 0, buff.length);
-
-        MessageUnpacker unpacker = msgPack.newUnpacker(buff);
-
-        return decode(unpacker);
-
-    }
-
-    /**
-     * Decode a gossip message.
-     * 
-     * @param bytes the raw message.
-     * @return the decoded message.
-     * @throws IOException in case of an error in decoding.
-     */
     public static GossipMessage decode(byte[] bytes) throws IOException, MessageTypeException {
 
         MessageUnpacker unpacker = msgPack.newUnpacker(bytes);
