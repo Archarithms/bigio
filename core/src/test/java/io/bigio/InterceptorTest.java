@@ -6,9 +6,6 @@
 
 package io.bigio;
 
-import io.bigio.Interceptor;
-import io.bigio.Starter;
-import io.bigio.Speaker;
 import io.bigio.core.Envelope;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -27,7 +24,7 @@ import org.junit.Test;
  */
 public class InterceptorTest {
     
-    private static Speaker speaker;
+    private static BigIO speaker;
 
     private final BlockingQueue<MyMessage> queue = new ArrayBlockingQueue<>(1);
     private final MyMessageListener listener = new MyMessageListener();
@@ -35,7 +32,7 @@ public class InterceptorTest {
 
     @BeforeClass
     public static void init() {
-        speaker = Starter.bootstrap();
+        speaker = BigIO.bootstrap();
     }
 
     @AfterClass

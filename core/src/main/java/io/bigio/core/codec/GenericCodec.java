@@ -40,11 +40,11 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Andy Trimble
  */
-public class GenericDecoder {
+public class GenericCodec {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GenericDecoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GenericCodec.class);
 
-    private GenericDecoder() {
+    private GenericCodec() {
         
     }
 
@@ -74,6 +74,28 @@ public class GenericDecoder {
             }
         } catch(ClassNotFoundException ex) {
             LOG.error("Cannot find message type", ex);
+        }
+
+        return null;
+    }
+
+    /**
+     * Encode a message payload.
+     * 
+     * @param message a message.
+     * @return the encoded form of the message.
+     * @throws IOException in case of an error in encoding.
+     */
+    public static byte[] encode(Object message) throws IOException {
+
+        if(message.getClass().getAnnotation(io.bigio.Message.class) != null) {
+            try {
+                byte[] ret;
+                ret = (byte[])((BigIOMessage)message).bigioencode();
+                return ret;
+            } catch (Exception ex) {
+                LOG.error("Exception serializing.", ex);
+            }
         }
 
         return null;

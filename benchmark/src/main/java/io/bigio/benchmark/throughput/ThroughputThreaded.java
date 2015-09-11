@@ -29,10 +29,9 @@
 
 package io.bigio.benchmark.throughput;
 
+import io.bigio.BigIO;
 import io.bigio.MessageListener;
 import io.bigio.Parameters;
-import io.bigio.Speaker;
-import io.bigio.Starter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -50,7 +49,7 @@ public class ThroughputThreaded {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThroughputThreaded.class);
     
-    private Speaker speaker;
+    private BigIO bigio;
 
     private boolean headerPrinted = false;
     
@@ -91,7 +90,7 @@ public class ThroughputThreaded {
     }
 
     public ThroughputThreaded bootstrap() {
-        this.speaker = Starter.bootstrap();
+        this.bigio = BigIO.bootstrap();
         return this;
     }
 
@@ -134,7 +133,7 @@ public class ThroughputThreaded {
                 for(int i = 0; i < THREADS; ++i) {
                     ProducerListener producer = new ProducerListener("Consumer" + i);
                     producers.add(producer);
-                    speaker.addListener("Producer" + i, producer);
+                    bigio.addListener("Producer" + i, producer);
                 }   
                 
                 try {
@@ -179,7 +178,7 @@ public class ThroughputThreaded {
             case "consumer":
                 LOG.info("Running as a consumer");
                 for(int i = 0; i < THREADS; ++i) {
-                    speaker.addListener("Consumer" + i, new ConsumerListener("Producer" + i));
+                    bigio.addListener("Consumer" + i, new ConsumerListener("Producer" + i));
                 }   break;
         }
     }
@@ -195,7 +194,7 @@ public class ThroughputThreaded {
         @Override
         public void receive(ThroughputMessage message) {
             try {
-                speaker.send(producerTopic, message);
+                bigio.send(producerTopic, message);
             } catch (Exception ex) {
                 LOG.error("Error", ex);
             }
@@ -222,7 +221,7 @@ public class ThroughputThreaded {
 
             try {
                 startTime = System.currentTimeMillis();
-                speaker.send(consumerTopic, currentMessage);
+                bigio.send(consumerTopic, currentMessage);
             } catch (Exception ex) {
                 LOG.error("Could not seed", ex);
             }
@@ -245,7 +244,7 @@ public class ThroughputThreaded {
 
             try {
                 if(running) {
-                    speaker.send(consumerTopic, currentMessage);
+                    bigio.send(consumerTopic, currentMessage);
                 } 
             } catch (Exception ex) {
                 LOG.error("Error", ex);

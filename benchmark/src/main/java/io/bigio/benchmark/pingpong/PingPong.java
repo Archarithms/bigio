@@ -29,15 +29,14 @@
 
 package io.bigio.benchmark.pingpong;
 
+import io.bigio.BigIO;
 import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.MessageListener;
 import io.bigio.Parameters;
-import io.bigio.Speaker;
-import io.bigio.Starter;
 import io.bigio.core.Envelope;
-import io.bigio.core.codec.EnvelopeEncoder;
-import io.bigio.core.codec.GenericEncoder;
+import io.bigio.core.codec.EnvelopeCodec;
+import io.bigio.core.codec.GenericCodec;
 import io.bigio.util.TimeUtil;
 import java.io.IOException;
 import javax.annotation.PostConstruct;
@@ -55,7 +54,7 @@ public class PingPong {
     private static final Logger LOG = LoggerFactory.getLogger(PingPong.class);
     
     @Inject
-    private Speaker speaker;
+    private BigIO bigio;
 
     private boolean running = true;
     private long time;
@@ -77,8 +76,8 @@ public class PingPong {
             while(running) {
                 try {
                     Thread.sleep(1000l);
-                    speaker.send("HelloWorldConsumer", m);
-                } catch(Exception ex) {
+                    bigio.send("HelloWorldConsumer", m);
+                } catch(InterruptedException | IOException ex) {
                     LOG.debug("Error", ex);
                 }
             }
@@ -91,7 +90,7 @@ public class PingPong {
             time = System.currentTimeMillis();
             while(running) {
                 try {
-                    speaker.send("HelloWorldLocal", m);
+                    bigio.send("HelloWorldLocal", m);
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -122,7 +121,7 @@ public class PingPong {
         LOG.info("Throwing away " + throwAway + " messages.");
         SimpleMessage sample = new SimpleMessage("m", 0, 0);
         try {
-            byte[] payload = GenericEncoder.encode(sample);
+            byte[] payload = GenericCodec.encode(sample);
             Envelope envelope = new Envelope();
             envelope.setDecoded(false);
             envelope.setExecuteTime(0);
@@ -133,7 +132,7 @@ public class PingPong {
             envelope.setPayload(payload);
             envelope.setDecoded(false);
 
-            byte[] bytes = EnvelopeEncoder.encode(envelope);
+            byte[] bytes = EnvelopeCodec.encode(envelope);
             LOG.info("Typical message size: " + bytes.length);
             LOG.info("Typical payload size: " + payload.length);
             LOG.info("Typical header size: " + (bytes.length - payload.length));
@@ -176,7 +175,7 @@ public class PingPong {
     }
 
     public PingPong bootstrap() {
-        this.speaker = Starter.bootstrap();
+        this.bigio = BigIO.bootstrap();
         return this;
     }
 
@@ -187,7 +186,7 @@ public class PingPong {
         switch (role) {
             case "producer":
                 LOG.info("Running as a producer");
-                speaker.addListener("HelloWorldProducer", new MessageListener<SimpleMessage>() {
+                bigio.addListener("HelloWorldProducer", new MessageListener<SimpleMessage>() {
                     @Override
                     public void receive(SimpleMessage message) {
                         if(messageCount >= throwAway && !warmedUp) {
@@ -207,7 +206,7 @@ public class PingPong {
                         
                         try {
                             if(running) {
-                                speaker.send("HelloWorldConsumer", m);
+                                bigio.send("HelloWorldConsumer", m);
                             }
                         } catch (Exception ex) {
                             LOG.error("Error", ex);
@@ -217,7 +216,7 @@ public class PingPong {
                 break;
             case "consumer":
                 LOG.info("Running as a consumer");
-                speaker.addListener("HelloWorldConsumer", new MessageListener<SimpleMessage>() {
+                bigio.addListener("HelloWorldConsumer", new MessageListener<SimpleMessage>() {
                     @Override
                     public void receive(SimpleMessage message) {
                         if(messageCount >= throwAway && !warmedUp) {
@@ -237,7 +236,7 @@ public class PingPong {
                         
                         try {
                             if(running) {
-                                speaker.send("HelloWorldProducer", m);
+                                bigio.send("HelloWorldProducer", m);
                             }
                         } catch (Exception ex) {
                             LOG.error("Error", ex);
@@ -246,7 +245,7 @@ public class PingPong {
                 }); break;
             default:
                 LOG.info("Running in VM only");
-                speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
+                bigio.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
                     @Override
                     public void receive(SimpleMessage message) {
                         if(messageCount >= throwAway && !warmedUp) {

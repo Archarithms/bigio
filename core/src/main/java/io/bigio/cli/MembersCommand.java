@@ -32,7 +32,7 @@ package io.bigio.cli;
 import io.bigio.CommandLine;
 import io.bigio.Component;
 import io.bigio.Inject;
-import io.bigio.Speaker;
+import io.bigio.BigIO;
 import io.bigio.core.member.Member;
 
 /**
@@ -45,7 +45,7 @@ import io.bigio.core.member.Member;
 public class MembersCommand implements CommandLine {
 
     @Inject
-    private Speaker speaker;
+    private BigIO speaker;
 
     /**
      * Get the command string.

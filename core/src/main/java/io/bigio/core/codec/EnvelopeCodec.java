@@ -30,24 +30,113 @@
 package io.bigio.core.codec;
 
 import io.bigio.core.Envelope;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import org.msgpack.core.MessageFormat;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessagePacker;
+import org.msgpack.core.MessageUnpacker;
 
 /**
- * This is a class for encoding envelope messages.
+ * This is a class for decoding envelope messages.
  * 
  * @author Andy Trimble
  */
-public class EnvelopeEncoder {
-
+public class EnvelopeCodec {
+    
     private static final MessagePack msgPack = new MessagePack();
 
-    private EnvelopeEncoder() {
-        
+    private EnvelopeCodec() {
+
+    }
+
+    /**
+     * Decode a message envelope.
+     * 
+     * @param bytes the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of a decode error.
+     */
+    public static Envelope decode(ByteBuf bytes) throws IOException {
+        MessageUnpacker unpacker = msgPack.newUnpacker(new ByteBufInputStream(bytes));
+        Envelope message = decode(unpacker);
+        return message;
     }
     
+    /**
+     * Decode a message envelope.
+     * 
+     * @param bytes the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of a decode error.
+     */
+    public static Envelope decode(byte[] bytes) throws IOException {
+        MessageUnpacker unpacker = msgPack.newUnpacker(bytes);
+        Envelope message = decode(unpacker);
+        return message;
+    }
+
+    /**
+     * Decode a message envelope.
+     * 
+     * @param unpacker a MsgPack object containing the raw message.
+     * @return the decoded message.
+     * @throws IOException in case of a decode error.
+     */
+    private static Envelope decode(MessageUnpacker unpacker) throws IOException {
+
+        Envelope message = new Envelope();
+
+        StringBuilder keyBuilder = new StringBuilder();
+        keyBuilder
+                .append(unpacker.unpackInt())
+                .append(".")
+                .append(unpacker.unpackInt())
+                .append(".")
+                .append(unpacker.unpackInt())
+                .append(".")
+                .append(unpacker.unpackInt())
+                .append(":")
+                .append(unpacker.unpackInt())
+                .append(":")
+                .append(unpacker.unpackInt());
+        message.setSenderKey(keyBuilder.toString());
+        message.setEncrypted(unpacker.unpackBoolean());
+        if(message.isEncrypted()) {
+            int length = unpacker.unpackArrayHeader();
+            byte[] key = new byte[length];
+            for(int i = 0; i < length; ++i) {
+                key[i] = unpacker.unpackByte();
+            }
+            message.setKey(key);
+        }
+        message.setExecuteTime(unpacker.unpackInt());
+        message.setMillisecondsSinceMidnight(unpacker.unpackInt());
+        message.setTopic(unpacker.unpackString());
+        message.setPartition(unpacker.unpackString());
+        message.setClassName(unpacker.unpackString());
+
+        if(unpacker.getNextFormat() == MessageFormat.BIN16 || 
+                unpacker.getNextFormat() == MessageFormat.BIN32 || 
+                unpacker.getNextFormat() == MessageFormat.BIN8) {
+            int length = unpacker.unpackBinaryHeader();
+            byte[] payload = new byte[length];
+            unpacker.readPayload(payload);
+            message.setPayload(payload);
+        } else {
+            int length = unpacker.unpackArrayHeader();
+            byte[] payload = new byte[length];
+            for(int i = 0; i < length; ++i) {
+                payload[i] = unpacker.unpackByte();
+            }
+            message.setPayload(payload);
+        }
+
+        return message;
+    }
+
     /**
      * Encode a message envelope.
      * 

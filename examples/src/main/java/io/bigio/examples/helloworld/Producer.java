@@ -29,10 +29,10 @@
 
 package io.bigio.examples.helloworld;
 
-import io.bigio.Component;
+import io.bigio.BigIO;
 import io.bigio.Initialize;
 import io.bigio.Inject;
-import io.bigio.Speaker;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +40,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author atrimble
  */
-@Component
+//@Component
 public class Producer {
 
     private static final Logger LOG = LoggerFactory.getLogger(Producer.class);
     
     @Inject
-    private Speaker speaker;
+    private BigIO bigio;
 
     @Initialize
     public void init() {
@@ -59,12 +59,18 @@ public class Producer {
                         LOG.info("Sending message.");
                         HelloWorldMessage message = new HelloWorldMessage();
                         message.setMessage("Hello World!");
-                        speaker.send("HelloWorld", message);
-                    } catch (Exception ex) {
+                        bigio.send("HelloWorld", message);
+                    } catch (InterruptedException | IOException ex) {
                         LOG.error("Caught exception", ex);
                     }
                 }
             }
         }.start();
+    }
+
+    public static void main(String[] args) {
+        Producer prod = new Producer();
+        prod.bigio = BigIO.bootstrap();
+        prod.init();
     }
 }

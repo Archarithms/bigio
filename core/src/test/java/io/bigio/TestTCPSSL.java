@@ -34,8 +34,8 @@ public class TestTCPSSL {
 
     private static boolean failed = false;
 
-    private static Speaker speaker1;
-    private static Speaker speaker2;
+    private static BigIO speaker1;
+    private static BigIO speaker2;
 
     @BeforeClass
     public static void init() throws InterruptedException {
@@ -77,8 +77,8 @@ public class TestTCPSSL {
     }
 
     private void setup() {
-        speaker1 = Starter.bootstrap();
-        speaker2 = Starter.bootstrap();
+        speaker1 = BigIO.bootstrap();
+        speaker2 = BigIO.bootstrap();
 
         speaker2.addListener("MyTCPTopic", listener);
     }

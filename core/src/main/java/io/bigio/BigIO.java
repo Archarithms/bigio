@@ -31,9 +31,14 @@ package io.bigio;
 
 import io.bigio.cli.CommandLineInterface;
 import io.bigio.core.ClusterService;
+import io.bigio.core.Container;
+import io.bigio.core.ListenerRegistry;
+import io.bigio.core.MCDiscovery;
 import io.bigio.core.member.Member;
+import io.bigio.core.member.MemberHolder;
 import io.bigio.util.TopicUtils;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.SocketException;
 import java.util.Collection;
 import java.util.Map;
@@ -46,15 +51,29 @@ import org.slf4j.LoggerFactory;
  * @author Andy Trimble
  */
 @Component
-public class Speaker {
+public class BigIO {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Speaker.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BigIO.class);
+
+    private static final boolean MONITOR_THREAD_CONTENTION = true;
+
+    private static BigIO bigio;
 
     @Inject
     private ClusterService cluster;
 
     @Inject
     private CommandLineInterface cli;
+
+    /**
+     * Do not use this constructor to create a BigIO instance. Rather, use the
+     * {@link #bootstrap() bootstrap} method.
+     */
+    public BigIO() {
+        if(MONITOR_THREAD_CONTENTION) {
+            ManagementFactory.getThreadMXBean().setThreadContentionMonitoringEnabled(MONITOR_THREAD_CONTENTION);
+        }
+    }
 
     /**
      * Initialize the framework.
@@ -76,10 +95,23 @@ public class Speaker {
     }
 
     /**
-     * Construct a speaker.
+     * Bootstrap the system and return a BigIO object.
+     * 
+     * @return an initialized speaker object.
      */
-    public Speaker() {
-        
+    public static BigIO bootstrap() {
+        BigIO speaker = new BigIO();
+        ClusterService cluster = new ClusterService();
+        MemberHolder memberHolder = new MemberHolder();
+        ListenerRegistry registry = new ListenerRegistry();
+        MCDiscovery mc = new MCDiscovery();
+        mc.setMemberHolder(memberHolder);
+        cluster.setMulticastDiscovery(mc);
+        cluster.setMemberHolder(memberHolder);
+        cluster.setRegistry(registry);
+        speaker.setCluster(cluster);
+        speaker.init();
+        return speaker;
     }
 
     /**
@@ -250,5 +282,23 @@ public class Speaker {
      */
     protected ClusterService getClusterService() {
         return cluster;
+    }
+
+    /**
+     * Exit from the CLI.
+     */
+    public static void exit() {
+        System.exit(0);
+    }
+
+    /**
+     * The main method for BigIO.
+     * 
+     * @param args command line arguments
+     */
+    public static void main(String[] args) {
+        Parameters.INSTANCE.currentOS(); // Just to load the properties
+        Container.INSTANCE.scan();
+        bigio = new BigIO();
     }
 }

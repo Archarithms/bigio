@@ -35,7 +35,7 @@ import io.bigio.Inject;
 import io.bigio.Interceptor;
 import io.bigio.MessageListener;
 import io.bigio.Parameters;
-import io.bigio.core.codec.GenericEncoder;
+import io.bigio.core.codec.GenericCodec;
 import io.bigio.core.member.AbstractMember;
 import io.bigio.core.member.MeMember;
 import io.bigio.core.member.MeMemberTCP;
@@ -224,7 +224,7 @@ public class ClusterService {
                         envelope.setMessage(message);
                         envelope.setDecoded(true);
                     } else {
-                        envelope.setPayload(GenericEncoder.encode(message));
+                        envelope.setPayload(GenericCodec.encode(message));
                         envelope.setDecoded(false);
                     }
 
@@ -244,7 +244,7 @@ public class ClusterService {
                         envelope.setMessage(message);
                         envelope.setDecoded(true);
                     } else {
-                        envelope.setPayload(GenericEncoder.encode(message));
+                        envelope.setPayload(GenericCodec.encode(message));
                         envelope.setDecoded(false);
                     }
 
@@ -260,7 +260,7 @@ public class ClusterService {
                         envelope.setMessage(message);
                         envelope.setDecoded(true);
                     } else {
-                        envelope.setPayload(GenericEncoder.encode(message));
+                        envelope.setPayload(GenericCodec.encode(message));
                         envelope.setDecoded(false);
                     }
 

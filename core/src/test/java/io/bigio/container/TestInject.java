@@ -5,7 +5,7 @@
 package io.bigio.container;
 
 import io.bigio.Parameters;
-import io.bigio.Speaker;
+import io.bigio.BigIO;
 import io.bigio.core.Container;
 import io.bigio.core.member.MemberStatus;
 import static org.junit.Assert.assertFalse;
@@ -27,7 +27,7 @@ public class TestInject {
 
         Thread.sleep(1000l);
 
-        Speaker speaker = scanner.getInstance(Speaker.class);
+        BigIO speaker = scanner.getInstance(BigIO.class);
 
         // A bunch of stuff needs to be wired together for this to be non null
         // and active.

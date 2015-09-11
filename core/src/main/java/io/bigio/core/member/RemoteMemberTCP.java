@@ -31,8 +31,8 @@ package io.bigio.core.member;
 import io.bigio.Parameters;
 import io.bigio.core.Envelope;
 import io.bigio.core.GossipMessage;
-import io.bigio.core.codec.EnvelopeEncoder;
-import io.bigio.core.codec.GossipEncoder;
+import io.bigio.core.codec.EnvelopeCodec;
+import io.bigio.core.codec.GossipCodec;
 import io.bigio.util.NetworkUtil;
 import io.bigio.util.RunningStatistics;
 import io.netty.bootstrap.Bootstrap;
@@ -222,7 +222,7 @@ public class RemoteMemberTCP extends RemoteMember {
             }
         }
 
-        byte[] bytes = EnvelopeEncoder.encode(message);
+        byte[] bytes = EnvelopeCodec.encode(message);
 
         if(LOG.isTraceEnabled()) {
             dataSizeStat.push(bytes.length);
@@ -235,7 +235,7 @@ public class RemoteMemberTCP extends RemoteMember {
 
     @Override
     public void gossip(final GossipMessage message) throws IOException {
-        byte[] bytes = GossipEncoder.encode(message);
+        byte[] bytes = GossipCodec.encode(message);
 
         if(LOG.isTraceEnabled()) {
             gossipSizeStat.push(bytes.length);

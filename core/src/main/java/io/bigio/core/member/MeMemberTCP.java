@@ -30,7 +30,7 @@ package io.bigio.core.member;
 
 import io.bigio.core.GossipMessage;
 import io.bigio.core.ListenerRegistry;
-import io.bigio.core.codec.GossipDecoder;
+import io.bigio.core.codec.GossipCodec;
 import io.bigio.util.NetworkUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -298,7 +298,7 @@ public class MeMemberTCP extends MeMember {
             if(msg instanceof byte[]) {
                 byte[] bytes = (byte[]) msg;
                 try {
-                    GossipMessage message = GossipDecoder.decode(bytes);
+                    GossipMessage message = GossipCodec.decode(bytes);
                     reactor.notify(GOSSIP_TOPIC, Event.wrap(message));
                 } catch (IOException | MessageTypeException ex) {
                     LOG.debug("Error decoding message.", ex);

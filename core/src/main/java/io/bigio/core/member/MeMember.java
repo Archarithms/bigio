@@ -33,8 +33,8 @@ import io.bigio.core.Envelope;
 import io.bigio.core.GossipListener;
 import io.bigio.core.GossipMessage;
 import io.bigio.core.ListenerRegistry;
-import io.bigio.core.codec.EnvelopeDecoder;
-import io.bigio.core.codec.GenericDecoder;
+import io.bigio.core.codec.EnvelopeCodec;
+import io.bigio.core.codec.GenericCodec;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -166,7 +166,7 @@ public abstract class MeMember extends AbstractMember {
             }
 
             // decode message
-            envelope.setMessage(GenericDecoder.decode(envelope.getClassName(), envelope.getPayload()));
+            envelope.setMessage(GenericCodec.decode(envelope.getClassName(), envelope.getPayload()));
             envelope.setDecoded(true);
         }
         
@@ -186,7 +186,7 @@ public abstract class MeMember extends AbstractMember {
 
         decoderReactor.on(Selectors.$(DECODE_TOPIC), (Event<byte[]> m) -> {
             try {
-                Envelope message = EnvelopeDecoder.decode(m.getData());
+                Envelope message = EnvelopeCodec.decode(m.getData());
                 message.setDecoded(false);
                 send(message);
             } catch (IOException | MessageTypeException ex) {

@@ -33,11 +33,11 @@ import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.MessageListener;
 import io.bigio.Parameters;
-import io.bigio.Speaker;
+import io.bigio.BigIO;
 import io.bigio.benchmark.pingpong.SimpleMessage;
 import io.bigio.core.Envelope;
-import io.bigio.core.codec.EnvelopeEncoder;
-import io.bigio.core.codec.GenericEncoder;
+import io.bigio.core.codec.EnvelopeCodec;
+import io.bigio.core.codec.GenericCodec;
 import io.bigio.util.TimeUtil;
 import java.io.IOException;
 import javax.annotation.PostConstruct;
@@ -55,7 +55,7 @@ public class BenchmarkComponent {
     private static final Logger LOG = LoggerFactory.getLogger(BenchmarkComponent.class);
     
     @Inject
-    private Speaker speaker;
+    private BigIO bigio;
 
     private boolean running = true;
     private long time;
@@ -77,7 +77,7 @@ public class BenchmarkComponent {
             while(running) {
                 try {
                     for(int i = 0; i < messagesPerSecond; ++i) {
-                        speaker.send("HelloWorld", new SimpleMessage("This message should be en/decoded", ++sendCount, System.currentTimeMillis()));
+                        bigio.send("HelloWorld", new SimpleMessage("This message should be en/decoded", ++sendCount, System.currentTimeMillis()));
                     }
                     Thread.sleep(1000l);
                 } catch(Exception ex) {
@@ -94,7 +94,7 @@ public class BenchmarkComponent {
             while(running) {
                 try {
 //                    Thread.sleep(100l);
-                    speaker.send("HelloWorldLocal", new SimpleMessage("This message should be en/decoded", ++sendCount, System.currentTimeMillis()));
+                    bigio.send("HelloWorldLocal", new SimpleMessage("This message should be en/decoded", ++sendCount, System.currentTimeMillis()));
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -105,7 +105,7 @@ public class BenchmarkComponent {
     public BenchmarkComponent() {
         SimpleMessage m = new SimpleMessage("This message should be en/decoded", 0, System.currentTimeMillis());
         try {
-            byte[] payload = GenericEncoder.encode(m);
+            byte[] payload = GenericCodec.encode(m);
             Envelope envelope = new Envelope();
             envelope.setDecoded(false);
             envelope.setExecuteTime(0);
@@ -116,7 +116,7 @@ public class BenchmarkComponent {
             envelope.setPayload(payload);
             envelope.setDecoded(false);
 
-            byte[] bytes = EnvelopeEncoder.encode(envelope);
+            byte[] bytes = EnvelopeCodec.encode(envelope);
             LOG.info("Typical message size: " + bytes.length);
             LOG.info("Typical payload size: " + payload.length);
             LOG.info("Typical header size: " + (bytes.length - payload.length));
@@ -165,7 +165,7 @@ public class BenchmarkComponent {
                 break;
             case "consumer":
                 LOG.info("Running as a consumer");
-                speaker.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
+                bigio.addListener("HelloWorld", new MessageListener<SimpleMessage>() {
                     long lastReceived = 0;
                     @Override
                     public void receive(SimpleMessage message) {
@@ -182,7 +182,7 @@ public class BenchmarkComponent {
                 }); break;
             default:
                 LOG.info("Running in VM only");
-                speaker.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
+                bigio.addListener("HelloWorldLocal", new MessageListener<SimpleMessage>() {
                     @Override
                     public void receive(SimpleMessage message) {
                         ++messageCount;

@@ -4,10 +4,6 @@
 
 package io.bigio;
 
-import io.bigio.Message;
-import io.bigio.Starter;
-import io.bigio.Speaker;
-import io.bigio.core.ClusterService;
 import io.bigio.core.member.Member;
 import java.util.Collection;
 import java.util.List;
@@ -30,13 +26,13 @@ public class TestDiscoveryTCP {
     private static final MyMessageListener listener = new MyMessageListener();
     private static final DelayedMessageListener delayedListener = new DelayedMessageListener();
 
-    private static Speaker speaker1;
-    private static Speaker speaker2;
+    private static BigIO speaker1;
+    private static BigIO speaker2;
 
     @BeforeClass
     public static void init() throws InterruptedException {
-        speaker1 = Starter.bootstrap();
-        speaker2 = Starter.bootstrap();
+        speaker1 = BigIO.bootstrap();
+        speaker2 = BigIO.bootstrap();
 
         speaker2.addListener("MyTopic", listener);
         speaker2.addListener("DelayedTopic", delayedListener);

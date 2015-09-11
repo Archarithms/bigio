@@ -30,11 +30,12 @@
 package io.bigio.core.codec;
 
 import io.bigio.core.GossipMessage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessagePacker;
 import org.msgpack.core.MessageTypeException;
 import org.msgpack.core.MessageUnpacker;
 import org.slf4j.Logger;
@@ -45,12 +46,12 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Andy Trimble
  */
-public class GossipDecoder {
+public class GossipCodec {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GossipDecoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GossipCodec.class);
     private static final MessagePack msgPack = new MessagePack();
     
-    private GossipDecoder() {
+    private GossipCodec() {
 
     }
     
@@ -143,5 +144,87 @@ public class GossipDecoder {
         }
 
         return message;
+    }
+
+    /**
+     * Encode a gossip message.
+     * 
+     * @param message a message.
+     * @return the encoded form of the message.
+     * @throws IOException in case of an encoding error.
+     */
+    public static byte[] encode(GossipMessage message) throws IOException {
+        ByteArrayOutputStream msgBuffer = new ByteArrayOutputStream();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        String[] splitIp = message.getIp().split("\\.");
+        List<List<Integer>> members = new ArrayList<>();
+        for(String m : message.getMembers()) {
+            List<Integer> memberList = new ArrayList<>();
+            String[] keys = m.split(":");
+            String[] memIp = keys[0].split("\\.");
+            if(memIp.length < 4) {
+                LOG.warn(keys[0] + " is not a valid IP address.");
+                continue;
+            }
+            memberList.add(Integer.parseInt(memIp[0]));
+            memberList.add(Integer.parseInt(memIp[1]));
+            memberList.add(Integer.parseInt(memIp[2]));
+            memberList.add(Integer.parseInt(memIp[3]));
+            memberList.add(Integer.parseInt(keys[1]));
+            memberList.add(Integer.parseInt(keys[2]));
+            members.add(memberList);
+        }
+
+        MessagePacker packer = msgPack.newPacker(msgBuffer);
+        packer.packInt(Integer.parseInt(splitIp[0]));
+        packer.packInt(Integer.parseInt(splitIp[1]));
+        packer.packInt(Integer.parseInt(splitIp[2]));
+        packer.packInt(Integer.parseInt(splitIp[3]));
+        packer.packInt(message.getGossipPort());
+        packer.packInt(message.getDataPort());
+        packer.packInt(message.getMillisecondsSinceMidnight());
+        if(message.getPublicKey() != null) {
+            packer.packBoolean(true);
+            packer.packArrayHeader(message.getPublicKey().length);
+            for(byte b : message.getPublicKey()) {
+                packer.packByte(b);
+            }
+        } else {
+            packer.packBoolean(false);
+        }
+
+        packer.packMapHeader(message.getTags().size());
+        for(String key : message.getTags().keySet()) {
+            packer.packString(key);
+            packer.packString(message.getTags().get(key));
+        }
+        packer.packArrayHeader(members.size());
+        for(List<Integer> l : members) {
+            packer.packArrayHeader(l.size());
+            for(int i : l) {
+                packer.packInt(i);
+            }
+        }
+        packer.packArrayHeader(message.getClock().size());
+        for(Integer i : message.getClock()) {
+            packer.packInt(i);
+        }
+        packer.packMapHeader(message.getListeners().size());
+        for(String key : message.getListeners().keySet()) {
+            packer.packString(key);
+            packer.packArrayHeader(message.getListeners().get(key).size());
+            for(String l : message.getListeners().get(key)) {
+                packer.packString(l);
+            }
+        }
+
+        packer.close();
+
+        out.write((short)msgBuffer.size() >>> 8);
+        out.write((short)msgBuffer.size());
+        msgBuffer.writeTo(out);
+
+        return out.toByteArray();
     }
 }

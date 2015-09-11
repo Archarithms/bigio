@@ -29,10 +29,9 @@
 
 package io.bigio.benchmark.throughput;
 
+import io.bigio.BigIO;
 import io.bigio.MessageListener;
 import io.bigio.Parameters;
-import io.bigio.Speaker;
-import io.bigio.Starter;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -47,7 +46,7 @@ public class Throughput {
 
     private static final Logger LOG = LoggerFactory.getLogger(Throughput.class);
     
-    private Speaker speaker;
+    private BigIO bigio;
 
     private boolean running = true;
     private boolean headerPrinted = false;
@@ -78,7 +77,7 @@ public class Throughput {
                     Thread.sleep(100l);
                     //LOG.info("Seeding");
                     currentMessage.sendTime = System.nanoTime();
-                    speaker.send("HelloWorldConsumer", currentMessage);
+                    bigio.send("HelloWorldConsumer", currentMessage);
                 } catch(Exception ex) {
                     LOG.debug("Error", ex);
                 }
@@ -87,7 +86,7 @@ public class Throughput {
     };
 
     public Throughput() {
-        this.speaker = Starter.bootstrap();
+        this.bigio = BigIO.bootstrap();
         
         int currentBytes = initialBytes;
         while(currentBytes < maxBytes) {
@@ -126,7 +125,7 @@ public class Throughput {
     }
 
     public Throughput bootstrap() {
-        this.speaker = Starter.bootstrap();
+        this.bigio = BigIO.bootstrap();
         return this;
     }
 
@@ -158,7 +157,7 @@ public class Throughput {
         switch (role) {
             case "producer":
                 LOG.info("Running as a producer");
-                speaker.addListener("HelloWorldProducer", new MessageListener<ThroughputMessage>() {
+                bigio.addListener("HelloWorldProducer", new MessageListener<ThroughputMessage>() {
                     @Override
                     public void receive(ThroughputMessage message) {
 //                    if(!seeded) {
@@ -191,7 +190,7 @@ public class Throughput {
                         
                         try {
                             if(running) {
-                                speaker.send("HelloWorldConsumer", currentMessage);
+                                bigio.send("HelloWorldConsumer", currentMessage);
                             }
                         } catch (Exception ex) {
                             LOG.error("Error", ex);
@@ -201,12 +200,12 @@ public class Throughput {
                 break;
             case "consumer":
                 LOG.info("Running as a consumer");
-                speaker.addListener("HelloWorldConsumer", new MessageListener<ThroughputMessage>() {
+                bigio.addListener("HelloWorldConsumer", new MessageListener<ThroughputMessage>() {
                     @Override
                     public void receive(ThroughputMessage message) {
                         try {
                             if(running) {
-                                speaker.send("HelloWorldProducer", message);
+                                bigio.send("HelloWorldProducer", message);
                             }
                         } catch (Exception ex) {
                             LOG.error("Error", ex);

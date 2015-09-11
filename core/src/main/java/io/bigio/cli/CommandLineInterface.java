@@ -28,11 +28,11 @@
  */
 package io.bigio.cli;
 
+import io.bigio.BigIO;
 import io.bigio.CommandLine;
 import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.Parameters;
-import io.bigio.Starter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -125,7 +125,7 @@ public class CommandLineInterface extends Thread {
 
                 if ("quit".equalsIgnoreCase(line) || "exit".equalsIgnoreCase(line)) {
                     found = true;
-                    Starter.exit();
+                    BigIO.exit();
                 }
 
                 if (!found && !"".equals(args[0])) {
@@ -133,7 +133,7 @@ public class CommandLineInterface extends Thread {
                 }
             }
         } catch (UserInterruptException ex) {
-            Starter.exit();
+            BigIO.exit();
         } catch (IOException ex) {
             LOG.error("IO Exception", ex);
         }

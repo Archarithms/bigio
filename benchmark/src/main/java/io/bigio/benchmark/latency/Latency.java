@@ -28,13 +28,12 @@
  */
 package io.bigio.benchmark.latency;
 
+import io.bigio.BigIO;
 import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.MessageListener;
 import io.bigio.Parameters;
-import io.bigio.Speaker;
-import io.bigio.Starter;
-import io.bigio.core.codec.GenericEncoder;
+import io.bigio.core.codec.GenericCodec;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,7 +53,7 @@ public class Latency {
     private static final Logger LOG = LoggerFactory.getLogger(Latency.class);
 
     @Inject
-    private Speaker speaker;
+    private BigIO bigio;
 
     private boolean running = true;
     private boolean headerPrinted = false;
@@ -85,8 +84,8 @@ public class Latency {
                     Thread.sleep(1000l);
                     LOG.info("Seeding");
                     currentMessage.sendTime = System.nanoTime();
-                    speaker.send("HelloWorldConsumer", currentMessage);
-                } catch (Exception ex) {
+                    bigio.send("HelloWorldConsumer", currentMessage);
+                } catch (InterruptedException | IOException ex) {
                     LOG.debug("Error", ex);
                 }
             }
@@ -142,7 +141,7 @@ public class Latency {
     }
 
     public Latency bootstrap() {
-        this.speaker = Starter.bootstrap();
+        this.bigio = BigIO.bootstrap();
         return this;
     }
 
@@ -186,7 +185,7 @@ public class Latency {
         int length = 0;
 
         try {
-            length = GenericEncoder.encode(currentMessage).length;
+            length = GenericCodec.encode(currentMessage).length;
         } catch (IOException ex) {
 
         }
@@ -232,14 +231,14 @@ public class Latency {
 
     private void setupProducer() {
         LOG.info("Running as a producer");
-        speaker.addListener("HelloWorldProducer", new MessageListener<LatencyMessage>() {
+        bigio.addListener("HelloWorldProducer", new MessageListener<LatencyMessage>() {
             long lat = 0;
 
             @Override
             public void receive(LatencyMessage message) {
                 try {
                     seeded = true;
-                    speaker.send("HelloWorldConsumer", message);
+                    bigio.send("HelloWorldConsumer", message);
                 } catch (Exception ex) {
                     LOG.error("Error", ex);
                 }
@@ -250,7 +249,7 @@ public class Latency {
 
     private void setupConsumer() {
         LOG.info("Running as a consumer");
-        speaker.addListener("HelloWorldConsumer", new MessageListener<LatencyMessage>() {
+        bigio.addListener("HelloWorldConsumer", new MessageListener<LatencyMessage>() {
             long lat = 0;
 
             @Override
@@ -286,7 +285,7 @@ public class Latency {
                 try {
                     if (running) {
                         currentMessage.sendTime = System.nanoTime();
-                        speaker.send("HelloWorldProducer", currentMessage);
+                        bigio.send("HelloWorldProducer", currentMessage);
                     }
                 } catch (Exception ex) {
                     LOG.error("Error", ex);

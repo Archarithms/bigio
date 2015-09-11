@@ -29,12 +29,12 @@
 
 package io.bigio.examples.helloworld;
 
+import io.bigio.BigIO;
 import io.bigio.Component;
 import io.bigio.Initialize;
 import io.bigio.Inject;
 import io.bigio.Interceptor;
 import io.bigio.MessageListener;
-import io.bigio.Speaker;
 import io.bigio.core.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,7 @@ public class Consumer {
     private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
     
     @Inject
-    private Speaker speaker;
+    private BigIO speaker;
 
     @Initialize
     public void init() {

@@ -32,8 +32,7 @@ package io.bigio.core;
 import io.bigio.Component;
 import io.bigio.Inject;
 import io.bigio.Parameters;
-import io.bigio.core.codec.GossipDecoder;
-import io.bigio.core.codec.GossipEncoder;
+import io.bigio.core.codec.GossipCodec;
 import io.bigio.core.member.AbstractMember;
 import io.bigio.core.member.Member;
 import io.bigio.core.member.MemberHolder;
@@ -242,7 +241,7 @@ public class MCDiscovery extends Thread {
         byte[] arr = new byte[length];
         buff.get(arr, 0, length);
 
-        GossipMessage message = GossipDecoder.decode(arr);
+        GossipMessage message = GossipCodec.decode(arr);
 
         String key = MemberKey.getKey(message);
 
@@ -302,7 +301,7 @@ public class MCDiscovery extends Thread {
      */
     public void sendMessage(GossipMessage message) throws IOException {
 
-        byte[] bytes = GossipEncoder.encode(message);
+        byte[] bytes = GossipCodec.encode(message);
 
         ByteBuffer buff = ByteBuffer.allocate(bytes.length);
         buff.clear();

@@ -27,7 +27,7 @@ public class MessageTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageTest.class);
 
-    private static Speaker speaker;
+    private static BigIO speaker;
 
     private static final String MESSAGE = "This is a test";
 
@@ -41,7 +41,7 @@ public class MessageTest {
 
     @Before
     public void init() {
-        speaker = Starter.bootstrap();
+        speaker = BigIO.bootstrap();
     }
 
     @After
