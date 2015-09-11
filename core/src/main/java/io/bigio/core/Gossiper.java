@@ -69,6 +69,8 @@ public class Gossiper {
 
     private final MembershipGossiper thread = new MembershipGossiper();
 
+    private final GossipMessage memberList = new GossipMessage();
+
     /**
      * Constructor.
      * 
@@ -103,14 +105,16 @@ public class Gossiper {
         Member member = getRandomMember();
 
         if (member != null) {
-            GossipMessage memberList = new GossipMessage();
             memberList.setIp(me.getIp());
             memberList.setGossipPort(me.getGossipPort());
             memberList.setDataPort(me.getDataPort());
             memberList.setMillisecondsSinceMidnight(TimeUtil.getMillisecondsSinceMidnight());
             memberList.setPublicKey(me.getPublicKey());
+            memberList.getTags().clear();
             memberList.getTags().putAll(me.getTags());
 
+            memberList.getMembers().clear();
+            memberList.getClock().clear();
             for(int i = 0; i < memberHolder.getActiveMembers().size(); ++i) {
                 Member m = memberHolder.getActiveMembers().get(i);
                 memberList.getMembers().add(MemberKey.getKey(m));
@@ -122,6 +126,12 @@ public class Gossiper {
                 }
             }
 
+            registry.getAllRegistrations().stream().forEach((registration) -> {
+                String key = MemberKey.getKey(registration.getMember());
+                if(memberList.getListeners().get(key) != null) {
+                    memberList.getListeners().get(key).clear();
+                }
+            });
             registry.getAllRegistrations().stream().forEach((registration) -> {
                 String key = MemberKey.getKey(registration.getMember());
                 if(memberList.getListeners().get(key) == null) {
